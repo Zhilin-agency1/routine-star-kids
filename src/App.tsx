@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/contexts/AppContext";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
+import { AuthPage } from "./pages/AuthPage";
 import { StorePage } from "./pages/child/StorePage";
 import { JobBoardPage } from "./pages/child/JobBoardPage";
 import { SchedulePage } from "./pages/child/SchedulePage";
@@ -30,8 +31,9 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Layout>
-                <Routes>
-                  <Route path="/" element={<Index />} />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<AuthPage />} />
                   {/* Child Routes */}
                   <Route path="/store" element={<StorePage />} />
                   <Route path="/jobs" element={<JobBoardPage />} />

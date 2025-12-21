@@ -1,6 +1,8 @@
-import { Globe, User, Users } from 'lucide-react';
+import { Globe, User, Users, LogIn, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/hooks/useAuth';
 import { CoinBadge } from './ui/CoinBadge';
 import { ChildAvatar } from './ui/ChildAvatar';
 import { Button } from './ui/button';
@@ -8,12 +10,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
   const { role, setRole, currentChild } = useApp();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border safe-area-top">
@@ -75,6 +80,18 @@ export const Header = () => {
               <DropdownMenuItem onClick={() => setRole('parent')}>
                 👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {user ? (
+                <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Выйти
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => navigate('/auth')}>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Войти
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

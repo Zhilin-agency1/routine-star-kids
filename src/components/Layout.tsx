@@ -8,10 +8,10 @@ interface LayoutProps {
 }
 
 export const Layout = ({ children }: LayoutProps) => {
-  const { role, viewMode } = useApp();
+  const { role } = useApp();
   
-  // Hide bottom nav in family dashboard mode for children
-  const showBottomNav = !(role === 'child' && viewMode === 'family');
+  // Show bottom nav for everyone (removed the family mode hide logic)
+  const showBottomNav = true;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

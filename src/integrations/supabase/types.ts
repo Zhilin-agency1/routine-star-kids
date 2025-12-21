@@ -610,6 +610,42 @@ export type Database = {
         }
         Relationships: []
       }
+      wishlists: {
+        Row: {
+          child_id: string
+          created_at: string
+          id: string
+          store_item_id: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          id?: string
+          store_item_id: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          id?: string
+          store_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlists_store_item_id_fkey"
+            columns: ["store_item_id"]
+            isOneToOne: false
+            referencedRelation: "store_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

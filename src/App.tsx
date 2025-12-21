@@ -13,7 +13,9 @@ import Index from "./pages/Index";
 import { AuthPage } from "./pages/AuthPage";
 import { StorePage } from "./pages/child/StorePage";
 import { JobBoardPage } from "./pages/child/JobBoardPage";
-import { SchedulePage } from "./pages/child/SchedulePage";
+import { FamilySchedulePage } from "./pages/child/FamilySchedulePage";
+import { FamilyJobBoardPage } from "./pages/child/FamilyJobBoardPage";
+import { MyRewardsPage } from "./pages/child/MyRewardsPage";
 import { ParentDashboard } from "./pages/parent/Dashboard";
 import { ChildrenPage } from "./pages/parent/ChildrenPage";
 import { TasksPage } from "./pages/parent/TasksPage";
@@ -50,6 +52,46 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                
+                {/* Child Routes - Family Mode */}
+                <Route
+                  path="/schedule"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <FamilySchedulePage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/exchange"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <FamilyJobBoardPage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Child Routes - Personal Mode */}
+                <Route
+                  path="/rewards"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <MyRewardsPage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/store"
                   element={
@@ -74,18 +116,8 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/schedule"
-                  element={
-                    <ProtectedRoute>
-                      <FamilySetup>
-                        <Layout>
-                          <SchedulePage />
-                        </Layout>
-                      </FamilySetup>
-                    </ProtectedRoute>
-                  }
-                />
+                
+                {/* Parent Routes */}
                 <Route
                   path="/parent"
                   element={

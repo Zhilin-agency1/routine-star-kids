@@ -6,6 +6,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { CoinBadge } from './ui/CoinBadge';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
+import { toast } from '@/hooks/use-toast';
 
 interface StoreCardProps {
   item: StoreItem;
@@ -33,12 +34,39 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!currentChild) return;
+    if (!currentChild) {
+      toast({
+        title: language === 'ru' ? 'Ошибка' : 'Error',
+        description: language === 'ru' ? 'Выберите ребёнка' : 'Select a child',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     if (inWishlist) {
-      removeFromWishlist.mutate({ childId: currentChild.id, storeItemId: item.id });
+      removeFromWishlist.mutate(
+        { childId: currentChild.id, storeItemId: item.id },
+        {
+          onSuccess: () => {
+            toast({
+              title: language === 'ru' ? 'Удалено' : 'Removed',
+              description: language === 'ru' ? `${name} удалён из списка желаний` : `${name} removed from wishlist`,
+            });
+          },
+        }
+      );
     } else {
-      addToWishlist.mutate({ childId: currentChild.id, storeItemId: item.id });
+      addToWishlist.mutate(
+        { childId: currentChild.id, storeItemId: item.id },
+        {
+          onSuccess: () => {
+            toast({
+              title: language === 'ru' ? 'Добавлено!' : 'Added!',
+              description: language === 'ru' ? `${name} добавлен в список желаний` : `${name} added to wishlist`,
+            });
+          },
+        }
+      );
     }
   };
 

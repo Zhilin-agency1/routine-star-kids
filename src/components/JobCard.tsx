@@ -16,8 +16,8 @@ export const JobCard = ({ job, onTake }: JobCardProps) => {
   const { takeJob } = useApp();
   const [isTaken, setIsTaken] = useState(false);
 
-  const title = job.title[language];
-  const description = job.description[language];
+  const title = language === 'ru' ? job.title_ru : job.title_en;
+  const description = language === 'ru' ? (job.description_ru || '') : (job.description_en || '');
 
   const handleTake = () => {
     takeJob(job.id);
@@ -46,7 +46,7 @@ export const JobCard = ({ job, onTake }: JobCardProps) => {
           </p>
           
           <div className="flex items-center justify-between mt-3">
-            <CoinBadge amount={job.rewardAmount} size="sm" showPlus />
+            <CoinBadge amount={job.reward_amount} size="sm" showPlus />
             
             <Button
               size="sm"

@@ -88,7 +88,7 @@ export const TasksPage = () => {
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     {child && (
                       <div className="flex items-center gap-1">
-                        <ChildAvatar avatar={child.avatarUrl} size="sm" />
+                        <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
                         <span>{child.name}</span>
                       </div>
                     )}

@@ -1,15 +1,20 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { useChildren, Child } from '@/hooks/useChildren';
+import { useTasks, TaskWithTemplate } from '@/hooks/useTasks';
+import { useStore, StoreItem } from '@/hooks/useStore';
+import { useJobBoard, JobBoardItem } from '@/hooks/useJobBoard';
+import { useSchedule, ActivitySchedule } from '@/hooks/useSchedule';
+import { useFamily } from '@/hooks/useFamily';
 
 export type Role = 'parent' | 'child';
 
-export interface Child {
-  id: string;
-  name: string;
-  avatarUrl: string;
-  balance: number;
-  languagePreference: 'ru' | 'en';
-}
+// Re-export types for backwards compatibility
+export type { Child } from '@/hooks/useChildren';
+export type { StoreItem } from '@/hooks/useStore';
+export type { JobBoardItem } from '@/hooks/useJobBoard';
+export type { ActivitySchedule } from '@/hooks/useSchedule';
 
+// Normalized task type for components
 export interface TaskInstance {
   id: string;
   templateId: string;
@@ -24,33 +29,6 @@ export interface TaskInstance {
   icon?: string;
 }
 
-export interface StoreItem {
-  id: string;
-  name: { ru: string; en: string };
-  price: number;
-  imageUrl: string;
-  active: boolean;
-}
-
-export interface JobBoardItem {
-  id: string;
-  title: { ru: string; en: string };
-  description: { ru: string; en: string };
-  rewardAmount: number;
-  active: boolean;
-  icon?: string;
-}
-
-export interface ActivitySchedule {
-  id: string;
-  childId: string;
-  title: { ru: string; en: string };
-  location?: string;
-  time: string;
-  duration: number;
-  days: number[];
-}
-
 interface AppContextType {
   role: Role;
   setRole: (role: Role) => void;
@@ -61,6 +39,7 @@ interface AppContextType {
   storeItems: StoreItem[];
   jobBoardItems: JobBoardItem[];
   activities: ActivitySchedule[];
+  isLoading: boolean;
   completeTask: (taskId: string) => void;
   moveTask: (taskId: string, state: TaskInstance['state']) => void;
   purchaseItem: (itemId: string) => void;
@@ -69,146 +48,82 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Mock data
-const mockChildren: Child[] = [
-  { id: '1', name: 'Миша', avatarUrl: '🦁', balance: 45, languagePreference: 'ru' },
-  { id: '2', name: 'Аня', avatarUrl: '🦄', balance: 72, languagePreference: 'ru' },
-];
-
-const mockTasks: TaskInstance[] = [
-  {
-    id: '1',
-    templateId: 't1',
-    childId: '1',
-    title: { ru: 'Заправить кровать', en: 'Make the bed' },
-    description: { ru: 'Аккуратно застелить одеялом', en: 'Neatly cover with blanket' },
-    rewardAmount: 5,
-    dueDateTime: new Date(),
-    state: 'todo',
-    rewardGranted: false,
-    icon: '🛏️',
-  },
-  {
-    id: '2',
-    templateId: 't2',
-    childId: '1',
-    title: { ru: 'Почистить зубы (утро)', en: 'Brush teeth (morning)' },
-    rewardAmount: 3,
-    dueDateTime: new Date(),
-    state: 'todo',
-    rewardGranted: false,
-    icon: '🪥',
-  },
-  {
-    id: '3',
-    templateId: 't3',
-    childId: '1',
-    title: { ru: 'Позавтракать', en: 'Have breakfast' },
-    rewardAmount: 2,
-    dueDateTime: new Date(),
-    state: 'doing',
-    rewardGranted: false,
-    icon: '🍳',
-  },
-  {
-    id: '4',
-    templateId: 't4',
-    childId: '1',
-    title: { ru: 'Убрать игрушки', en: 'Tidy up toys' },
-    rewardAmount: 10,
-    dueDateTime: new Date(),
-    state: 'done',
-    completedAt: new Date(),
-    rewardGranted: true,
-    icon: '🧸',
-  },
-];
-
-const mockStoreItems: StoreItem[] = [
-  { id: '1', name: { ru: '30 минут мультиков', en: '30 min cartoons' }, price: 20, imageUrl: '📺', active: true },
-  { id: '2', name: { ru: 'Мороженое', en: 'Ice cream' }, price: 30, imageUrl: '🍦', active: true },
-  { id: '3', name: { ru: 'Поход в парк', en: 'Trip to park' }, price: 50, imageUrl: '🎢', active: true },
-  { id: '4', name: { ru: 'Новая игрушка', en: 'New toy' }, price: 100, imageUrl: '🎁', active: true },
-];
-
-const mockJobBoardItems: JobBoardItem[] = [
-  { id: '1', title: { ru: 'Помыть посуду', en: 'Wash dishes' }, description: { ru: 'Помочь маме с посудой', en: 'Help mom with dishes' }, rewardAmount: 15, active: true, icon: '🍽️' },
-  { id: '2', title: { ru: 'Полить цветы', en: 'Water plants' }, description: { ru: 'Полить все цветы в доме', en: 'Water all plants in the house' }, rewardAmount: 10, active: true, icon: '🌱' },
-  { id: '3', title: { ru: 'Помочь с уборкой', en: 'Help with cleaning' }, description: { ru: 'Пропылесосить комнату', en: 'Vacuum the room' }, rewardAmount: 20, active: true, icon: '🧹' },
-];
-
-const mockActivities: ActivitySchedule[] = [
-  { id: '1', childId: '1', title: { ru: 'Футбол', en: 'Football' }, location: 'Спортзал', time: '16:00', duration: 60, days: [1, 3, 5] },
-  { id: '2', childId: '1', title: { ru: 'Английский', en: 'English' }, location: 'Онлайн', time: '18:00', duration: 45, days: [2, 4] },
-];
-
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children: childrenProp }) => {
   const [role, setRole] = useState<Role>('child');
-  const [currentChild, setCurrentChild] = useState<Child | null>(mockChildren[0]);
-  const [childrenList, setChildrenList] = useState<Child[]>(mockChildren);
-  const [tasks, setTasks] = useState<TaskInstance[]>(mockTasks);
-  const [storeItems] = useState<StoreItem[]>(mockStoreItems);
-  const [jobBoardItems] = useState<JobBoardItem[]>(mockJobBoardItems);
-  const [activities] = useState<ActivitySchedule[]>(mockActivities);
+  const [currentChild, setCurrentChild] = useState<Child | null>(null);
+  
+  // Use real hooks
+  const { family, isLoading: familyLoading } = useFamily();
+  const { children: childrenData, isLoading: childrenLoading } = useChildren();
+  const { instances, completeTask: completeTaskMutation, updateInstanceState } = useTasks(currentChild?.id, new Date());
+  const { items: storeItemsData, purchaseItem: purchaseItemMutation, isLoading: storeLoading } = useStore();
+  const { jobs: jobBoardItemsData, claimJob, isLoading: jobsLoading } = useJobBoard();
+  const { activities: activitiesData, isLoading: activitiesLoading } = useSchedule(currentChild?.id);
+
+  // Set current child when children are loaded
+  useEffect(() => {
+    if (childrenData.length > 0 && !currentChild) {
+      setCurrentChild(childrenData[0]);
+    }
+  }, [childrenData, currentChild]);
+
+  // Update currentChild when childrenData changes (e.g., balance updates)
+  useEffect(() => {
+    if (currentChild && childrenData.length > 0) {
+      const updatedChild = childrenData.find(c => c.id === currentChild.id);
+      if (updatedChild && updatedChild.balance !== currentChild.balance) {
+        setCurrentChild(updatedChild);
+      }
+    }
+  }, [childrenData, currentChild]);
+
+  // Normalize task instances to TaskInstance format
+  const tasks = useMemo((): TaskInstance[] => {
+    return instances.map((instance: TaskWithTemplate) => ({
+      id: instance.id,
+      templateId: instance.template_id,
+      childId: instance.child_id,
+      title: {
+        ru: instance.template?.title_ru || '',
+        en: instance.template?.title_en || '',
+      },
+      description: instance.template?.description_ru || instance.template?.description_en ? {
+        ru: instance.template?.description_ru || '',
+        en: instance.template?.description_en || '',
+      } : undefined,
+      rewardAmount: instance.template?.reward_amount || 0,
+      dueDateTime: new Date(instance.due_datetime),
+      state: instance.state as TaskInstance['state'],
+      completedAt: instance.completed_at ? new Date(instance.completed_at) : undefined,
+      rewardGranted: instance.reward_granted,
+      icon: instance.template?.icon || '✨',
+    }));
+  }, [instances]);
 
   const completeTask = (taskId: string) => {
-    setTasks(prev => prev.map(task => {
-      if (task.id === taskId && !task.rewardGranted) {
-        // Grant reward
-        if (currentChild) {
-          setChildrenList(children => children.map(c => 
-            c.id === currentChild.id 
-              ? { ...c, balance: c.balance + task.rewardAmount }
-              : c
-          ));
-          setCurrentChild(prev => prev ? { ...prev, balance: prev.balance + task.rewardAmount } : null);
-        }
-        return { ...task, state: 'done' as const, completedAt: new Date(), rewardGranted: true };
-      }
-      return task;
-    }));
+    if (!currentChild) return;
+    completeTaskMutation.mutate({ instanceId: taskId, childId: currentChild.id });
   };
 
   const moveTask = (taskId: string, state: TaskInstance['state']) => {
     if (state === 'done') {
       completeTask(taskId);
     } else {
-      setTasks(prev => prev.map(task => 
-        task.id === taskId ? { ...task, state } : task
-      ));
+      updateInstanceState.mutate({ instanceId: taskId, state });
     }
   };
 
   const purchaseItem = (itemId: string) => {
-    const item = storeItems.find(i => i.id === itemId);
-    if (item && currentChild && currentChild.balance >= item.price) {
-      setChildrenList(children => children.map(c => 
-        c.id === currentChild.id 
-          ? { ...c, balance: c.balance - item.price }
-          : c
-      ));
-      setCurrentChild(prev => prev ? { ...prev, balance: prev.balance - item.price } : null);
-    }
+    if (!currentChild) return;
+    purchaseItemMutation.mutate({ itemId, childId: currentChild.id });
   };
 
   const takeJob = (jobId: string) => {
-    const job = jobBoardItems.find(j => j.id === jobId);
-    if (job && currentChild) {
-      const newTask: TaskInstance = {
-        id: `job-${Date.now()}`,
-        templateId: `job-template-${jobId}`,
-        childId: currentChild.id,
-        title: job.title,
-        description: job.description,
-        rewardAmount: job.rewardAmount,
-        dueDateTime: new Date(),
-        state: 'todo',
-        rewardGranted: false,
-        icon: job.icon,
-      };
-      setTasks(prev => [...prev, newTask]);
-    }
+    if (!currentChild) return;
+    claimJob.mutate({ jobId, childId: currentChild.id, addToRoutine: true });
   };
+
+  const isLoading = familyLoading || childrenLoading || storeLoading || jobsLoading || activitiesLoading;
 
   return (
     <AppContext.Provider value={{
@@ -216,17 +131,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setRole,
       currentChild,
       setCurrentChild,
-      children: childrenList,
+      children: childrenData,
       tasks,
-      storeItems,
-      jobBoardItems,
-      activities,
+      storeItems: storeItemsData,
+      jobBoardItems: jobBoardItemsData,
+      activities: activitiesData,
+      isLoading,
       completeTask,
       moveTask,
       purchaseItem,
       takeJob,
     }}>
-      {children}
+      {childrenProp}
     </AppContext.Provider>
   );
 };

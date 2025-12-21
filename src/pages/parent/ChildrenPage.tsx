@@ -29,14 +29,14 @@ export const ChildrenPage = () => {
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <div className="flex items-center gap-4">
-              <ChildAvatar avatar={child.avatarUrl} size="xl" />
+              <ChildAvatar avatar={child.avatar_url || '🦁'} size="xl" />
               
               <div className="flex-1">
                 <h3 className="text-xl font-bold">{child.name}</h3>
                 <div className="flex items-center gap-2 mt-2">
                   <CoinBadge amount={child.balance} size="md" />
                   <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                    {child.languagePreference === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN'}
+                    {child.language_preference === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN'}
                   </span>
                 </div>
               </div>

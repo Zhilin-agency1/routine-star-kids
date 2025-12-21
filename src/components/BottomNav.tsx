@@ -19,8 +19,8 @@ const childNavItems: NavItem[] = [
 
 const parentNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_dashboard', path: '/parent' },
-  { icon: Users, labelKey: 'nav_children', path: '/parent/children' },
   { icon: ListTodo, labelKey: 'nav_tasks', path: '/parent/tasks' },
+  { icon: Briefcase, labelKey: 'nav_job_board', path: '/parent/jobs' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/parent/store' },
   { icon: BarChart3, labelKey: 'nav_reports', path: '/parent/reports' },
 ];

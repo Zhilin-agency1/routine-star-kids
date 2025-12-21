@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 interface ChildAvatarProps {
   avatar: string;
   name?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   showName?: boolean;
 }
@@ -16,6 +16,7 @@ export const ChildAvatar = ({
   showName = false
 }: ChildAvatarProps) => {
   const sizeClasses = {
+    xs: 'w-6 h-6 text-sm',
     sm: 'w-8 h-8 text-lg',
     md: 'w-12 h-12 text-2xl',
     lg: 'w-16 h-16 text-3xl',

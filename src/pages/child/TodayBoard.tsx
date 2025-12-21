@@ -4,11 +4,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { SimpleTaskCard } from '@/components/SimpleTaskCard';
-import { FamilyAchievements } from './FamilyAchievements';
 
 export const TodayBoard = () => {
   const { t } = useLanguage();
-  const { tasks, currentChild, viewMode, moveTask } = useApp();
+  const { tasks, currentChild, moveTask } = useApp();
 
   const childTasks = useMemo(() => {
     if (!currentChild) return { pending: [], done: [] };
@@ -30,11 +29,6 @@ export const TodayBoard = () => {
   const handleComplete = (taskId: string) => {
     moveTask(taskId, 'done');
   };
-
-  // Show family dashboard if viewMode is 'family'
-  if (viewMode === 'family') {
-    return <FamilyAchievements />;
-  }
 
   return (
     <div className="space-y-4 animate-fade-in">

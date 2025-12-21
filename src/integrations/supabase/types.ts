@@ -477,6 +477,7 @@ export type Database = {
           reward_amount: number
           start_date: string
           status: string
+          task_category: string
           task_type: string
           title_en: string
           title_ru: string
@@ -498,6 +499,7 @@ export type Database = {
           reward_amount?: number
           start_date?: string
           status?: string
+          task_category?: string
           task_type?: string
           title_en: string
           title_ru: string
@@ -519,6 +521,7 @@ export type Database = {
           reward_amount?: number
           start_date?: string
           status?: string
+          task_category?: string
           task_type?: string
           title_en?: string
           title_ru?: string

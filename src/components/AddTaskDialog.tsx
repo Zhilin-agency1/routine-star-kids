@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Loader2, ClipboardList, Clock } from 'lucide-react';
+import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { useChildren } from '@/hooks/useChildren';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -63,8 +64,7 @@ const taskSchema = z.object({
   rewardAmount: z.number()
     .min(1, { message: 'Награда должна быть минимум 1' })
     .max(1000, { message: 'Награда не должна превышать 1000' }),
-  recurringTime: z.string()
-    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Некорректное время' }),
+  recurringTime: z.string().optional(),
   childId: z.string().optional(),
 });
 
@@ -80,6 +80,8 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
   const [selectedIcon, setSelectedIcon] = useState(taskIcons[0]);
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [taskType, setTaskType] = useState<'recurring' | 'one_time'>('recurring');
+  const [taskCategory, setTaskCategory] = useState<'routine' | 'activity'>('routine');
+  const [hasTime, setHasTime] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { createTemplate } = useTasks();
@@ -93,7 +95,7 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
       descriptionRu: '',
       descriptionEn: '',
       rewardAmount: 5,
-      recurringTime: '09:00',
+      recurringTime: '',
       childId: '',
     },
   });
@@ -122,8 +124,9 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
         icon: selectedIcon,
         reward_amount: data.rewardAmount,
         task_type: taskType,
+        task_category: taskCategory,
         recurring_days: taskType === 'recurring' ? selectedDays : null,
-        recurring_time: data.recurringTime,
+        recurring_time: hasTime && data.recurringTime ? data.recurringTime : null,
         child_id: data.childId || null,
         start_date: new Date().toISOString().split('T')[0],
         one_time_date: taskType === 'one_time' ? new Date().toISOString().split('T')[0] : null,
@@ -134,6 +137,8 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
       form.reset();
       setSelectedIcon(taskIcons[0]);
       setSelectedDays([1, 2, 3, 4, 5]);
+      setTaskCategory('routine');
+      setHasTime(true);
     } catch (error: any) {
       toast.error(error.message || 'Ошибка при создании задачи');
     } finally {
@@ -163,9 +168,47 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+          {/* Task Category */}
+          <div className="space-y-2">
+            <Label>Категория</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTaskCategory('routine')}
+                className={cn(
+                  "p-3 rounded-xl border-2 text-sm font-medium transition-all",
+                  taskCategory === 'routine'
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/50"
+                )}
+              >
+                <RotateCcw className="w-4 h-4 inline mr-1" />
+                Рутина
+              </button>
+              <button
+                type="button"
+                onClick={() => setTaskCategory('activity')}
+                className={cn(
+                  "p-3 rounded-xl border-2 text-sm font-medium transition-all",
+                  taskCategory === 'activity'
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/50"
+                )}
+              >
+                <Calendar className="w-4 h-4 inline mr-1" />
+                Занятие
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {taskCategory === 'routine' 
+                ? 'Рутины отображаются только в списке задач' 
+                : 'Занятия отображаются в списке задач и в расписании'}
+            </p>
+          </div>
+
           {/* Task Type */}
           <div className="space-y-2">
-            <Label>Тип задачи</Label>
+            <Label>Повторение</Label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -266,16 +309,29 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
           {/* Time & Reward */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="task-time" className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                Время
-              </Label>
-              <Input
-                id="task-time"
-                type="time"
-                className="rounded-xl"
-                {...form.register('recurringTime')}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="task-time" className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  Время
+                </Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Указать</span>
+                  <Switch
+                    checked={hasTime}
+                    onCheckedChange={setHasTime}
+                  />
+                </div>
+              </div>
+              {hasTime ? (
+                <Input
+                  id="task-time"
+                  type="time"
+                  className="rounded-xl"
+                  {...form.register('recurringTime')}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground py-2">Без привязки ко времени</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="task-reward">Награда 🪙</Label>

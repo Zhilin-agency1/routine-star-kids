@@ -1,8 +1,9 @@
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
+import { AddStoreItemDialog } from '@/components/AddStoreItemDialog';
 
 export const ParentStorePage = () => {
   const { t, language } = useLanguage();
@@ -13,10 +14,7 @@ export const ParentStorePage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('nav_store')}</h1>
-        <Button size="sm" className="rounded-xl">
-          <Plus className="w-4 h-4 mr-1" />
-          {t('add_store_item')}
-        </Button>
+        <AddStoreItemDialog />
       </div>
 
       {/* Store Items */}

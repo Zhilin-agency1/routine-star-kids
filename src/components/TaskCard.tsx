@@ -49,38 +49,38 @@ export const TaskCard = ({ task, onComplete }: TaskCardProps) => {
       <Confetti isActive={showConfetti} />
       <div 
         className={cn(
-          "bg-card rounded-xl p-4 shadow-card interactive-card",
+          "bg-card rounded-2xl p-5 shadow-card interactive-card",
           stateStyles[task.state],
           isCompleting && "animate-bounce-in scale-105",
           task.state === 'done' && "bg-success/10"
         )}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           {/* Icon */}
-          <div className="text-3xl flex-shrink-0 animate-float">
+          <div className="text-4xl flex-shrink-0 animate-float">
             {task.icon || '✨'}
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <h3 className={cn(
-              "font-bold text-lg leading-tight",
+              "font-bold text-xl leading-tight",
               task.state === 'done' && "line-through text-muted-foreground"
             )}>
               {title}
             </h3>
             {description && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              <p className="text-base text-muted-foreground mt-2 line-clamp-2">
                 {description}
               </p>
             )}
             
-            <div className="flex items-center gap-2 mt-3">
-              <CoinBadge amount={task.rewardAmount} size="sm" showPlus />
+            <div className="flex items-center gap-3 mt-4">
+              <CoinBadge amount={task.rewardAmount} size="md" showPlus />
               
               {task.state === 'doing' && (
-                <span className="flex items-center gap-1 text-xs text-warning font-medium">
-                  <Clock className="w-3 h-3" />
+                <span className="flex items-center gap-1.5 text-sm text-warning font-semibold">
+                  <Clock className="w-4 h-4" />
                   {t('state_doing')}
                 </span>
               )}
@@ -93,24 +93,24 @@ export const TaskCard = ({ task, onComplete }: TaskCardProps) => {
               <Button
                 size="icon"
                 variant="outline"
-                className="rounded-full w-12 h-12 border-2 border-primary hover:bg-primary hover:text-primary-foreground transition-all"
+                className="rounded-full w-14 h-14 border-2 border-primary hover:bg-primary hover:text-primary-foreground transition-all"
                 onClick={handleStart}
               >
-                <Play className="w-5 h-5" />
+                <Play className="w-6 h-6" />
               </Button>
             )}
             {task.state === 'doing' && (
               <Button
                 size="icon"
-                className="rounded-full w-12 h-12 bg-success hover:bg-success/90 text-success-foreground shadow-lg animate-pulse-glow"
+                className="rounded-full w-14 h-14 bg-success hover:bg-success/90 text-success-foreground shadow-lg animate-pulse-glow"
                 onClick={handleComplete}
               >
-                <Check className="w-6 h-6" strokeWidth={3} />
+                <Check className="w-7 h-7" strokeWidth={3} />
               </Button>
             )}
             {task.state === 'done' && (
-              <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center">
-                <Check className="w-6 h-6 text-success" strokeWidth={3} />
+              <div className="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center">
+                <Check className="w-7 h-7 text-success" strokeWidth={3} />
               </div>
             )}
           </div>

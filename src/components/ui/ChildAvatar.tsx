@@ -16,11 +16,11 @@ export const ChildAvatar = ({
   showName = false
 }: ChildAvatarProps) => {
   const sizeClasses = {
-    xs: 'w-6 h-6 text-sm',
-    sm: 'w-8 h-8 text-lg',
-    md: 'w-12 h-12 text-2xl',
-    lg: 'w-16 h-16 text-3xl',
-    xl: 'w-24 h-24 text-5xl',
+    xs: 'w-8 h-8 text-lg',
+    sm: 'w-11 h-11 text-2xl',
+    md: 'w-16 h-16 text-3xl',
+    lg: 'w-20 h-20 text-4xl',
+    xl: 'w-28 h-28 text-6xl',
   };
 
   return (

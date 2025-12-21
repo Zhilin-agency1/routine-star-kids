@@ -73,7 +73,7 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
   return (
     <div 
       className={cn(
-        "bg-card rounded-2xl p-4 shadow-card interactive-card border-2 relative",
+        "bg-card rounded-3xl p-5 shadow-card interactive-card border-2 relative",
         canAfford ? "border-success/30" : "border-transparent"
       )}
     >
@@ -81,35 +81,35 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
       <button
         onClick={handleWishlistToggle}
         className={cn(
-          "absolute top-3 right-3 p-2 rounded-full transition-all",
+          "absolute top-4 right-4 p-3 rounded-full transition-all active:scale-90",
           inWishlist 
-            ? "bg-destructive/10 text-destructive" 
-            : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            ? "bg-destructive/15 text-destructive shadow-md" 
+            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
       >
         <Heart 
-          className={cn("w-5 h-5", inWishlist && "fill-current")} 
+          className={cn("w-6 h-6 transition-transform", inWishlist && "fill-current scale-110")} 
         />
       </button>
 
       {/* Image/Icon */}
-      <div className="text-5xl text-center mb-3 animate-float">
+      <div className="text-6xl text-center mb-4 animate-float">
         {item.image_url || '🎁'}
       </div>
 
       {/* Name */}
-      <h3 className="font-bold text-center text-lg mb-2">{name}</h3>
+      <h3 className="font-bold text-center text-xl mb-3">{name}</h3>
 
       {/* Price */}
-      <div className="flex justify-center mb-3">
-        <CoinBadge amount={item.price} size="md" />
+      <div className="flex justify-center mb-4">
+        <CoinBadge amount={item.price} size="lg" />
       </div>
 
       {/* Progress to purchase */}
       {!canAfford && (
-        <div className="mb-3">
-          <Progress value={progress} className="h-2 mb-1" />
-          <p className="text-xs text-center text-muted-foreground">
+        <div className="mb-4">
+          <Progress value={progress} className="h-3 mb-2" />
+          <p className="text-sm text-center text-muted-foreground font-medium">
             {coinsNeeded} {t('coins_to_go')}
           </p>
         </div>

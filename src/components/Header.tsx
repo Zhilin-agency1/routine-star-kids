@@ -31,8 +31,8 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border safe-area-top">
-      <div className="flex items-center justify-between h-16 px-4 max-w-lg mx-auto">
+    <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b-2 border-border safe-area-top shadow-sm">
+      <div className="flex items-center justify-between h-20 px-5 max-w-lg mx-auto">
         {/* Left: Avatar & Name or Logo */}
         <div className="flex items-center gap-3">
           {role === 'child' ? (

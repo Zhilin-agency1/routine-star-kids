@@ -66,8 +66,8 @@ export const BottomNav = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-bottom z-40">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t-2 border-border safe-area-bottom z-40 shadow-lg">
+      <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-3">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -77,22 +77,22 @@ export const BottomNav = () => {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 py-2 px-1 rounded-lg transition-all",
+                "flex flex-col items-center justify-center gap-1 flex-1 py-3 px-2 rounded-xl transition-all",
                 isActive 
                   ? "text-primary" 
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
-                "p-1.5 rounded-xl transition-all",
-                isActive && "bg-primary/10"
+                "p-2 rounded-2xl transition-all",
+                isActive && "bg-primary/15 shadow-sm"
               )}>
                 <Icon className={cn(
-                  "w-5 h-5 transition-transform",
+                  "w-6 h-6 transition-transform",
                   isActive && "scale-110"
                 )} />
               </div>
-              <span className="text-[10px] font-medium truncate max-w-full">
+              <span className="text-xs font-semibold truncate max-w-full">
                 {getLabel(item.labelKey)}
               </span>
             </button>

@@ -5,6 +5,7 @@ import { useStore, StoreItem } from '@/hooks/useStore';
 import { useJobBoard, JobBoardItem } from '@/hooks/useJobBoard';
 import { useSchedule, ActivitySchedule } from '@/hooks/useSchedule';
 import { useFamily } from '@/hooks/useFamily';
+import { useTaskGeneration } from '@/hooks/useTaskGeneration';
 
 export type Role = 'parent' | 'child';
 
@@ -59,6 +60,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children:
   const { items: storeItemsData, purchaseItem: purchaseItemMutation, isLoading: storeLoading } = useStore();
   const { jobs: jobBoardItemsData, claimJob, isLoading: jobsLoading } = useJobBoard();
   const { activities: activitiesData, isLoading: activitiesLoading } = useSchedule(currentChild?.id);
+  
+  // Auto-generate task instances for today
+  useTaskGeneration();
 
   // Set current child when children are loaded
   useEffect(() => {

@@ -10,3 +10,4 @@ export { useJobBoard, type JobBoardItem, type JobClaim, type JobWithClaims } fro
 export { useSchedule, type ActivitySchedule } from './useSchedule';
 export { useTransactions, type Transaction } from './useTransactions';
 export { useTaskGeneration } from './useTaskGeneration';
+export { useAllTodayTasks } from './useAllTodayTasks';

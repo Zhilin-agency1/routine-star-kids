@@ -28,11 +28,11 @@ export const ParentStorePage = () => {
             style={{ animationDelay: `${index * 0.05}s` }}
           >
             {/* Icon */}
-            <div className="text-4xl flex-shrink-0">{item.imageUrl}</div>
+            <div className="text-4xl flex-shrink-0">{item.image_url || '🎁'}</div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold">{item.name[language]}</h3>
+              <h3 className="font-bold">{language === 'ru' ? item.name_ru : item.name_en}</h3>
               <CoinBadge amount={item.price} size="sm" />
             </div>
 

@@ -15,8 +15,8 @@ const dayLabels = {
 export const ScheduleCard = ({ activity }: ScheduleCardProps) => {
   const { language } = useLanguage();
 
-  const title = activity.title[language];
-  const days = activity.days.map(d => dayLabels[language][d]).join(', ');
+  const title = language === 'ru' ? activity.title_ru : activity.title_en;
+  const days = (activity.recurring_days || []).map(d => dayLabels[language][d]).join(', ');
 
   return (
     <div className="bg-card-schedule rounded-2xl p-4 shadow-card interactive-card">

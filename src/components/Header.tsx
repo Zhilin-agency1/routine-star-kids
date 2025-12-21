@@ -22,7 +22,7 @@ export const Header = () => {
         <div className="flex items-center gap-3">
           {role === 'child' && currentChild ? (
             <>
-              <ChildAvatar avatar={currentChild.avatarUrl} size="sm" />
+              <ChildAvatar avatar={currentChild.avatar_url || '🦁'} size="sm" />
               <div>
                 <p className="text-xs text-muted-foreground">{t('hello')},</p>
                 <p className="font-bold text-lg leading-tight">{currentChild.name}!</p>

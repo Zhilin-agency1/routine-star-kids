@@ -15,7 +15,7 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
   const { language, t } = useLanguage();
   const { currentChild, purchaseItem } = useApp();
 
-  const name = item.name[language];
+  const name = language === 'ru' ? item.name_ru : item.name_en;
   const balance = currentChild?.balance || 0;
   const canAfford = balance >= item.price;
   const progress = Math.min((balance / item.price) * 100, 100);
@@ -37,7 +37,7 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
     >
       {/* Image/Icon */}
       <div className="text-5xl text-center mb-3 animate-float">
-        {item.imageUrl}
+        {item.image_url || '🎁'}
       </div>
 
       {/* Name */}

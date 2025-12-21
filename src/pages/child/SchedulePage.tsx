@@ -7,12 +7,12 @@ export const SchedulePage = () => {
   const { t } = useLanguage();
   const { activities, currentChild } = useApp();
 
-  const childActivities = activities.filter(a => a.childId === currentChild?.id);
+  const childActivities = activities.filter(a => a.child_id === currentChild?.id);
 
   // Group by days
   const today = new Date().getDay();
-  const todayActivities = childActivities.filter(a => a.days.includes(today));
-  const otherActivities = childActivities.filter(a => !a.days.includes(today));
+  const todayActivities = childActivities.filter(a => (a.recurring_days || []).includes(today));
+  const otherActivities = childActivities.filter(a => !(a.recurring_days || []).includes(today));
 
   return (
     <div className="space-y-6 animate-fade-in">

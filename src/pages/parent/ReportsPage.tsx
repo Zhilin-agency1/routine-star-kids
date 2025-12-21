@@ -81,7 +81,7 @@ export const ReportsPage = () => {
               <span className="w-6 h-6 rounded-full bg-coin/20 flex items-center justify-center text-sm font-bold">
                 {index + 1}
               </span>
-              <ChildAvatar avatar={child.avatarUrl} size="sm" />
+              <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
               <span className="flex-1 font-medium">{child.name}</span>
               <CoinBadge amount={child.balance} size="sm" />
             </div>

@@ -1,9 +1,10 @@
-import { Plus, Calendar, MoreVertical } from 'lucide-react';
+import { Calendar, MoreVertical, ClipboardList } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
+import { AddTaskDialog } from '@/components/AddTaskDialog';
 
 export const TasksPage = () => {
   const { t, language } = useLanguage();
@@ -37,10 +38,7 @@ export const TasksPage = () => {
             {tasks.length}
           </span>
         </div>
-        <Button size="sm" className="rounded-xl">
-          <Plus className="w-4 h-4 mr-1" />
-          {t('add_task')}
-        </Button>
+        <AddTaskDialog />
       </div>
 
       {/* Date selector (placeholder) */}
@@ -63,48 +61,59 @@ export const TasksPage = () => {
       </div>
 
       {/* Tasks List */}
-      <div className="space-y-3">
-        {tasks.map((task, index) => {
-          const child = getChildById(task.childId);
-          return (
-            <div 
-              key={task.id}
-              className="bg-card rounded-2xl p-4 shadow-card interactive-card animate-fade-in-up"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <div className="flex items-start gap-3">
-                {/* Icon */}
-                <div className="text-2xl flex-shrink-0">{task.icon || '✨'}</div>
+      {tasks.length > 0 ? (
+        <div className="space-y-3">
+          {tasks.map((task, index) => {
+            const child = getChildById(task.childId);
+            return (
+              <div 
+                key={task.id}
+                className="bg-card rounded-2xl p-4 shadow-card interactive-card animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Icon */}
+                  <div className="text-2xl flex-shrink-0">{task.icon || '✨'}</div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-bold truncate">{task.title[language]}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${stateColors[task.state]}`}>
-                      {stateLabels[task.state]}
-                    </span>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold truncate">{task.title[language]}</h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${stateColors[task.state]}`}>
+                        {stateLabels[task.state]}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {child && (
+                        <div className="flex items-center gap-1">
+                          <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
+                          <span>{child.name}</span>
+                        </div>
+                      )}
+                      <CoinBadge amount={task.rewardAmount} size="sm" />
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    {child && (
-                      <div className="flex items-center gap-1">
-                        <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
-                        <span>{child.name}</span>
-                      </div>
-                    )}
-                    <CoinBadge amount={task.rewardAmount} size="sm" />
-                  </div>
+
+                  {/* Actions */}
+                  <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
                 </div>
-
-                {/* Actions */}
-                <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <div className="w-20 h-20 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+            <ClipboardList className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Пока нет задач</h3>
+          <p className="text-muted-foreground mb-4">Создайте первую задачу для детей</p>
+          <AddTaskDialog />
+        </div>
+      )}
     </div>
   );
 };

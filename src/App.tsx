@@ -18,6 +18,7 @@ import { ParentDashboard } from "./pages/parent/Dashboard";
 import { ChildrenPage } from "./pages/parent/ChildrenPage";
 import { TasksPage } from "./pages/parent/TasksPage";
 import { ParentStorePage } from "./pages/parent/ParentStorePage";
+import { ParentJobBoardPage } from "./pages/parent/ParentJobBoardPage";
 import { ReportsPage } from "./pages/parent/ReportsPage";
 import NotFound from "./pages/NotFound";
 
@@ -128,6 +129,18 @@ const App = () => (
                       <FamilySetup>
                         <Layout>
                           <ParentStorePage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/parent/jobs"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <ParentJobBoardPage />
                         </Layout>
                       </FamilySetup>
                     </ProtectedRoute>

@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, addMonths, isSameDay, isToday } from 'date-fns';
+import { Calendar, ChevronLeft, ChevronRight, Filter, BookOpen, Sparkles } from 'lucide-react';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, addMonths, isSameDay, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSchedule } from '@/hooks/useSchedule';
 import { useChildren } from '@/hooks/useChildren';
+import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { cn } from '@/lib/utils';
@@ -12,10 +13,23 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 type ViewMode = 'day' | 'week' | 'month';
 
+interface ScheduleItem {
+  id: string;
+  child_id: string;
+  time: string;
+  title_ru: string;
+  title_en: string;
+  location?: string | null;
+  duration?: number;
+  type: 'activity' | 'task';
+  icon?: string | null;
+}
+
 export const FamilySchedulePage = () => {
   const { language } = useLanguage();
   const { children } = useChildren();
   const { activities } = useSchedule();
+  const { templates } = useTasks();
   
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -23,19 +37,67 @@ export const FamilySchedulePage = () => {
 
   const locale = language === 'ru' ? ru : undefined;
 
+  // Filter activity_schedules
   const filteredActivities = useMemo(() => {
     if (!selectedChildId) return activities;
     return activities.filter(a => a.child_id === selectedChildId);
   }, [activities, selectedChildId]);
 
-  const getActivitiesForDay = (date: Date) => {
+  // Filter task templates with task_category='activity'
+  const activityTasks = useMemo(() => {
+    const tasks = templates.filter(t => t.task_category === 'activity' && t.status === 'active');
+    if (!selectedChildId) return tasks;
+    return tasks.filter(t => t.child_id === selectedChildId);
+  }, [templates, selectedChildId]);
+
+  const getItemsForDay = (date: Date): ScheduleItem[] => {
     const dayOfWeek = date.getDay();
-    return filteredActivities.filter(activity => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const items: ScheduleItem[] = [];
+    
+    // Add activity_schedules
+    filteredActivities.forEach(activity => {
       if (activity.recurring_days?.includes(dayOfWeek)) {
-        return true;
+        items.push({
+          id: activity.id,
+          child_id: activity.child_id,
+          time: activity.time,
+          title_ru: activity.title_ru,
+          title_en: activity.title_en,
+          location: activity.location,
+          duration: activity.duration,
+          type: 'activity',
+        });
       }
-      return false;
     });
+    
+    // Add task templates with task_category='activity'
+    activityTasks.forEach(task => {
+      // Check if task is active for this date
+      const startDate = parseISO(task.start_date);
+      const endDate = task.end_date ? parseISO(task.end_date) : null;
+      
+      if (date < startDate) return;
+      if (endDate && date > endDate) return;
+      
+      // Check recurring days or one-time date
+      const isRecurring = task.task_type === 'recurring' && task.recurring_days?.includes(dayOfWeek);
+      const isOneTime = task.task_type === 'one_time' && task.one_time_date === dateStr;
+      
+      if (isRecurring || isOneTime) {
+        items.push({
+          id: task.id,
+          child_id: task.child_id || '',
+          time: task.recurring_time || '09:00',
+          title_ru: task.title_ru,
+          title_en: task.title_en,
+          type: 'task',
+          icon: task.icon,
+        });
+      }
+    });
+    
+    return items;
   };
 
   const navigatePrev = () => {
@@ -168,7 +230,7 @@ export const FamilySchedulePage = () => {
             ))}
             {/* Day cells */}
             {days.map(day => {
-              const dayActivities = getActivitiesForDay(day);
+              const dayItems = getItemsForDay(day);
               return (
                 <div 
                   key={day.toISOString()} 
@@ -184,20 +246,23 @@ export const FamilySchedulePage = () => {
                     {format(day, 'd')}
                   </div>
                   <div className="space-y-0.5">
-                    {dayActivities.slice(0, 2).map(activity => {
-                      const child = children.find(c => c.id === activity.child_id);
+                    {dayItems.slice(0, 2).map(item => {
+                      const child = children.find(c => c.id === item.child_id);
                       return (
                         <div 
-                          key={activity.id}
-                          className="text-[8px] px-1 py-0.5 rounded bg-secondary/30 truncate"
+                          key={item.id}
+                          className={cn(
+                            "text-[8px] px-1 py-0.5 rounded truncate",
+                            item.type === 'task' ? 'bg-accent/30' : 'bg-secondary/30'
+                          )}
                         >
-                          {child?.name?.charAt(0)}: {activity.time.slice(0, 5)}
+                          {child?.name?.charAt(0)}: {item.time.slice(0, 5)}
                         </div>
                       );
                     })}
-                    {dayActivities.length > 2 && (
+                    {dayItems.length > 2 && (
                       <div className="text-[8px] text-muted-foreground">
-                        +{dayActivities.length - 2}
+                        +{dayItems.length - 2}
                       </div>
                     )}
                   </div>
@@ -208,7 +273,7 @@ export const FamilySchedulePage = () => {
         ) : (
           <div className="space-y-2">
             {days.map(day => {
-              const dayActivities = getActivitiesForDay(day);
+              const dayItems = getItemsForDay(day);
               return (
                 <div 
                   key={day.toISOString()} 
@@ -229,40 +294,49 @@ export const FamilySchedulePage = () => {
                     </span>
                   </div>
                   
-                  {dayActivities.length === 0 ? (
+                  {dayItems.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       {language === 'ru' ? 'Нет занятий' : 'No activities'}
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      {dayActivities
+                      {dayItems
                         .sort((a, b) => a.time.localeCompare(b.time))
-                        .map(activity => {
-                          const child = children.find(c => c.id === activity.child_id);
+                        .map(item => {
+                          const child = children.find(c => c.id === item.child_id);
                           return (
                             <div 
-                              key={activity.id}
+                              key={item.id}
                               className="flex items-center gap-3 p-2 rounded-lg bg-background/50"
                             >
                               <div className="text-sm font-mono font-semibold w-12">
-                                {activity.time.slice(0, 5)}
+                                {item.time.slice(0, 5)}
                               </div>
                               {child && (
                                 <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">
-                                  {language === 'ru' ? activity.title_ru : activity.title_en}
-                                </p>
-                                {activity.location && (
+                                <div className="flex items-center gap-1">
+                                  {item.type === 'task' ? (
+                                    <Sparkles className="w-3 h-3 text-accent" />
+                                  ) : (
+                                    <BookOpen className="w-3 h-3 text-secondary" />
+                                  )}
+                                  <p className="font-medium text-sm truncate">
+                                    {language === 'ru' ? item.title_ru : item.title_en}
+                                  </p>
+                                </div>
+                                {item.location && (
                                   <p className="text-xs text-muted-foreground truncate">
-                                    📍 {activity.location}
+                                    📍 {item.location}
                                   </p>
                                 )}
                               </div>
-                              <span className="text-xs text-muted-foreground">
-                                {activity.duration}{language === 'ru' ? ' мин' : ' min'}
-                              </span>
+                              {item.duration && (
+                                <span className="text-xs text-muted-foreground">
+                                  {item.duration}{language === 'ru' ? ' мин' : ' min'}
+                                </span>
+                              )}
                             </div>
                           );
                         })}

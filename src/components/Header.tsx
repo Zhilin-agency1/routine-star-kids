@@ -1,4 +1,4 @@
-import { Globe, User, Users, LogIn, LogOut } from 'lucide-react';
+import { Globe, User, Users, LogIn, LogOut, ChevronDown, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
@@ -12,11 +12,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from './ui/dropdown-menu';
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
-  const { role, setRole, currentChild } = useApp();
+  const { role, setRole, currentChild, setCurrentChild, children } = useApp();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -26,13 +27,44 @@ export const Header = () => {
         {/* Left: Avatar & Name or Logo */}
         <div className="flex items-center gap-3">
           {role === 'child' && currentChild ? (
-            <>
-              <ChildAvatar avatar={currentChild.avatar_url || '🦁'} size="sm" />
-              <div>
-                <p className="text-xs text-muted-foreground">{t('hello')},</p>
-                <p className="font-bold text-lg leading-tight">{currentChild.name}!</p>
-              </div>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                  <ChildAvatar avatar={currentChild.avatar_url || '🦁'} size="sm" />
+                  <div className="text-left">
+                    <p className="text-xs text-muted-foreground">{t('hello')},</p>
+                    <div className="flex items-center gap-1">
+                      <p className="font-bold text-lg leading-tight">{currentChild.name}</p>
+                      {children.length > 1 && (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              {children.length > 1 && (
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>Переключить ребёнка</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {children.map((child) => (
+                    <DropdownMenuItem
+                      key={child.id}
+                      onClick={() => setCurrentChild(child)}
+                      className="flex items-center gap-3"
+                    >
+                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
+                      <div className="flex-1">
+                        <p className="font-medium">{child.name}</p>
+                        <p className="text-xs text-muted-foreground">{child.balance} 🪙</p>
+                      </div>
+                      {currentChild.id === child.id && (
+                        <Check className="w-4 h-4 text-primary" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              )}
+            </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -66,7 +98,7 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Role Toggle (for demo) */}
+          {/* Role Toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">

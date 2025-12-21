@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/contexts/AppContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { FamilySetup } from "@/components/FamilySetup";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import { AuthPage } from "./pages/AuthPage";
@@ -30,24 +32,123 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Layout>
               <Routes>
-                <Route path="/" element={<Index />} />
+                {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
-                  {/* Child Routes */}
-                  <Route path="/store" element={<StorePage />} />
-                  <Route path="/jobs" element={<JobBoardPage />} />
-                  <Route path="/schedule" element={<SchedulePage />} />
-                  {/* Parent Routes */}
-                  <Route path="/parent" element={<ParentDashboard />} />
-                  <Route path="/parent/children" element={<ChildrenPage />} />
-                  <Route path="/parent/tasks" element={<TasksPage />} />
-                  <Route path="/parent/store" element={<ParentStorePage />} />
-                  <Route path="/parent/reports" element={<ReportsPage />} />
-                  {/* Catch-all */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
+                
+                {/* Protected routes */}
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <Index />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/store"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <StorePage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/jobs"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <JobBoardPage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/schedule"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <SchedulePage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/parent"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <ParentDashboard />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/parent/children"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <ChildrenPage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/parent/tasks"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <TasksPage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/parent/store"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <ParentStorePage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/parent/reports"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <ReportsPage />
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Catch-all */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </BrowserRouter>
           </TooltipProvider>
         </AppProvider>

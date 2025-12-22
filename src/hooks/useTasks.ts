@@ -59,14 +59,16 @@ export const useTasks = (childId?: string, date?: Date) => {
         .eq('child_id', childId);
       
       if (date) {
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
+        // Format date as YYYY-MM-DD in local timezone
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
         
+        // Use date casting to compare only the date part
         query = query
-          .gte('due_datetime', startOfDay.toISOString())
-          .lte('due_datetime', endOfDay.toISOString());
+          .gte('due_datetime', `${dateStr}T00:00:00`)
+          .lte('due_datetime', `${dateStr}T23:59:59.999`);
       }
       
       const { data, error } = await query.order('due_datetime', { ascending: true });

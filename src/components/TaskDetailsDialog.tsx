@@ -64,15 +64,16 @@ export const TaskDetailsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-3">
             <span className="text-3xl">{task.icon || '✨'}</span>
             <span>{task.title[language]}</span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="space-y-4 pb-2">
           {/* Task reward */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
@@ -132,47 +133,45 @@ export const TaskDetailsDialog = ({
                 {language === 'ru' ? 'Шаги выполнения' : 'Steps'}
               </h4>
               
-              <ScrollArea className="max-h-[200px]">
-                <div className="space-y-2">
-                  {steps.map((step, index) => {
-                    const completed = isStepCompleted(step.id);
-                    
-                    return (
-                      <div 
-                        key={step.id}
-                        className={cn(
-                          "flex items-start gap-3 p-2 rounded-lg transition-colors",
-                          canToggleSteps && "cursor-pointer hover:bg-muted/50",
-                          completed && "opacity-60"
-                        )}
-                        onClick={() => handleToggleStep(step.id)}
-                      >
-                        <div className={cn(
-                          "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
-                          completed 
-                            ? "bg-success border-success" 
-                            : "border-muted-foreground/30"
-                        )}>
-                          {completed && <Check className="w-3 h-3 text-success-foreground" strokeWidth={3} />}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "text-sm",
-                            completed && "line-through text-muted-foreground"
-                          )}>
-                            {language === 'ru' ? step.title_ru : step.title_en}
-                          </p>
-                        </div>
-                        
-                        {step.bonus_amount > 0 && !step.bonus_hidden && (
-                          <CoinBadge amount={step.bonus_amount} size="sm" />
-                        )}
+              <div className="space-y-2">
+                {steps.map((step, index) => {
+                  const completed = isStepCompleted(step.id);
+                  
+                  return (
+                    <div 
+                      key={step.id}
+                      className={cn(
+                        "flex items-start gap-3 p-2 rounded-lg transition-colors",
+                        canToggleSteps && "cursor-pointer hover:bg-muted/50",
+                        completed && "opacity-60"
+                      )}
+                      onClick={() => handleToggleStep(step.id)}
+                    >
+                      <div className={cn(
+                        "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
+                        completed 
+                          ? "bg-success border-success" 
+                          : "border-muted-foreground/30"
+                      )}>
+                        {completed && <Check className="w-3 h-3 text-success-foreground" strokeWidth={3} />}
                       </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "text-sm",
+                          completed && "line-through text-muted-foreground"
+                        )}>
+                          {language === 'ru' ? step.title_ru : step.title_en}
+                        </p>
+                      </div>
+                      
+                      {step.bonus_amount > 0 && !step.bonus_hidden && (
+                        <CoinBadge amount={step.bonus_amount} size="sm" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -190,6 +189,7 @@ export const TaskDetailsDialog = ({
             </div>
           )}
         </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

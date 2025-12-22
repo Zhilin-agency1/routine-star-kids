@@ -1,15 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Filter, BookOpen, Sparkles } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Filter, BookOpen, Sparkles, Pencil } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, addMonths, isSameDay, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useSchedule } from '@/hooks/useSchedule';
+import { useSchedule, type ActivitySchedule } from '@/hooks/useSchedule';
 import { useChildren } from '@/hooks/useChildren';
 import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { EditActivityDialog } from '@/components/EditActivityDialog';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -23,6 +24,7 @@ interface ScheduleItem {
   duration?: number;
   type: 'activity' | 'task';
   icon?: string | null;
+  originalActivity?: ActivitySchedule;
 }
 
 export const FamilySchedulePage = () => {
@@ -34,6 +36,7 @@ export const FamilySchedulePage = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [editingActivity, setEditingActivity] = useState<ActivitySchedule | null>(null);
 
   const locale = language === 'ru' ? ru : undefined;
 
@@ -67,6 +70,7 @@ export const FamilySchedulePage = () => {
           location: activity.location,
           duration: activity.duration,
           type: 'activity',
+          originalActivity: activity,
         });
       }
     });
@@ -307,7 +311,7 @@ export const FamilySchedulePage = () => {
                           return (
                             <div 
                               key={item.id}
-                              className="flex items-center gap-3 p-2 rounded-lg bg-background/50"
+                              className="flex items-center gap-3 p-2 rounded-lg bg-background/50 group"
                             >
                               <div className="text-sm font-mono font-semibold w-12">
                                 {item.time.slice(0, 5)}
@@ -337,6 +341,16 @@ export const FamilySchedulePage = () => {
                                   {item.duration}{language === 'ru' ? ' мин' : ' min'}
                                 </span>
                               )}
+                              {item.type === 'activity' && item.originalActivity && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                                  onClick={() => setEditingActivity(item.originalActivity!)}
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           );
                         })}
@@ -348,6 +362,12 @@ export const FamilySchedulePage = () => {
           </div>
         )}
       </ScrollArea>
+
+      <EditActivityDialog
+        activity={editingActivity}
+        open={!!editingActivity}
+        onOpenChange={(open) => !open && setEditingActivity(null)}
+      />
     </div>
   );
 };

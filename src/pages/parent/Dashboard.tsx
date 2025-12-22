@@ -115,12 +115,12 @@ export const ParentDashboard = () => {
 
       {/* Trello-style Board */}
       {children.length > 0 ? (
-        <div className="overflow-x-auto -mx-4 px-4 lg:overflow-visible lg:mx-0 lg:px-0">
-          <div className="flex gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 lg:gap-4" style={{ minWidth: 'max-content' }}>
+        <div className="overflow-x-auto -mx-4 px-4 md:overflow-visible md:mx-0 md:px-0">
+          <div className="flex gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4">
             {childColumns.map(({ child, tasks: childTasks, completedCount, totalCount, earnedToday, progress }) => (
               <div 
                 key={child.id} 
-                className="bg-card/50 rounded-2xl p-3 w-72 flex-shrink-0 lg:w-full lg:flex-shrink"
+                className="bg-card/50 rounded-2xl p-3 w-72 flex-shrink-0 md:w-full md:flex-shrink"
               >
                 {/* Column Header */}
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">

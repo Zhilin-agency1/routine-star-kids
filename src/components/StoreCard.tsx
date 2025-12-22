@@ -77,11 +77,16 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
         canAfford ? "border-success/30" : "border-transparent"
       )}
     >
-      {/* Wishlist Button */}
+      {/* Image/Icon */}
+      <div className="text-6xl text-center mb-4 animate-float">
+        {item.image_url || '🎁'}
+      </div>
+
+      {/* Wishlist Button - positioned after image for proper z-index stacking */}
       <button
         onClick={handleWishlistToggle}
         className={cn(
-          "absolute top-4 right-4 p-3 rounded-full transition-all active:scale-90",
+          "absolute top-4 right-4 z-10 p-3 rounded-full transition-all active:scale-90",
           inWishlist 
             ? "bg-destructive/15 text-destructive shadow-md" 
             : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -91,11 +96,6 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
           className={cn("w-6 h-6 transition-transform", inWishlist && "fill-current scale-110")} 
         />
       </button>
-
-      {/* Image/Icon */}
-      <div className="text-6xl text-center mb-4 animate-float">
-        {item.image_url || '🎁'}
-      </div>
 
       {/* Name */}
       <h3 className="font-bold text-center text-xl mb-3">{name}</h3>
@@ -128,13 +128,13 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
       >
         {canAfford ? (
           <>
-            <ShoppingCart className="w-4 h-4 mr-2" />
+            <ShoppingCart className="w-5 h-5 mr-2" />
             {t('buy')}
           </>
         ) : (
           <>
-            <Lock className="w-4 h-4 mr-2" />
-            {t('not_enough')}
+            <Lock className="w-5 h-5 mr-2" />
+            {language === 'ru' ? 'Копить' : 'Save'}
           </>
         )}
       </Button>

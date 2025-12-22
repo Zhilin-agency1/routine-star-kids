@@ -236,7 +236,39 @@ export const useTasks = (childId?: string, date?: Date) => {
       
       return { rewardAmount };
     },
-    onSuccess: () => {
+    onMutate: async ({ instanceId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['task_instances'] });
+      await queryClient.cancelQueries({ queryKey: ['all_today_tasks'] });
+
+      // Snapshot previous values
+      const previousAllTodayTasks = queryClient.getQueryData(['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]]);
+
+      // Optimistically update all_today_tasks
+      queryClient.setQueryData(
+        ['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]],
+        (old: TaskWithTemplate[] | undefined) => {
+          if (!old) return old;
+          return old.map(task => 
+            task.id === instanceId 
+              ? { ...task, state: 'done', completed_at: new Date().toISOString(), reward_granted: true }
+              : task
+          );
+        }
+      );
+
+      return { previousAllTodayTasks };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousAllTodayTasks) {
+        queryClient.setQueryData(
+          ['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]],
+          context.previousAllTodayTasks
+        );
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['task_instances'] });
       queryClient.invalidateQueries({ queryKey: ['all_today_tasks'] });
       queryClient.invalidateQueries({ queryKey: ['children'] });

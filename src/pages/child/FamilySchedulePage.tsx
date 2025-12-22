@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Filter, BookOpen, Sparkles, Pencil } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, addMonths, isSameDay, isToday, parseISO } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, addMonths, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSchedule, type ActivitySchedule } from '@/hooks/useSchedule';
@@ -27,6 +27,29 @@ interface ScheduleItem {
   originalActivity?: ActivitySchedule;
 }
 
+// Color palette for children - use different colors for each child
+const CHILD_COLORS = [
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-purple-500',
+  'bg-orange-500',
+  'bg-pink-500',
+  'bg-teal-500',
+  'bg-red-500',
+  'bg-yellow-500',
+];
+
+const CHILD_COLORS_LIGHT = [
+  'bg-blue-100 border-blue-300',
+  'bg-green-100 border-green-300',
+  'bg-purple-100 border-purple-300',
+  'bg-orange-100 border-orange-300',
+  'bg-pink-100 border-pink-300',
+  'bg-teal-100 border-teal-300',
+  'bg-red-100 border-red-300',
+  'bg-yellow-100 border-yellow-300',
+];
+
 export const FamilySchedulePage = () => {
   const { language } = useLanguage();
   const { children } = useChildren();
@@ -39,6 +62,15 @@ export const FamilySchedulePage = () => {
   const [editingActivity, setEditingActivity] = useState<ActivitySchedule | null>(null);
 
   const locale = language === 'ru' ? ru : undefined;
+
+  // Create a map of child_id to color index
+  const childColorMap = useMemo(() => {
+    const map = new Map<string, number>();
+    children.forEach((child, index) => {
+      map.set(child.id, index % CHILD_COLORS.length);
+    });
+    return map;
+  }, [children]);
 
   // Filter activity_schedules
   const filteredActivities = useMemo(() => {
@@ -101,7 +133,7 @@ export const FamilySchedulePage = () => {
       }
     });
     
-    return items;
+    return items.sort((a, b) => a.time.localeCompare(b.time));
   };
 
   const navigatePrev = () => {
@@ -131,6 +163,18 @@ export const FamilySchedulePage = () => {
   };
 
   const days = getDaysToShow();
+
+  // Get hours range for week view (7am to 21pm)
+  const hours = Array.from({ length: 15 }, (_, i) => i + 7);
+
+  // Get items for a specific hour on a specific day
+  const getItemsForHour = (date: Date, hour: number): ScheduleItem[] => {
+    const dayItems = getItemsForDay(date);
+    return dayItems.filter(item => {
+      const itemHour = parseInt(item.time.split(':')[0], 10);
+      return itemHour === hour;
+    });
+  };
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -201,7 +245,7 @@ export const FamilySchedulePage = () => {
         >
           {language === 'ru' ? 'Все' : 'All'}
         </button>
-        {children.map(child => (
+        {children.map((child, index) => (
           <button
             key={child.id}
             onClick={() => setSelectedChildId(child.id)}
@@ -212,6 +256,10 @@ export const FamilySchedulePage = () => {
                 : 'bg-muted hover:bg-muted/80'
             )}
           >
+            <div className={cn(
+              'w-3 h-3 rounded-full',
+              CHILD_COLORS[index % CHILD_COLORS.length]
+            )} />
             <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
             {child.name}
           </button>
@@ -224,7 +272,7 @@ export const FamilySchedulePage = () => {
           <div className="grid grid-cols-7 gap-1">
             {/* Day headers */}
             {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, i) => (
-              <div key={i} className="text-center text-xs text-muted-foreground py-2">
+              <div key={i} className="text-center text-xs text-muted-foreground py-2 font-medium">
                 {language === 'ru' ? day : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
               </div>
             ))}
@@ -250,23 +298,25 @@ export const FamilySchedulePage = () => {
                     {format(day, 'd')}
                   </div>
                   <div className="space-y-0.5">
-                    {dayItems.slice(0, 2).map(item => {
+                    {dayItems.slice(0, 3).map(item => {
                       const child = children.find(c => c.id === item.child_id);
+                      const colorIndex = childColorMap.get(item.child_id) ?? 0;
                       return (
                         <div 
                           key={item.id}
                           className={cn(
-                            "text-[8px] px-1 py-0.5 rounded truncate",
-                            item.type === 'task' ? 'bg-accent/30' : 'bg-secondary/30'
+                            "text-[8px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border",
+                            CHILD_COLORS_LIGHT[colorIndex]
                           )}
                         >
-                          {child?.name?.charAt(0)}: {item.time.slice(0, 5)}
+                          <span className="text-[10px]">{child?.avatar_url || '👤'}</span>
+                          <span className="truncate">{item.time.slice(0, 5)}</span>
                         </div>
                       );
                     })}
-                    {dayItems.length > 2 && (
-                      <div className="text-[8px] text-muted-foreground">
-                        +{dayItems.length - 2}
+                    {dayItems.length > 3 && (
+                      <div className="text-[8px] text-muted-foreground text-center">
+                        +{dayItems.length - 3}
                       </div>
                     )}
                   </div>
@@ -274,7 +324,90 @@ export const FamilySchedulePage = () => {
               );
             })}
           </div>
+        ) : viewMode === 'week' ? (
+          /* Week View - Grid with days on top, hours on left */
+          <div className="min-w-[700px]">
+            {/* Header row with days */}
+            <div className="grid grid-cols-8 border-b border-border sticky top-0 bg-background z-10">
+              <div className="p-2 text-center text-xs text-muted-foreground font-medium">
+                {/* Empty corner cell */}
+              </div>
+              {days.map(day => (
+                <div 
+                  key={day.toISOString()} 
+                  className={cn(
+                    "p-2 text-center border-l border-border",
+                    isToday(day) && "bg-primary/10"
+                  )}
+                >
+                  <div className={cn(
+                    "text-xs font-medium",
+                    isToday(day) ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {format(day, 'EEE', { locale })}
+                  </div>
+                  <div className={cn(
+                    "text-lg font-bold",
+                    isToday(day) && "text-primary"
+                  )}>
+                    {format(day, 'd')}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Time grid */}
+            <div className="relative">
+              {hours.map(hour => (
+                <div key={hour} className="grid grid-cols-8 border-b border-border/50 min-h-[60px]">
+                  {/* Hour label */}
+                  <div className="p-2 text-xs text-muted-foreground font-mono text-right pr-3 border-r border-border">
+                    {hour.toString().padStart(2, '0')}:00
+                  </div>
+                  {/* Day columns */}
+                  {days.map(day => {
+                    const hourItems = getItemsForHour(day, hour);
+                    return (
+                      <div 
+                        key={day.toISOString()} 
+                        className={cn(
+                          "p-1 border-l border-border/50 min-h-[60px]",
+                          isToday(day) && "bg-primary/5"
+                        )}
+                      >
+                        {hourItems.map(item => {
+                          const child = children.find(c => c.id === item.child_id);
+                          const colorIndex = childColorMap.get(item.child_id) ?? 0;
+                          return (
+                            <div 
+                              key={item.id}
+                              onClick={() => item.type === 'activity' && item.originalActivity && setEditingActivity(item.originalActivity)}
+                              className={cn(
+                                "text-[10px] p-1 rounded mb-1 border cursor-pointer hover:opacity-80 transition-opacity",
+                                CHILD_COLORS_LIGHT[colorIndex]
+                              )}
+                            >
+                              <div className="flex items-center gap-1">
+                                <span>{child?.avatar_url || '👤'}</span>
+                                <span className="font-medium truncate">
+                                  {language === 'ru' ? item.title_ru : item.title_en}
+                                </span>
+                              </div>
+                              <div className="text-muted-foreground">
+                                {item.time.slice(0, 5)}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
+          /* Day View - Vertical list */
           <div className="space-y-2">
             {days.map(day => {
               const dayItems = getItemsForDay(day);
@@ -304,56 +437,58 @@ export const FamilySchedulePage = () => {
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      {dayItems
-                        .sort((a, b) => a.time.localeCompare(b.time))
-                        .map(item => {
-                          const child = children.find(c => c.id === item.child_id);
-                          return (
-                            <div 
-                              key={item.id}
-                              className="flex items-center gap-3 p-2 rounded-lg bg-background/50 group"
-                            >
-                              <div className="text-sm font-mono font-semibold w-12">
-                                {item.time.slice(0, 5)}
-                              </div>
-                              {child && (
-                                <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1">
-                                  {item.type === 'task' ? (
-                                    <Sparkles className="w-3 h-3 text-accent" />
-                                  ) : (
-                                    <BookOpen className="w-3 h-3 text-secondary" />
-                                  )}
-                                  <p className="font-medium text-sm truncate">
-                                    {language === 'ru' ? item.title_ru : item.title_en}
-                                  </p>
-                                </div>
-                                {item.location && (
-                                  <p className="text-xs text-muted-foreground truncate">
-                                    📍 {item.location}
-                                  </p>
+                      {dayItems.map(item => {
+                        const child = children.find(c => c.id === item.child_id);
+                        const colorIndex = childColorMap.get(item.child_id) ?? 0;
+                        return (
+                          <div 
+                            key={item.id}
+                            className={cn(
+                              "flex items-center gap-3 p-2 rounded-lg group border",
+                              CHILD_COLORS_LIGHT[colorIndex]
+                            )}
+                          >
+                            <div className="text-sm font-mono font-semibold w-12">
+                              {item.time.slice(0, 5)}
+                            </div>
+                            {child && (
+                              <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1">
+                                {item.type === 'task' ? (
+                                  <Sparkles className="w-3 h-3 text-accent" />
+                                ) : (
+                                  <BookOpen className="w-3 h-3 text-secondary" />
                                 )}
+                                <p className="font-medium text-sm truncate">
+                                  {language === 'ru' ? item.title_ru : item.title_en}
+                                </p>
                               </div>
-                              {item.duration && (
-                                <span className="text-xs text-muted-foreground">
-                                  {item.duration}{language === 'ru' ? ' мин' : ' min'}
-                                </span>
-                              )}
-                              {item.type === 'activity' && item.originalActivity && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                                  onClick={() => setEditingActivity(item.originalActivity!)}
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
+                              {item.location && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  📍 {item.location}
+                                </p>
                               )}
                             </div>
-                          );
-                        })}
+                            {item.duration && (
+                              <span className="text-xs text-muted-foreground">
+                                {item.duration}{language === 'ru' ? ' мин' : ' min'}
+                              </span>
+                            )}
+                            {item.type === 'activity' && item.originalActivity && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                                onClick={() => setEditingActivity(item.originalActivity!)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

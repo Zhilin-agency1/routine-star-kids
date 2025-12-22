@@ -4,9 +4,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, Edit } from 'lucide-react';
+import { Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, Edit, Plus, X, ListChecks, GripVertical } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { useChildren } from '@/hooks/useChildren';
+import { useTaskSteps } from '@/hooks/useTaskSteps';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -102,8 +103,14 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
   const [oneTimeDate, setOneTimeDate] = useState<Date>(template.one_time_date ? new Date(template.one_time_date) : new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Steps state
+  const [localSteps, setLocalSteps] = useState<Array<{ id?: string; title_ru: string; title_en: string }>>([]);
+  const [newStepTitle, setNewStepTitle] = useState('');
+  const [stepsInitialized, setStepsInitialized] = useState(false);
+  
   const { updateTemplate } = useTasks();
   const { children } = useChildren();
+  const { steps: existingSteps, isLoading: stepsLoading, createSteps, deleteAllSteps } = useTaskSteps(template.id);
 
   const locale = language === 'ru' ? ru : undefined;
 
@@ -142,7 +149,43 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
     setStartDate(template.start_date ? new Date(template.start_date) : new Date());
     setEndDate(template.end_date ? new Date(template.end_date) : undefined);
     setOneTimeDate(template.one_time_date ? new Date(template.one_time_date) : new Date());
+    setStepsInitialized(false);
   }, [template, form]);
+
+  // Load existing steps when dialog opens
+  useEffect(() => {
+    if (open && !stepsLoading && !stepsInitialized && existingSteps) {
+      setLocalSteps(existingSteps.map(s => ({
+        id: s.id,
+        title_ru: s.title_ru,
+        title_en: s.title_en,
+      })));
+      setStepsInitialized(true);
+    }
+  }, [open, stepsLoading, stepsInitialized, existingSteps]);
+
+  const addStep = () => {
+    if (newStepTitle.trim()) {
+      setLocalSteps([...localSteps, { title_ru: newStepTitle.trim(), title_en: newStepTitle.trim() }]);
+      setNewStepTitle('');
+    }
+  };
+
+  const removeStep = (index: number) => {
+    setLocalSteps(localSteps.filter((_, i) => i !== index));
+  };
+
+  const moveStep = (index: number, direction: 'up' | 'down') => {
+    if (
+      (direction === 'up' && index === 0) ||
+      (direction === 'down' && index === localSteps.length - 1)
+    ) return;
+    
+    const newSteps = [...localSteps];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    [newSteps[index], newSteps[newIndex]] = [newSteps[newIndex], newSteps[index]];
+    setLocalSteps(newSteps);
+  };
 
   const toggleDay = (day: number) => {
     setSelectedDays(prev => 
@@ -185,6 +228,19 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
         one_time_date: taskType === 'one_time' ? format(oneTimeDate, 'yyyy-MM-dd') : null,
       });
+
+      // Update steps: delete all and recreate
+      await deleteAllSteps.mutateAsync(template.id);
+      if (localSteps.length > 0) {
+        await createSteps.mutateAsync(
+          localSteps.map((s, index) => ({
+            template_id: template.id,
+            title_ru: s.title_ru,
+            title_en: s.title_en,
+            order_index: index,
+          }))
+        );
+      }
       
       toast.success(language === 'ru' ? 'Задача обновлена!' : 'Task updated!');
       setOpen(false);
@@ -538,6 +594,84 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
             />
             {form.formState.errors.rewardAmount && (
               <p className="text-sm text-destructive">{form.formState.errors.rewardAmount.message}</p>
+            )}
+          </div>
+
+          {/* Steps / Checklist */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <ListChecks className="w-4 h-4" />
+              {language === 'ru' ? 'Шаги (чек-лист)' : 'Steps (checklist)'}
+            </Label>
+            
+            {/* Existing steps */}
+            {localSteps.length > 0 && (
+              <div className="space-y-2">
+                {localSteps.map((step, index) => (
+                  <div
+                    key={step.id || index}
+                    className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg group"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => moveStep(index, 'up')}
+                        disabled={index === 0}
+                        className="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <GripVertical className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-medium">
+                      {index + 1}
+                    </span>
+                    <span className="flex-1 text-sm">
+                      {language === 'ru' ? step.title_ru : step.title_en}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeStep(index)}
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add new step */}
+            <div className="flex gap-2">
+              <Input
+                placeholder={language === 'ru' ? 'Добавить шаг...' : 'Add step...'}
+                value={newStepTitle}
+                onChange={(e) => setNewStepTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addStep();
+                  }
+                }}
+                className="rounded-xl flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={addStep}
+                disabled={!newStepTitle.trim()}
+                className="rounded-xl"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {localSteps.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                {language === 'ru' 
+                  ? 'Шаги помогут разбить задачу на понятные действия' 
+                  : 'Steps help break down the task into clear actions'}
+              </p>
             )}
           </div>
 

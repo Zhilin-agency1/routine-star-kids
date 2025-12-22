@@ -10,6 +10,7 @@ export interface TaskStep {
   due_date: string | null;
   bonus_amount: number;
   bonus_hidden: boolean;
+  duration_minutes: number | null;
   created_at: string;
 }
 

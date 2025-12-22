@@ -104,11 +104,13 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
     dueDate?: string;
     bonusAmount: number;
     bonusHidden: boolean;
+    durationMinutes?: number;
   }[]>([]);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [newStepDueDate, setNewStepDueDate] = useState<Date | undefined>(undefined);
   const [newStepBonus, setNewStepBonus] = useState(0);
   const [newStepBonusHidden, setNewStepBonusHidden] = useState(false);
+  const [newStepDuration, setNewStepDuration] = useState<number | undefined>(undefined);
   
   const { createTemplate } = useTasks();
   const { createSteps } = useTaskSteps();
@@ -146,11 +148,13 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
         dueDate: newStepDueDate ? format(newStepDueDate, 'yyyy-MM-dd') : undefined,
         bonusAmount: newStepBonus,
         bonusHidden: newStepBonusHidden,
+        durationMinutes: newStepDuration,
       }]);
       setNewStepTitle('');
       setNewStepDueDate(undefined);
       setNewStepBonus(0);
       setNewStepBonusHidden(false);
+      setNewStepDuration(undefined);
     }
   };
 
@@ -203,6 +207,7 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
             due_date: step.dueDate || null,
             bonus_amount: step.bonusAmount,
             bonus_hidden: step.bonusHidden,
+            duration_minutes: step.durationMinutes || null,
           }))
         );
       }
@@ -582,6 +587,7 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
                 due_date: s.dueDate,
                 bonus_amount: s.bonusAmount,
                 bonus_hidden: s.bonusHidden,
+                duration_minutes: s.durationMinutes,
               }))}
               onReorder={(reordered) => setSteps(reordered.map(s => ({
                 titleRu: s.title_ru,
@@ -589,6 +595,7 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
                 dueDate: s.due_date || undefined,
                 bonusAmount: s.bonus_amount,
                 bonusHidden: s.bonus_hidden,
+                durationMinutes: s.duration_minutes || undefined,
               })))}
               onRemove={removeStep}
             />
@@ -611,7 +618,7 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
               </div>
               
               {/* Step options row */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {/* Due date */}
                 <Popover>
                   <PopoverTrigger asChild>
@@ -638,6 +645,20 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
                     />
                   </PopoverContent>
                 </Popover>
+                
+                {/* Duration minutes */}
+                <div className="relative">
+                  <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={180}
+                    value={newStepDuration || ''}
+                    onChange={(e) => setNewStepDuration(parseInt(e.target.value) || undefined)}
+                    placeholder={language === 'ru' ? 'мин' : 'min'}
+                    className="rounded-lg h-8 text-xs pl-6 pr-2"
+                  />
+                </div>
                 
                 {/* Bonus amount */}
                 <div className="relative">

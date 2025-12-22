@@ -7,6 +7,9 @@ export interface TaskStep {
   title_ru: string;
   title_en: string;
   order_index: number;
+  due_date: string | null;
+  bonus_amount: number;
+  bonus_hidden: boolean;
   created_at: string;
 }
 

@@ -498,7 +498,10 @@ export type Database = {
       }
       task_steps: {
         Row: {
+          bonus_amount: number | null
+          bonus_hidden: boolean | null
           created_at: string
+          due_date: string | null
           id: string
           order_index: number
           template_id: string
@@ -506,7 +509,10 @@ export type Database = {
           title_ru: string
         }
         Insert: {
+          bonus_amount?: number | null
+          bonus_hidden?: boolean | null
           created_at?: string
+          due_date?: string | null
           id?: string
           order_index?: number
           template_id: string
@@ -514,7 +520,10 @@ export type Database = {
           title_ru: string
         }
         Update: {
+          bonus_amount?: number | null
+          bonus_hidden?: boolean | null
           created_at?: string
+          due_date?: string | null
           id?: string
           order_index?: number
           template_id?: string

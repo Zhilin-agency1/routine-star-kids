@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye } from 'lucide-react';
+import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye, GripVertical } from 'lucide-react';
+import { SortableStepList, type SortableStep } from './SortableStepList';
 import { useTasks } from '@/hooks/useTasks';
 import { useTaskSteps } from '@/hooks/useTaskSteps';
 import { useChildren } from '@/hooks/useChildren';
@@ -573,42 +574,24 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
               {language === 'ru' ? 'Шаги (чек-лист)' : 'Steps (checklist)'}
             </Label>
             
-            {steps.length > 0 && (
-              <div className="space-y-2">
-                {steps.map((step, index) => (
-                  <div key={index} className="bg-muted/50 rounded-lg p-2 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
-                      <span className="flex-1 text-sm">{step.titleRu}</span>
-                      {step.bonusAmount > 0 && (
-                        <span className={cn(
-                          "text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1",
-                          step.bonusHidden ? "bg-muted-foreground/20" : "bg-amber-500/20 text-amber-600"
-                        )}>
-                          {step.bonusHidden ? <EyeOff className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
-                          +{step.bonusAmount}
-                        </span>
-                      )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => removeStep(index)}
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    {step.dueDate && (
-                      <div className="ml-6 text-xs text-muted-foreground flex items-center gap-1">
-                        <CalendarIcon className="w-3 h-3" />
-                        {language === 'ru' ? 'До:' : 'Due:'} {format(new Date(step.dueDate), 'dd.MM.yyyy', { locale })}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <SortableStepList
+              steps={steps.map((s, i) => ({
+                id: `add-step-${i}`,
+                title_ru: s.titleRu,
+                title_en: s.titleEn,
+                due_date: s.dueDate,
+                bonus_amount: s.bonusAmount,
+                bonus_hidden: s.bonusHidden,
+              }))}
+              onReorder={(reordered) => setSteps(reordered.map(s => ({
+                titleRu: s.title_ru,
+                titleEn: s.title_en,
+                dueDate: s.due_date || undefined,
+                bonusAmount: s.bonus_amount,
+                bonusHidden: s.bonus_hidden,
+              })))}
+              onRemove={removeStep}
+            />
             
             {/* New step input */}
             <div className="space-y-2 border rounded-xl p-3 bg-muted/30">

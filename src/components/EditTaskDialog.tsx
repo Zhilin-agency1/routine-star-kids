@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, Edit, Plus, X, ListChecks, GripVertical, Gift, EyeOff, Eye } from 'lucide-react';
+import { Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, Edit, Plus, X, ListChecks, Gift, EyeOff, Eye } from 'lucide-react';
+import { SortableStepList, type SortableStep } from './SortableStepList';
 import { useTasks } from '@/hooks/useTasks';
 import { useChildren } from '@/hooks/useChildren';
 import { useTaskSteps } from '@/hooks/useTaskSteps';
@@ -208,18 +209,6 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
 
   const removeStep = (index: number) => {
     setLocalSteps(localSteps.filter((_, i) => i !== index));
-  };
-
-  const moveStep = (index: number, direction: 'up' | 'down') => {
-    if (
-      (direction === 'up' && index === 0) ||
-      (direction === 'down' && index === localSteps.length - 1)
-    ) return;
-    
-    const newSteps = [...localSteps];
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    [newSteps[index], newSteps[newIndex]] = [newSteps[newIndex], newSteps[index]];
-    setLocalSteps(newSteps);
   };
 
   const toggleDay = (day: number) => {
@@ -644,58 +633,11 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
               {language === 'ru' ? 'Шаги (чек-лист)' : 'Steps (checklist)'}
             </Label>
             
-            {/* Existing steps */}
-            {localSteps.length > 0 && (
-              <div className="space-y-2">
-                {localSteps.map((step, index) => (
-                  <div
-                    key={step.id || index}
-                    className="bg-muted/50 rounded-lg p-2 space-y-1 group"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col gap-0.5">
-                        <button
-                          type="button"
-                          onClick={() => moveStep(index, 'up')}
-                          disabled={index === 0}
-                          className="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          <GripVertical className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-medium">
-                        {index + 1}
-                      </span>
-                      <span className="flex-1 text-sm">
-                        {language === 'ru' ? step.title_ru : step.title_en}
-                      </span>
-                      {step.bonus_amount > 0 && (
-                        <span className={cn(
-                          "text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1",
-                          step.bonus_hidden ? "bg-muted-foreground/20" : "bg-amber-500/20 text-amber-600"
-                        )}>
-                          {step.bonus_hidden ? <EyeOff className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
-                          +{step.bonus_amount}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeStep(index)}
-                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    {step.due_date && (
-                      <div className="ml-8 text-xs text-muted-foreground flex items-center gap-1">
-                        <CalendarIcon className="w-3 h-3" />
-                        {language === 'ru' ? 'До:' : 'Due:'} {format(new Date(step.due_date), 'dd.MM.yyyy', { locale })}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <SortableStepList
+              steps={localSteps}
+              onReorder={setLocalSteps}
+              onRemove={removeStep}
+            />
 
             {/* Add new step */}
             <div className="space-y-2 border rounded-xl p-3 bg-muted/30">

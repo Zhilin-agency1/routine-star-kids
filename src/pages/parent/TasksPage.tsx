@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Calendar, MoreVertical, ClipboardList, Trash2, Edit, ListChecks } from 'lucide-react';
+import { Calendar, MoreVertical, ClipboardList, Trash2, Edit, ListChecks, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
-import { StepChecklist } from '@/components/StepChecklist';
+import { StepChecklist, StepProgressBadge } from '@/components/StepChecklist';
 import { useChildren } from '@/hooks/useChildren';
 import { useTasks } from '@/hooks/useTasks';
 import { useAllTodayTasks } from '@/hooks/useAllTodayTasks';
@@ -37,6 +37,7 @@ export const TasksPage = () => {
   const { instances } = useAllTodayTasks();
   const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<typeof templates[0] | null>(null);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const getChildById = (id: string) => children.find(c => c.id === id);
 
@@ -113,13 +114,17 @@ export const TasksPage = () => {
             <div className="space-y-3">
               {todayTasks.map((task, index) => {
                 const child = getChildById(task.childId);
+                const isExpanded = expandedTaskId === task.id;
                 return (
                   <div 
                     key={task.id}
                     className="bg-card rounded-2xl p-4 shadow-card interactive-card animate-fade-in-up"
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    <div className="flex items-start gap-3">
+                    <div 
+                      className="flex items-start gap-3 cursor-pointer"
+                      onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                    >
                       <div className="text-2xl flex-shrink-0">{task.icon || '✨'}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -136,15 +141,22 @@ export const TasksPage = () => {
                             </div>
                           )}
                           <CoinBadge amount={task.rewardAmount} size="sm" />
+                          <StepProgressBadge templateId={task.templateId} instanceId={task.id} />
                         </div>
-                        
-                        {/* Step checklist for tasks with steps */}
-                        <StepChecklist 
-                          templateId={task.templateId} 
-                          instanceId={task.id}
-                        />
                       </div>
+                      <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0">
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </Button>
                     </div>
+                    
+                    {/* Expanded step checklist */}
+                    {isExpanded && (
+                      <StepChecklist 
+                        templateId={task.templateId} 
+                        instanceId={task.id}
+                        isParent
+                      />
+                    )}
                   </div>
                 );
               })}

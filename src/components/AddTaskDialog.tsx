@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw } from 'lucide-react';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
+import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { useChildren } from '@/hooks/useChildren';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -10,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -64,7 +72,8 @@ const taskSchema = z.object({
   rewardAmount: z.number()
     .min(1, { message: 'Награда должна быть минимум 1' })
     .max(1000, { message: 'Награда не должна превышать 1000' }),
-  recurringTime: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
   childId: z.string().optional(),
 });
 
@@ -82,10 +91,16 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
   const [taskType, setTaskType] = useState<'recurring' | 'one_time'>('recurring');
   const [taskCategory, setTaskCategory] = useState<'routine' | 'activity'>('routine');
   const [hasTime, setHasTime] = useState(true);
+  const [hasEndTime, setHasEndTime] = useState(false);
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [oneTimeDate, setOneTimeDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { createTemplate } = useTasks();
   const { children } = useChildren();
+
+  const locale = language === 'ru' ? ru : undefined;
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -95,7 +110,8 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
       descriptionRu: '',
       descriptionEn: '',
       rewardAmount: 5,
-      recurringTime: '',
+      startTime: '',
+      endTime: '',
       childId: '',
     },
   });
@@ -114,6 +130,14 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
       return;
     }
 
+    // Validate time interval
+    if (hasTime && hasEndTime && data.startTime && data.endTime) {
+      if (data.endTime <= data.startTime) {
+        toast.error(language === 'ru' ? 'Время окончания должно быть после времени начала' : 'End time must be after start time');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       await createTemplate.mutateAsync({
@@ -126,10 +150,12 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
         task_type: taskType,
         task_category: taskCategory,
         recurring_days: taskType === 'recurring' ? selectedDays : null,
-        recurring_time: hasTime && data.recurringTime ? data.recurringTime : null,
+        recurring_time: hasTime && data.startTime ? data.startTime : null,
+        end_time: hasTime && hasEndTime && data.endTime ? data.endTime : null,
         child_id: data.childId || null,
-        start_date: new Date().toISOString().split('T')[0],
-        one_time_date: taskType === 'one_time' ? new Date().toISOString().split('T')[0] : null,
+        start_date: format(startDate, 'yyyy-MM-dd'),
+        end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
+        one_time_date: taskType === 'one_time' ? format(oneTimeDate, 'yyyy-MM-dd') : null,
       });
       
       toast.success('Задача создана!');
@@ -139,6 +165,10 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
       setSelectedDays([1, 2, 3, 4, 5]);
       setTaskCategory('routine');
       setHasTime(true);
+      setHasEndTime(false);
+      setStartDate(new Date());
+      setEndDate(undefined);
+      setOneTimeDate(new Date());
     } catch (error: any) {
       toast.error(error.message || 'Ошибка при создании задачи');
     } finally {
@@ -306,47 +336,184 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
             </Select>
           </div>
 
-          {/* Time & Reward */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="task-time" className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  Время
-                </Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Указать</span>
-                  <Switch
-                    checked={hasTime}
-                    onCheckedChange={setHasTime}
-                  />
+          {/* Date Range */}
+          {taskType === 'recurring' ? (
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <CalendarIcon className="w-4 h-4" />
+                Период действия
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Start Date */}
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Дата начала</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal rounded-xl",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, 'dd.MM.yyyy', { locale }) : 'Выберите дату'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={startDate}
+                        onSelect={(date) => date && setStartDate(date)}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* End Date */}
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Дата окончания</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal rounded-xl",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, 'dd.MM.yyyy', { locale }) : 'Бессрочно'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        disabled={(date) => date < startDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
-              {hasTime ? (
-                <Input
-                  id="task-time"
-                  type="time"
-                  className="rounded-xl"
-                  {...form.register('recurringTime')}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground py-2">Без привязки ко времени</p>
-              )}
             </div>
+          ) : (
             <div className="space-y-2">
-              <Label htmlFor="task-reward">Награда 🪙</Label>
-              <Input
-                id="task-reward"
-                type="number"
-                min={1}
-                max={1000}
-                className="rounded-xl"
-                {...form.register('rewardAmount', { valueAsNumber: true })}
-              />
-              {form.formState.errors.rewardAmount && (
-                <p className="text-sm text-destructive">{form.formState.errors.rewardAmount.message}</p>
-              )}
+              <Label className="flex items-center gap-2">
+                <CalendarIcon className="w-4 h-4" />
+                Дата выполнения
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal rounded-xl",
+                      !oneTimeDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {oneTimeDate ? format(oneTimeDate, 'dd MMMM yyyy', { locale }) : 'Выберите дату'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={oneTimeDate}
+                    onSelect={(date) => date && setOneTimeDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
+          )}
+
+          {/* Time Interval */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Время
+              </Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Указать время</span>
+                <Switch
+                  checked={hasTime}
+                  onCheckedChange={setHasTime}
+                />
+              </div>
+            </div>
+            
+            {hasTime && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Start Time */}
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Начало</span>
+                    <Input
+                      type="time"
+                      className="rounded-xl"
+                      {...form.register('startTime')}
+                    />
+                  </div>
+                  
+                  {/* End Time */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Окончание</span>
+                      <Switch
+                        checked={hasEndTime}
+                        onCheckedChange={setHasEndTime}
+                        className="scale-75"
+                      />
+                    </div>
+                    {hasEndTime ? (
+                      <Input
+                        type="time"
+                        className="rounded-xl"
+                        {...form.register('endTime')}
+                      />
+                    ) : (
+                      <div className="h-10 flex items-center text-sm text-muted-foreground">
+                        —
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {hasEndTime && form.watch('startTime') && form.watch('endTime') && (
+                  <p className="text-xs text-muted-foreground">
+                    ⏱️ Интервал: {form.watch('startTime')} — {form.watch('endTime')}
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {!hasTime && (
+              <p className="text-sm text-muted-foreground py-1">Без привязки ко времени</p>
+            )}
+          </div>
+
+          {/* Reward */}
+          <div className="space-y-2">
+            <Label htmlFor="task-reward">Награда 🪙</Label>
+            <Input
+              id="task-reward"
+              type="number"
+              min={1}
+              max={1000}
+              className="rounded-xl"
+              {...form.register('rewardAmount', { valueAsNumber: true })}
+            />
+            {form.formState.errors.rewardAmount && (
+              <p className="text-sm text-destructive">{form.formState.errors.rewardAmount.message}</p>
+            )}
           </div>
 
           {/* Days of Week (for recurring) */}

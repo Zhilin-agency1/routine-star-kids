@@ -78,11 +78,11 @@ export const FamilySchedulePage = () => {
     return activities.filter(a => a.child_id === selectedChildId);
   }, [activities, selectedChildId]);
 
-  // Filter task templates with task_category='activity'
-  const activityTasks = useMemo(() => {
-    const tasks = templates.filter(t => t.task_category === 'activity' && t.status === 'active');
+  // Filter all task templates (activities AND routines)
+  const allTasks = useMemo(() => {
+    const tasks = templates.filter(t => t.status === 'active');
     if (!selectedChildId) return tasks;
-    return tasks.filter(t => t.child_id === selectedChildId);
+    return tasks.filter(t => t.child_id === selectedChildId || t.child_id === null);
   }, [templates, selectedChildId]);
 
   const getItemsForDay = (date: Date): ScheduleItem[] => {
@@ -107,8 +107,8 @@ export const FamilySchedulePage = () => {
       }
     });
     
-    // Add task templates with task_category='activity'
-    activityTasks.forEach(task => {
+    // Add task templates
+    allTasks.forEach(task => {
       // Check if task is active for this date
       const startDate = parseISO(task.start_date);
       const endDate = task.end_date ? parseISO(task.end_date) : null;

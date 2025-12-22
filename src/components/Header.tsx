@@ -5,6 +5,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { CoinBadge } from './ui/CoinBadge';
 import { ChildAvatar } from './ui/ChildAvatar';
+import { NotificationBell } from './NotificationBell';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -148,6 +149,9 @@ export const Header = () => {
               <CoinBadge amount={currentChild.balance} size="md" />
             )}
 
+            {/* Notifications for parents */}
+            {role === 'parent' && <NotificationBell />}
+
             {/* Language Toggle */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -205,6 +209,9 @@ export const Header = () => {
       {role === 'child' && viewMode === 'personal' && currentChild && (
         <CoinBadge amount={currentChild.balance} size="md" />
       )}
+
+      {/* Notifications for parents */}
+      {role === 'parent' && <NotificationBell />}
 
       {/* Language Toggle */}
       <DropdownMenu>

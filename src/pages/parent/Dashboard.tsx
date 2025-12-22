@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TrendingUp, CheckCircle, Users } from 'lucide-react';
+import { TrendingUp, CheckCircle, Users, Undo2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChildren } from '@/hooks/useChildren';
 import { useAllTodayTasks } from '@/hooks/useAllTodayTasks';
@@ -15,7 +15,7 @@ export const ParentDashboard = () => {
   const { t, language } = useLanguage();
   const { children } = useChildren();
   const { instances } = useAllTodayTasks();
-  const { completeTask, updateInstanceState } = useTasks();
+  const { completeTask, uncompleteTask, updateInstanceState } = useTasks();
 
   // Normalize instances to task format
   const tasks = useMemo(() => {
@@ -67,6 +67,10 @@ export const ParentDashboard = () => {
 
   const handleComplete = (taskId: string, childId: string) => {
     completeTask.mutate({ instanceId: taskId, childId });
+  };
+
+  const handleUncomplete = (taskId: string, childId: string) => {
+    uncompleteTask.mutate({ instanceId: taskId, childId });
   };
 
   const handleStartTask = (taskId: string) => {
@@ -166,7 +170,7 @@ export const ParentDashboard = () => {
                             </div>
                           </div>
                           
-                          {task.state !== 'done' && (
+                          {task.state !== 'done' ? (
                             <div className="flex gap-1 mt-2">
                               {task.state === 'todo' && (
                                 <Button 
@@ -184,6 +188,18 @@ export const ParentDashboard = () => {
                                 onClick={() => handleComplete(task.id, task.childId)}
                               >
                                 {language === 'ru' ? 'Готово ✓' : 'Done ✓'}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1 mt-2">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="flex-1 h-7 text-xs text-muted-foreground hover:text-destructive"
+                                onClick={() => handleUncomplete(task.id, task.childId)}
+                              >
+                                <Undo2 className="w-3 h-3 mr-1" />
+                                {language === 'ru' ? 'Отменить' : 'Undo'}
                               </Button>
                             </div>
                           )}

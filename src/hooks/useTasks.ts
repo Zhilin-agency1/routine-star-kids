@@ -276,7 +276,115 @@ export const useTasks = (childId?: string, date?: Date) => {
     },
   });
 
-  // Cancel task instance
+  // Uncomplete task (revert from done to todo and remove reward)
+  const uncompleteTask = useMutation({
+    mutationFn: async ({ instanceId, childId }: { instanceId: string; childId: string }) => {
+      // Get the task instance with template
+      const { data: instance, error: fetchError } = await supabase
+        .from('task_instances')
+        .select(`
+          *,
+          template:task_templates(*)
+        `)
+        .eq('id', instanceId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      if (!instance || !family) throw new Error('Task not found');
+      
+      const taskWithTemplate = instance as unknown as TaskWithTemplate;
+      const rewardAmount = taskWithTemplate.template.reward_amount;
+      const wasRewardGranted = taskWithTemplate.reward_granted;
+      
+      // Update task instance back to todo
+      const { error: updateError } = await supabase
+        .from('task_instances')
+        .update({
+          state: 'todo',
+          completed_at: null,
+          reward_granted: false,
+        })
+        .eq('id', instanceId);
+      
+      if (updateError) throw updateError;
+      
+      // If reward was granted, subtract it from balance
+      if (wasRewardGranted) {
+        // Get current child balance
+        const { data: child, error: childError } = await supabase
+          .from('children')
+          .select('balance')
+          .eq('id', childId)
+          .single();
+        
+        if (childError) throw childError;
+        
+        // Update child balance (subtract reward)
+        const newBalance = Math.max(0, (child?.balance || 0) - rewardAmount);
+        const { error: balanceError } = await supabase
+          .from('children')
+          .update({ balance: newBalance })
+          .eq('id', childId);
+        
+        if (balanceError) throw balanceError;
+        
+        // Create reversal transaction
+        const { error: txError } = await supabase
+          .from('transactions')
+          .insert({
+            family_id: family.id,
+            child_id: childId,
+            transaction_type: 'reversal',
+            amount: -rewardAmount,
+            source: 'task_instance',
+            source_id: instanceId,
+            note: 'Task completion cancelled',
+          });
+        
+        if (txError) throw txError;
+      }
+      
+      return { rewardAmount };
+    },
+    onMutate: async ({ instanceId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['task_instances'] });
+      await queryClient.cancelQueries({ queryKey: ['all_today_tasks'] });
+
+      // Snapshot previous values
+      const previousAllTodayTasks = queryClient.getQueryData(['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]]);
+
+      // Optimistically update all_today_tasks
+      queryClient.setQueryData(
+        ['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]],
+        (old: TaskWithTemplate[] | undefined) => {
+          if (!old) return old;
+          return old.map(task => 
+            task.id === instanceId 
+              ? { ...task, state: 'todo', completed_at: null, reward_granted: false }
+              : task
+          );
+        }
+      );
+
+      return { previousAllTodayTasks };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousAllTodayTasks) {
+        queryClient.setQueryData(
+          ['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]],
+          context.previousAllTodayTasks
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['task_instances'] });
+      queryClient.invalidateQueries({ queryKey: ['all_today_tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
   const cancelInstance = useMutation({
     mutationFn: async ({ 
       instanceId, 
@@ -374,6 +482,7 @@ export const useTasks = (childId?: string, date?: Date) => {
     createInstance,
     updateInstanceState,
     completeTask,
+    uncompleteTask,
     cancelInstance,
     deleteTemplate,
   };

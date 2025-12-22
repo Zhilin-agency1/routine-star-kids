@@ -189,7 +189,10 @@ export const TasksPage = () => {
                           )}
                           <CoinBadge amount={template.reward_amount} size="sm" />
                           {template.recurring_time && (
-                            <span className="text-xs">🕐 {template.recurring_time.slice(0, 5)}</span>
+                            <span className="text-xs">
+                              🕐 {template.recurring_time.slice(0, 5)}
+                              {(template as any).end_time && ` — ${(template as any).end_time.slice(0, 5)}`}
+                            </span>
                           )}
                         </div>
 

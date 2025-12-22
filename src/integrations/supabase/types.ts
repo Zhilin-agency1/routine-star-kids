@@ -467,6 +467,7 @@ export type Database = {
           description_en: string | null
           description_ru: string | null
           end_date: string | null
+          end_time: string | null
           family_id: string
           icon: string | null
           id: string
@@ -489,6 +490,7 @@ export type Database = {
           description_en?: string | null
           description_ru?: string | null
           end_date?: string | null
+          end_time?: string | null
           family_id: string
           icon?: string | null
           id?: string
@@ -511,6 +513,7 @@ export type Database = {
           description_en?: string | null
           description_ru?: string | null
           end_date?: string | null
+          end_time?: string | null
           family_id?: string
           icon?: string | null
           id?: string

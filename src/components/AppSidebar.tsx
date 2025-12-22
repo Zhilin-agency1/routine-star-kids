@@ -1,8 +1,11 @@
-import { Home, Calendar, Briefcase, Trophy, ShoppingBag, BarChart3, ListTodo, Users } from 'lucide-react';
+import { Home, Calendar, Briefcase, Trophy, ShoppingBag, BarChart3, ListTodo, Users, LogOut, LogIn, ChevronDown, Check } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/hooks/useAuth';
+import { ChildAvatar } from '@/components/ui/ChildAvatar';
+import { CoinBadge } from '@/components/ui/CoinBadge';
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +19,14 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
 
 interface NavItem {
   icon: React.ElementType;
@@ -60,10 +71,13 @@ const translations: Record<string, { en: string; ru: string }> = {
 
 export const AppSidebar = () => {
   const { language, t } = useLanguage();
-  const { role, viewMode } = useApp();
+  const { role, viewMode, setViewMode, currentChild, setCurrentChild, children } = useApp();
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
+
+  const isCollapsed = state === 'collapsed';
 
   // Determine which nav items to show based on role and viewMode
   const getNavItems = () => {
@@ -85,6 +99,15 @@ export const AppSidebar = () => {
       ? (language === 'ru' ? 'Семья' : 'Family')
       : (language === 'ru' ? 'Личное' : 'Personal');
 
+  const handleSelectChild = (child: typeof currentChild) => {
+    setCurrentChild(child);
+    setViewMode('personal');
+  };
+
+  const handleSelectFamily = () => {
+    setViewMode('family');
+  };
+
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarHeader className="p-4">
@@ -92,15 +115,132 @@ export const AppSidebar = () => {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
             <Users className="w-4 h-4 text-primary-foreground" />
           </div>
-          {state !== 'collapsed' && (
+          {!isCollapsed && (
             <span className="font-bold text-lg">{t('app_name')}</span>
           )}
         </div>
       </SidebarHeader>
 
       <SidebarContent>
+        {/* User Profile Section */}
+        {role === 'child' && (
+          <SidebarGroup>
+            {!isCollapsed && (
+              <SidebarGroupLabel>
+                {language === 'ru' ? 'Профиль' : 'Profile'}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors",
+                    isCollapsed && "justify-center p-2"
+                  )}>
+                    {viewMode === 'family' ? (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Trophy className="w-5 h-5 text-primary" />
+                        </div>
+                        {!isCollapsed && (
+                          <div className="flex-1 text-left min-w-0">
+                            <div className="flex items-center gap-1">
+                              <p className="font-semibold truncate">
+                                {language === 'ru' ? 'Семья' : 'Family'}
+                              </p>
+                              <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {language === 'ru' ? 'Общий дашборд' : 'Dashboard'}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    ) : currentChild ? (
+                      <>
+                        <ChildAvatar avatar={currentChild.avatar_url || '🦁'} size="md" />
+                        {!isCollapsed && (
+                          <div className="flex-1 text-left min-w-0">
+                            <div className="flex items-center gap-1">
+                              <p className="font-semibold truncate">{currentChild.name}</p>
+                              <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            </div>
+                            <CoinBadge amount={currentChild.balance} size="sm" />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                          <Users className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        {!isCollapsed && (
+                          <div className="flex items-center gap-1">
+                            <p className="font-semibold">
+                              {language === 'ru' ? 'Выберите' : 'Select'}
+                            </p>
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>
+                    {language === 'ru' ? 'Переключить вид' : 'Switch view'}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  {/* Family Dashboard Option */}
+                  <DropdownMenuItem
+                    onClick={handleSelectFamily}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Trophy className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {language === 'ru' ? 'Общий дашборд' : 'Family Dashboard'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'ru' ? 'Все дети' : 'All children'}
+                      </p>
+                    </div>
+                    {viewMode === 'family' && (
+                      <Check className="w-4 h-4 text-primary" />
+                    )}
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Children List */}
+                  {children.map((child) => (
+                    <DropdownMenuItem
+                      key={child.id}
+                      onClick={() => handleSelectChild(child)}
+                      className="flex items-center gap-3"
+                    >
+                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
+                      <div className="flex-1">
+                        <p className="font-medium">{child.name}</p>
+                        <p className="text-xs text-muted-foreground">{child.balance} 🪙</p>
+                      </div>
+                      {viewMode === 'personal' && currentChild?.id === child.id && (
+                        <Check className="w-4 h-4 text-primary" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Navigation */}
         <SidebarGroup>
-          {state !== 'collapsed' && (
+          {!isCollapsed && (
             <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -131,11 +271,33 @@ export const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        {state !== 'collapsed' && (
-          <p className="text-xs text-muted-foreground text-center">
-            {language === 'ru' ? 'Семейный планировщик' : 'Family Planner'}
-          </p>
+      <SidebarFooter className="p-3">
+        {user ? (
+          <button
+            onClick={() => signOut()}
+            className={cn(
+              "w-full flex items-center gap-2 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors",
+              isCollapsed && "justify-center"
+            )}
+          >
+            <LogOut className="w-4 h-4" />
+            {!isCollapsed && (
+              <span className="text-sm">{language === 'ru' ? 'Выйти' : 'Sign out'}</span>
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate('/auth')}
+            className={cn(
+              "w-full flex items-center gap-2 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors",
+              isCollapsed && "justify-center"
+            )}
+          >
+            <LogIn className="w-4 h-4" />
+            {!isCollapsed && (
+              <span className="text-sm">{language === 'ru' ? 'Войти' : 'Sign in'}</span>
+            )}
+          </button>
         )}
       </SidebarFooter>
     </Sidebar>

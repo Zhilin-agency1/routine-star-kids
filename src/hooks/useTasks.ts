@@ -238,6 +238,7 @@ export const useTasks = (childId?: string, date?: Date) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task_instances'] });
+      queryClient.invalidateQueries({ queryKey: ['all_today_tasks'] });
       queryClient.invalidateQueries({ queryKey: ['children'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },

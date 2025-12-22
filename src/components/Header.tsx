@@ -30,6 +30,7 @@ export const Header = () => {
 
   const handleSelectFamily = () => {
     setViewMode('family');
+    navigate('/');
   };
 
   // Mobile: full header with logo

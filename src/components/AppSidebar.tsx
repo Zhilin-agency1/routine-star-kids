@@ -124,6 +124,7 @@ export const AppSidebar = () => {
 
   const handleSelectFamily = () => {
     setViewMode('family');
+    navigate('/');
   };
 
   return (

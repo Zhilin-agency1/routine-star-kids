@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, Users, Calendar, Clock } from 'lucide-react';
+import { Settings, Users, Calendar, Clock, ListChecks, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
@@ -9,8 +9,11 @@ import { AddChildDialog } from '@/components/AddChildDialog';
 import { EditChildProfileDialog } from '@/components/EditChildProfileDialog';
 import { Progress } from '@/components/ui/progress';
 import { useTasks } from '@/hooks/useTasks';
+import { useTaskSteps } from '@/hooks/useTaskSteps';
 import { differenceInDays, parseISO, format } from 'date-fns';
 import type { Child } from '@/hooks/useChildren';
+import { cn } from '@/lib/utils';
+import { TemplateStepsPreview } from '@/components/TemplateStepsPreview';
 
 export const ChildrenPage = () => {
   const { t, language } = useLanguage();
@@ -107,8 +110,20 @@ export const ChildrenPage = () => {
                               </span>
                               <CoinBadge amount={task.reward_amount} size="sm" />
                             </div>
-                            <Progress value={progressPercent} className="h-2 mb-2" />
-                            <div className="flex justify-between text-xs text-muted-foreground">
+                            
+                            {/* Days progress */}
+                            <div className="mb-2">
+                              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                                <span>{language === 'ru' ? 'Прогресс по дням' : 'Days progress'}</span>
+                                <span>{daysPassed}/{totalDays}</span>
+                              </div>
+                              <Progress value={progressPercent} className="h-2" />
+                            </div>
+                            
+                            {/* Steps preview */}
+                            <TemplateStepsPreview templateId={task.id} />
+                            
+                            <div className="flex justify-between text-xs text-muted-foreground mt-2 pt-2 border-t border-border/30">
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {language === 'ru' 

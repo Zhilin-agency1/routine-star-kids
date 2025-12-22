@@ -1,4 +1,5 @@
-import { Home, Calendar, Briefcase, Trophy, ShoppingBag, BarChart3, ListTodo, Users, LogOut, LogIn, ChevronDown, Check } from 'lucide-react';
+import { useState } from 'react';
+import { Home, Calendar, Briefcase, Trophy, ShoppingBag, BarChart3, ListTodo, Users, LogOut, LogIn, ChevronDown, Check, Pencil } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -6,6 +7,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { CoinBadge } from '@/components/ui/CoinBadge';
+import { EditChildProfileDialog } from '@/components/EditChildProfileDialog';
 import {
   Sidebar,
   SidebarContent,
@@ -76,8 +78,24 @@ export const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [childToEdit, setChildToEdit] = useState<typeof currentChild>(null);
 
   const isCollapsed = state === 'collapsed';
+
+  const handleEditChild = (child: typeof currentChild, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (child) {
+      setChildToEdit(child);
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleEditSuccess = (updatedChild: typeof currentChild) => {
+    if (updatedChild && currentChild?.id === updatedChild.id) {
+      setCurrentChild(updatedChild);
+    }
+  };
 
   // Determine which nav items to show based on role and viewMode
   const getNavItems = () => {
@@ -227,6 +245,13 @@ export const AppSidebar = () => {
                         <p className="font-medium">{child.name}</p>
                         <p className="text-xs text-muted-foreground">{child.balance} 🪙</p>
                       </div>
+                      <button
+                        onClick={(e) => handleEditChild(child, e)}
+                        className="p-1.5 rounded-md hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
+                        title={language === 'ru' ? 'Редактировать' : 'Edit'}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                       {viewMode === 'personal' && currentChild?.id === child.id && (
                         <Check className="w-4 h-4 text-primary" />
                       )}
@@ -300,6 +325,16 @@ export const AppSidebar = () => {
           </button>
         )}
       </SidebarFooter>
+
+      {/* Edit Child Profile Dialog */}
+      {childToEdit && (
+        <EditChildProfileDialog
+          child={childToEdit}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </Sidebar>
   );
 };

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks } from 'lucide-react';
+import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { useTaskSteps } from '@/hooks/useTaskSteps';
 import { useChildren } from '@/hooks/useChildren';
@@ -97,8 +97,17 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [oneTimeDate, setOneTimeDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [steps, setSteps] = useState<{ titleRu: string; titleEn: string }[]>([]);
+  const [steps, setSteps] = useState<{ 
+    titleRu: string; 
+    titleEn: string; 
+    dueDate?: string;
+    bonusAmount: number;
+    bonusHidden: boolean;
+  }[]>([]);
   const [newStepTitle, setNewStepTitle] = useState('');
+  const [newStepDueDate, setNewStepDueDate] = useState<Date | undefined>(undefined);
+  const [newStepBonus, setNewStepBonus] = useState(0);
+  const [newStepBonusHidden, setNewStepBonusHidden] = useState(false);
   
   const { createTemplate } = useTasks();
   const { createSteps } = useTaskSteps();
@@ -130,8 +139,17 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
 
   const addStep = () => {
     if (newStepTitle.trim()) {
-      setSteps([...steps, { titleRu: newStepTitle.trim(), titleEn: newStepTitle.trim() }]);
+      setSteps([...steps, { 
+        titleRu: newStepTitle.trim(), 
+        titleEn: newStepTitle.trim(),
+        dueDate: newStepDueDate ? format(newStepDueDate, 'yyyy-MM-dd') : undefined,
+        bonusAmount: newStepBonus,
+        bonusHidden: newStepBonusHidden,
+      }]);
       setNewStepTitle('');
+      setNewStepDueDate(undefined);
+      setNewStepBonus(0);
+      setNewStepBonusHidden(false);
     }
   };
 
@@ -181,6 +199,9 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
             title_ru: step.titleRu,
             title_en: step.titleEn,
             order_index: index,
+            due_date: step.dueDate || null,
+            bonus_amount: step.bonusAmount,
+            bonus_hidden: step.bonusHidden,
           }))
         );
       }
@@ -555,51 +576,140 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
             {steps.length > 0 && (
               <div className="space-y-2">
                 {steps.map((step, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
-                    <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
-                    <span className="flex-1 text-sm">{step.titleRu}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => removeStep(index)}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
+                  <div key={index} className="bg-muted/50 rounded-lg p-2 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
+                      <span className="flex-1 text-sm">{step.titleRu}</span>
+                      {step.bonusAmount > 0 && (
+                        <span className={cn(
+                          "text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1",
+                          step.bonusHidden ? "bg-muted-foreground/20" : "bg-amber-500/20 text-amber-600"
+                        )}>
+                          {step.bonusHidden ? <EyeOff className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
+                          +{step.bonusAmount}
+                        </span>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => removeStep(index)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    {step.dueDate && (
+                      <div className="ml-6 text-xs text-muted-foreground flex items-center gap-1">
+                        <CalendarIcon className="w-3 h-3" />
+                        {language === 'ru' ? 'До:' : 'Due:'} {format(new Date(step.dueDate), 'dd.MM.yyyy', { locale })}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
             
-            <div className="flex gap-2">
-              <Input
-                placeholder={language === 'ru' ? 'Добавить шаг...' : 'Add step...'}
-                value={newStepTitle}
-                onChange={(e) => setNewStepTitle(e.target.value)}
-                className="rounded-xl flex-1"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addStep();
-                  }
-                }}
-              />
+            {/* New step input */}
+            <div className="space-y-2 border rounded-xl p-3 bg-muted/30">
+              <div className="flex gap-2">
+                <Input
+                  placeholder={language === 'ru' ? 'Название шага...' : 'Step title...'}
+                  value={newStepTitle}
+                  onChange={(e) => setNewStepTitle(e.target.value)}
+                  className="rounded-xl flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addStep();
+                    }
+                  }}
+                />
+              </div>
+              
+              {/* Step options row */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* Due date */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start text-left font-normal rounded-lg text-xs h-8",
+                        !newStepDueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-1 h-3 w-3" />
+                      {newStepDueDate ? format(newStepDueDate, 'dd.MM', { locale }) : (language === 'ru' ? 'Срок' : 'Due')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={newStepDueDate}
+                      onSelect={setNewStepDueDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                {/* Bonus amount */}
+                <div className="relative">
+                  <Gift className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={newStepBonus || ''}
+                    onChange={(e) => setNewStepBonus(parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                    className="rounded-lg h-8 text-xs pl-6 pr-2"
+                  />
+                </div>
+                
+                {/* Hidden bonus toggle */}
+                <Button
+                  type="button"
+                  variant={newStepBonusHidden ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-8 text-xs rounded-lg"
+                  onClick={() => setNewStepBonusHidden(!newStepBonusHidden)}
+                  disabled={newStepBonus === 0}
+                >
+                  {newStepBonusHidden ? (
+                    <>
+                      <EyeOff className="w-3 h-3 mr-1" />
+                      {language === 'ru' ? 'Скрыт' : 'Hidden'}
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-3 h-3 mr-1" />
+                      {language === 'ru' ? 'Виден' : 'Visible'}
+                    </>
+                  )}
+                </Button>
+              </div>
+              
               <Button
                 type="button"
                 variant="outline"
-                size="icon"
-                className="rounded-xl"
+                size="sm"
+                className="w-full rounded-xl"
                 onClick={addStep}
                 disabled={!newStepTitle.trim()}
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-1" />
+                {language === 'ru' ? 'Добавить шаг' : 'Add step'}
               </Button>
             </div>
+            
             <p className="text-xs text-muted-foreground">
               {language === 'ru' 
-                ? 'Шаги помогают разбить задачу на части и отслеживать прогресс'
-                : 'Steps help break down tasks and track progress'}
+                ? 'Шаги помогают разбить задачу на части. Бонусы могут быть скрыты до завершения!'
+                : 'Steps help break down tasks. Bonuses can be hidden until completion!'}
             </p>
           </div>
 

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, Edit, Plus, X, ListChecks, GripVertical } from 'lucide-react';
+import { Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, Edit, Plus, X, ListChecks, GripVertical, Gift, EyeOff, Eye } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { useChildren } from '@/hooks/useChildren';
 import { useTaskSteps } from '@/hooks/useTaskSteps';
@@ -104,8 +104,18 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Steps state
-  const [localSteps, setLocalSteps] = useState<Array<{ id?: string; title_ru: string; title_en: string }>>([]);
+  const [localSteps, setLocalSteps] = useState<Array<{ 
+    id?: string; 
+    title_ru: string; 
+    title_en: string;
+    due_date?: string | null;
+    bonus_amount: number;
+    bonus_hidden: boolean;
+  }>>([]);
   const [newStepTitle, setNewStepTitle] = useState('');
+  const [newStepDueDate, setNewStepDueDate] = useState<Date | undefined>(undefined);
+  const [newStepBonus, setNewStepBonus] = useState(0);
+  const [newStepBonusHidden, setNewStepBonusHidden] = useState(false);
   const [stepsInitialized, setStepsInitialized] = useState(false);
   
   const { updateTemplate } = useTasks();
@@ -159,6 +169,9 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
         id: s.id,
         title_ru: s.title_ru,
         title_en: s.title_en,
+        due_date: s.due_date,
+        bonus_amount: s.bonus_amount,
+        bonus_hidden: s.bonus_hidden,
       })));
       setStepsInitialized(true);
     }
@@ -166,8 +179,17 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
 
   const addStep = () => {
     if (newStepTitle.trim()) {
-      setLocalSteps([...localSteps, { title_ru: newStepTitle.trim(), title_en: newStepTitle.trim() }]);
+      setLocalSteps([...localSteps, { 
+        title_ru: newStepTitle.trim(), 
+        title_en: newStepTitle.trim(),
+        due_date: newStepDueDate ? format(newStepDueDate, 'yyyy-MM-dd') : null,
+        bonus_amount: newStepBonus,
+        bonus_hidden: newStepBonusHidden,
+      }]);
       setNewStepTitle('');
+      setNewStepDueDate(undefined);
+      setNewStepBonus(0);
+      setNewStepBonusHidden(false);
     }
   };
 
@@ -238,6 +260,9 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
             title_ru: s.title_ru,
             title_en: s.title_en,
             order_index: index,
+            due_date: s.due_date || null,
+            bonus_amount: s.bonus_amount,
+            bonus_hidden: s.bonus_hidden,
           }))
         );
       }
@@ -610,40 +635,57 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
                 {localSteps.map((step, index) => (
                   <div
                     key={step.id || index}
-                    className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg group"
+                    className="bg-muted/50 rounded-lg p-2 space-y-1 group"
                   >
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => moveStep(index, 'up')}
+                          disabled={index === 0}
+                          className="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <GripVertical className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-medium">
+                        {index + 1}
+                      </span>
+                      <span className="flex-1 text-sm">
+                        {language === 'ru' ? step.title_ru : step.title_en}
+                      </span>
+                      {step.bonus_amount > 0 && (
+                        <span className={cn(
+                          "text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1",
+                          step.bonus_hidden ? "bg-muted-foreground/20" : "bg-amber-500/20 text-amber-600"
+                        )}>
+                          {step.bonus_hidden ? <EyeOff className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
+                          +{step.bonus_amount}
+                        </span>
+                      )}
                       <button
                         type="button"
-                        onClick={() => moveStep(index, 'up')}
-                        disabled={index === 0}
-                        className="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                        onClick={() => removeStep(index)}
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
                       >
-                        <GripVertical className="w-3 h-3" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-medium">
-                      {index + 1}
-                    </span>
-                    <span className="flex-1 text-sm">
-                      {language === 'ru' ? step.title_ru : step.title_en}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeStep(index)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    {step.due_date && (
+                      <div className="ml-8 text-xs text-muted-foreground flex items-center gap-1">
+                        <CalendarIcon className="w-3 h-3" />
+                        {language === 'ru' ? 'До:' : 'Due:'} {format(new Date(step.due_date), 'dd.MM.yyyy', { locale })}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
             {/* Add new step */}
-            <div className="flex gap-2">
+            <div className="space-y-2 border rounded-xl p-3 bg-muted/30">
               <Input
-                placeholder={language === 'ru' ? 'Добавить шаг...' : 'Add step...'}
+                placeholder={language === 'ru' ? 'Название шага...' : 'Step title...'}
                 value={newStepTitle}
                 onChange={(e) => setNewStepTitle(e.target.value)}
                 onKeyDown={(e) => {
@@ -652,27 +694,93 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
                     addStep();
                   }
                 }}
-                className="rounded-xl flex-1"
+                className="rounded-xl"
               />
+              
+              {/* Step options row */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* Due date */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start text-left font-normal rounded-lg text-xs h-8",
+                        !newStepDueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-1 h-3 w-3" />
+                      {newStepDueDate ? format(newStepDueDate, 'dd.MM', { locale }) : (language === 'ru' ? 'Срок' : 'Due')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={newStepDueDate}
+                      onSelect={setNewStepDueDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                {/* Bonus amount */}
+                <div className="relative">
+                  <Gift className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={newStepBonus || ''}
+                    onChange={(e) => setNewStepBonus(parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                    className="rounded-lg h-8 text-xs pl-6 pr-2"
+                  />
+                </div>
+                
+                {/* Hidden bonus toggle */}
+                <Button
+                  type="button"
+                  variant={newStepBonusHidden ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-8 text-xs rounded-lg"
+                  onClick={() => setNewStepBonusHidden(!newStepBonusHidden)}
+                  disabled={newStepBonus === 0}
+                >
+                  {newStepBonusHidden ? (
+                    <>
+                      <EyeOff className="w-3 h-3 mr-1" />
+                      {language === 'ru' ? 'Скрыт' : 'Hidden'}
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-3 h-3 mr-1" />
+                      {language === 'ru' ? 'Виден' : 'Visible'}
+                    </>
+                  )}
+                </Button>
+              </div>
+              
               <Button
                 type="button"
                 variant="outline"
-                size="icon"
+                size="sm"
+                className="w-full rounded-xl"
                 onClick={addStep}
                 disabled={!newStepTitle.trim()}
-                className="rounded-xl"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-1" />
+                {language === 'ru' ? 'Добавить шаг' : 'Add step'}
               </Button>
             </div>
             
-            {localSteps.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                {language === 'ru' 
-                  ? 'Шаги помогут разбить задачу на понятные действия' 
-                  : 'Steps help break down the task into clear actions'}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              {language === 'ru' 
+                ? 'Бонусы могут быть скрыты — ребенок увидит их только после завершения!'
+                : 'Bonuses can be hidden — child will see them only after completion!'}
+            </p>
           </div>
 
           {/* Submit Button */}

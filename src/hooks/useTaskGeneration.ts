@@ -15,7 +15,11 @@ export const useTaskGeneration = () => {
       if (!family || children.length === 0) return { created: 0 };
 
       const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      // Format date as YYYY-MM-DD in local timezone
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
       const dayOfWeek = (today.getDay() + 6) % 7; // Monday = 0, Sunday = 6
 
       // Get all active templates
@@ -28,17 +32,12 @@ export const useTaskGeneration = () => {
       if (templatesError) throw templatesError;
       if (!templates || templates.length === 0) return { created: 0 };
 
-      // Get existing instances for today
-      const todayStart = new Date(today);
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date(today);
-      todayEnd.setHours(23, 59, 59, 999);
-
+      // Get existing instances for today (using local date string)
       const { data: existingInstances, error: instancesError } = await supabase
         .from('task_instances')
         .select('template_id, child_id')
-        .gte('due_datetime', todayStart.toISOString())
-        .lte('due_datetime', todayEnd.toISOString());
+        .gte('due_datetime', `${todayStr}T00:00:00`)
+        .lte('due_datetime', `${todayStr}T23:59:59.999`);
 
       if (instancesError) throw instancesError;
 
@@ -88,19 +87,17 @@ export const useTaskGeneration = () => {
         for (const child of targetChildren) {
           const key = `${template.id}_${child.id}`;
           if (!existingSet.has(key)) {
-            // Calculate due_datetime
-            const dueDate = new Date(today);
+            // Calculate due_datetime using local date string to avoid UTC conversion
+            let timeStr = '09:00:00'; // Default to 9:00 AM
             if (template.recurring_time) {
               const [hours, minutes] = template.recurring_time.split(':').map(Number);
-              dueDate.setHours(hours, minutes, 0, 0);
-            } else {
-              dueDate.setHours(9, 0, 0, 0); // Default to 9:00 AM
+              timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
             }
 
             instancesToCreate.push({
               template_id: template.id,
               child_id: child.id,
-              due_datetime: dueDate.toISOString(),
+              due_datetime: `${todayStr}T${timeStr}`,
               state: 'todo',
             });
           }

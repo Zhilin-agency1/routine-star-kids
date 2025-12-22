@@ -22,8 +22,9 @@ export const useAllTodayTasks = () => {
         .from('task_instances')
         .select(`
           *,
-          template:task_templates(*)
+          template:task_templates!inner(*)
         `)
+        .eq('template.family_id', family.id)
         .gte('due_datetime', `${dateStr}T00:00:00`)
         .lte('due_datetime', `${dateStr}T23:59:59.999`)
         .order('due_datetime', { ascending: true });

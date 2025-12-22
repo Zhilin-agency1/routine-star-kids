@@ -39,7 +39,8 @@ export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true, canToggl
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't open dialog if clicking on checkbox
     if ((e.target as HTMLElement).closest('button')) return;
-    if (hasDetails) {
+    // Open dialog if we have templateId (steps may still be loading)
+    if (task.templateId) {
       setDialogOpen(true);
     }
   };
@@ -50,7 +51,7 @@ export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true, canToggl
         className={cn(
           "flex items-center gap-3 bg-card rounded-xl p-3 transition-all",
           isDone && "opacity-60",
-          hasDetails && "cursor-pointer hover:bg-card/80"
+          task.templateId && "cursor-pointer hover:bg-card/80"
         )}
         onClick={handleCardClick}
       >
@@ -99,8 +100,8 @@ export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true, canToggl
         <CoinBadge amount={task.rewardAmount} size="sm" />
       </div>
 
-      {/* Details Dialog */}
-      {hasDetails && task.templateId && (
+      {/* Details Dialog - always render if templateId exists */}
+      {task.templateId && (
         <TaskDetailsDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}

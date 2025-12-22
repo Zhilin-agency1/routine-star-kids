@@ -5,6 +5,7 @@ import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
+import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { useChildren } from '@/hooks/useChildren';
 import { useTasks } from '@/hooks/useTasks';
 import { useAllTodayTasks } from '@/hooks/useAllTodayTasks';
@@ -241,6 +242,18 @@ export const TasksPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover">
+                          <EditTaskDialog 
+                            template={template}
+                            trigger={
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                {language === 'ru' ? 'Редактировать' : 'Edit'}
+                              </DropdownMenuItem>
+                            }
+                          />
                           <DropdownMenuItem 
                             className="text-destructive cursor-pointer"
                             onClick={() => setDeletingTemplateId(template.id)}

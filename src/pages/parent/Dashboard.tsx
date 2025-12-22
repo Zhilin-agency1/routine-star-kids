@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { TrendingUp, CheckCircle, Users, Undo2 } from 'lucide-react';
+import { TrendingUp, CheckCircle, Users, Undo2, MapPin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChildren } from '@/hooks/useChildren';
 import { useAllTodayTasks } from '@/hooks/useAllTodayTasks';
 import { useTasks } from '@/hooks/useTasks';
+import { useSchedule } from '@/hooks/useSchedule';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
@@ -11,15 +12,30 @@ import { AddChildDialog } from '@/components/AddChildDialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+interface DashboardTask {
+  id: string;
+  templateId: string;
+  childId: string;
+  title: { ru: string; en: string };
+  rewardAmount: number;
+  state: 'todo' | 'doing' | 'done' | 'skipped' | 'cancelled';
+  icon: string;
+  rewardGranted: boolean;
+  dueTime: string | null;
+  isActivity?: boolean;
+  location?: string | null;
+}
+
 export const ParentDashboard = () => {
   const { t, language } = useLanguage();
   const { children } = useChildren();
   const { instances } = useAllTodayTasks();
   const { completeTask, uncompleteTask, updateInstanceState } = useTasks();
+  const { todayActivities } = useSchedule();
 
   // Normalize instances to task format
   const tasks = useMemo(() => {
-    return instances.map(instance => ({
+    const taskList: DashboardTask[] = instances.map(instance => ({
       id: instance.id,
       templateId: instance.template_id,
       childId: instance.child_id,
@@ -32,8 +48,31 @@ export const ParentDashboard = () => {
       icon: instance.template?.icon || '✨',
       rewardGranted: instance.reward_granted,
       dueTime: instance.template?.recurring_time || null,
+      isActivity: false,
     }));
-  }, [instances]);
+
+    // Add today's activities as read-only items
+    todayActivities.forEach(activity => {
+      taskList.push({
+        id: `activity-${activity.id}`,
+        templateId: activity.id,
+        childId: activity.child_id,
+        title: {
+          ru: activity.title_ru,
+          en: activity.title_en,
+        },
+        rewardAmount: 0,
+        state: 'todo',
+        icon: '📅',
+        rewardGranted: false,
+        dueTime: activity.time,
+        isActivity: true,
+        location: activity.location,
+      });
+    });
+
+    return taskList;
+  }, [instances, todayActivities]);
 
   // Group tasks by child
   const childColumns = useMemo(() => {
@@ -82,6 +121,8 @@ export const ParentDashboard = () => {
     doing: 'border-l-warning',
     done: 'border-l-success',
   };
+
+  const activityColor = 'border-l-primary';
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -149,7 +190,7 @@ export const ParentDashboard = () => {
                       childTasks.map(task => (
                         <div 
                           key={task.id}
-                          className={`bg-background rounded-xl p-3 border-l-4 ${stateColors[task.state]} shadow-sm transition-all hover:shadow-md ${
+                          className={`bg-background rounded-xl p-3 border-l-4 ${task.isActivity ? activityColor : stateColors[task.state]} shadow-sm transition-all hover:shadow-md ${
                             task.state === 'done' ? 'opacity-60' : ''
                           }`}
                         >
@@ -159,18 +200,29 @@ export const ParentDashboard = () => {
                               <p className={`font-medium text-sm ${task.state === 'done' ? 'line-through' : ''}`}>
                                 {task.title[language]}
                               </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <CoinBadge amount={task.rewardAmount} size="sm" />
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                {!task.isActivity && <CoinBadge amount={task.rewardAmount} size="sm" />}
+                                {task.isActivity && (
+                                  <span className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full">
+                                    {language === 'ru' ? 'Занятие' : 'Activity'}
+                                  </span>
+                                )}
                                 {task.dueTime && (
                                   <span className="text-xs text-muted-foreground">
                                     {task.dueTime.slice(0, 5)}
+                                  </span>
+                                )}
+                                {task.location && (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                                    <MapPin className="w-3 h-3" />
+                                    {task.location}
                                   </span>
                                 )}
                               </div>
                             </div>
                           </div>
                           
-                          {task.state !== 'done' ? (
+                          {!task.isActivity && task.state !== 'done' ? (
                             <div className="flex gap-1 mt-2">
                               {task.state === 'todo' && (
                                 <Button 
@@ -190,7 +242,7 @@ export const ParentDashboard = () => {
                                 {language === 'ru' ? 'Готово ✓' : 'Done ✓'}
                               </Button>
                             </div>
-                          ) : (
+                          ) : !task.isActivity ? (
                             <div className="flex gap-1 mt-2">
                               <Button 
                                 size="sm" 
@@ -202,7 +254,7 @@ export const ParentDashboard = () => {
                                 {language === 'ru' ? 'Отменить' : 'Undo'}
                               </Button>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       ))
                     )}

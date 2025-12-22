@@ -4,7 +4,7 @@ import { useTaskSteps, useStepCompletions } from '@/hooks/useTaskSteps';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CoinBadge } from '@/components/ui/CoinBadge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Check, ListChecks, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, differenceInDays } from 'date-fns';
@@ -64,7 +64,7 @@ export const TaskDetailsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-3">
             <span className="text-3xl">{task.icon || '✨'}</span>
@@ -72,7 +72,7 @@ export const TaskDetailsDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <div className="flex-1 min-h-0 overflow-y-auto -mx-6 px-6">
           <div className="space-y-4 pb-2">
           {/* Task reward */}
           <div className="flex items-center gap-2">
@@ -189,7 +189,7 @@ export const TaskDetailsDialog = ({
             </div>
           )}
         </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

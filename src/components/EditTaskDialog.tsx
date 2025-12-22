@@ -86,12 +86,25 @@ type TaskFormData = z.infer<typeof taskSchema>;
 interface EditTaskDialogProps {
   template: TaskTemplate;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
 }
 
-export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogProps) => {
+export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpenChange, onSuccess }: EditTaskDialogProps) => {
   const { language } = useLanguage();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Support both controlled and uncontrolled mode
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (value: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
   const [selectedIcon, setSelectedIcon] = useState(template.icon || taskIcons[0]);
   const [selectedDays, setSelectedDays] = useState<number[]>(template.recurring_days || [1, 2, 3, 4, 5]);
   const [taskType, setTaskType] = useState<'recurring' | 'one_time'>(template.task_type as 'recurring' | 'one_time');
@@ -279,14 +292,16 @@ export const EditTaskDialog = ({ template, trigger, onSuccess }: EditTaskDialogP
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button size="sm" variant="ghost" className="rounded-xl">
-            <Edit className="w-4 h-4 mr-1" />
-            {language === 'ru' ? 'Редактировать' : 'Edit'}
-          </Button>
-        )}
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button size="sm" variant="ghost" className="rounded-xl">
+              <Edit className="w-4 h-4 mr-1" />
+              {language === 'ru' ? 'Редактировать' : 'Edit'}
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

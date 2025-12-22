@@ -36,6 +36,7 @@ export const TasksPage = () => {
   const { templates, deleteTemplate } = useTasks();
   const { instances } = useAllTodayTasks();
   const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<typeof templates[0] | null>(null);
 
   const getChildById = (id: string) => children.find(c => c.id === id);
 
@@ -250,18 +251,13 @@ export const TasksPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover">
-                          <EditTaskDialog 
-                            template={template}
-                            trigger={
-                              <DropdownMenuItem 
-                                className="cursor-pointer"
-                                onSelect={(e) => e.preventDefault()}
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                {language === 'ru' ? 'Редактировать' : 'Edit'}
-                              </DropdownMenuItem>
-                            }
-                          />
+                          <DropdownMenuItem 
+                            className="cursor-pointer"
+                            onClick={() => setEditingTemplate(template)}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            {language === 'ru' ? 'Редактировать' : 'Edit'}
+                          </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-destructive cursor-pointer"
                             onClick={() => setDeletingTemplateId(template.id)}
@@ -319,6 +315,16 @@ export const TasksPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Task Dialog - outside dropdown for mobile compatibility */}
+      {editingTemplate && (
+        <EditTaskDialog 
+          template={editingTemplate}
+          open={!!editingTemplate}
+          onOpenChange={(open) => !open && setEditingTemplate(null)}
+          onSuccess={() => setEditingTemplate(null)}
+        />
+      )}
     </div>
   );
 };

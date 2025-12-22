@@ -125,11 +125,13 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
     due_date?: string | null;
     bonus_amount: number;
     bonus_hidden: boolean;
+    duration_minutes?: number | null;
   }>>([]);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [newStepDueDate, setNewStepDueDate] = useState<Date | undefined>(undefined);
   const [newStepBonus, setNewStepBonus] = useState(0);
   const [newStepBonusHidden, setNewStepBonusHidden] = useState(false);
+  const [newStepDuration, setNewStepDuration] = useState<number | undefined>(undefined);
   const [stepsInitialized, setStepsInitialized] = useState(false);
   
   const { updateTemplate } = useTasks();
@@ -186,6 +188,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
         due_date: s.due_date,
         bonus_amount: s.bonus_amount,
         bonus_hidden: s.bonus_hidden,
+        duration_minutes: s.duration_minutes,
       })));
       setStepsInitialized(true);
     }
@@ -199,11 +202,13 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
         due_date: newStepDueDate ? format(newStepDueDate, 'yyyy-MM-dd') : null,
         bonus_amount: newStepBonus,
         bonus_hidden: newStepBonusHidden,
+        duration_minutes: newStepDuration,
       }]);
       setNewStepTitle('');
       setNewStepDueDate(undefined);
       setNewStepBonus(0);
       setNewStepBonusHidden(false);
+      setNewStepDuration(undefined);
     }
   };
 
@@ -265,6 +270,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
             due_date: s.due_date || null,
             bonus_amount: s.bonus_amount,
             bonus_hidden: s.bonus_hidden,
+            duration_minutes: s.duration_minutes || null,
           }))
         );
       }
@@ -655,7 +661,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
               />
               
               {/* Step options row */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {/* Due date */}
                 <Popover>
                   <PopoverTrigger asChild>
@@ -682,6 +688,20 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
                     />
                   </PopoverContent>
                 </Popover>
+                
+                {/* Duration minutes */}
+                <div className="relative">
+                  <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={180}
+                    value={newStepDuration || ''}
+                    onChange={(e) => setNewStepDuration(parseInt(e.target.value) || undefined)}
+                    placeholder={language === 'ru' ? 'мин' : 'min'}
+                    className="rounded-lg h-8 text-xs pl-6 pr-2"
+                  />
+                </div>
                 
                 {/* Bonus amount */}
                 <div className="relative">

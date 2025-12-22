@@ -562,6 +562,7 @@ export type Database = {
           bonus_hidden: boolean | null
           created_at: string
           due_date: string | null
+          duration_minutes: number | null
           id: string
           order_index: number
           template_id: string
@@ -573,6 +574,7 @@ export type Database = {
           bonus_hidden?: boolean | null
           created_at?: string
           due_date?: string | null
+          duration_minutes?: number | null
           id?: string
           order_index?: number
           template_id: string
@@ -584,6 +586,7 @@ export type Database = {
           bonus_hidden?: boolean | null
           created_at?: string
           due_date?: string | null
+          duration_minutes?: number | null
           id?: string
           order_index?: number
           template_id?: string

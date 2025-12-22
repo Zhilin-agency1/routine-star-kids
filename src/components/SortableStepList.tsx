@@ -16,7 +16,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { GripVertical, X, Gift, EyeOff, CalendarIcon } from 'lucide-react';
+import { GripVertical, X, Gift, EyeOff, CalendarIcon, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ export interface SortableStep {
   due_date?: string | null;
   bonus_amount: number;
   bonus_hidden: boolean;
+  duration_minutes?: number | null;
 }
 
 interface SortableStepItemProps {
@@ -86,6 +87,12 @@ const SortableStepItem = ({ step, index, onRemove }: SortableStepItemProps) => {
           )}>
             {step.bonus_hidden ? <EyeOff className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
             +{step.bonus_amount}
+          </span>
+        )}
+        {step.duration_minutes && step.duration_minutes > 0 && (
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-600 flex items-center gap-1 flex-shrink-0">
+            <Clock className="w-3 h-3" />
+            {step.duration_minutes}{language === 'ru' ? 'м' : 'm'}
           </span>
         )}
         <button

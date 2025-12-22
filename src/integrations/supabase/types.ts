@@ -460,6 +460,77 @@ export type Database = {
           },
         ]
       }
+      task_step_completions: {
+        Row: {
+          completed_at: string
+          id: string
+          step_id: string
+          task_instance_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          step_id: string
+          task_instance_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          step_id?: string
+          task_instance_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_step_completions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "task_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_step_completions_task_instance_id_fkey"
+            columns: ["task_instance_id"]
+            isOneToOne: false
+            referencedRelation: "task_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_steps: {
+        Row: {
+          created_at: string
+          id: string
+          order_index: number
+          template_id: string
+          title_en: string
+          title_ru: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          template_id: string
+          title_en: string
+          title_ru: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          template_id?: string
+          title_en?: string
+          title_ru?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_steps_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_templates: {
         Row: {
           child_id: string | null

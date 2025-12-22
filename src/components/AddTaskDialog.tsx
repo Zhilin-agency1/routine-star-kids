@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon } from 'lucide-react';
+import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
+import { useTaskSteps } from '@/hooks/useTaskSteps';
 import { useChildren } from '@/hooks/useChildren';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -96,8 +97,11 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [oneTimeDate, setOneTimeDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [steps, setSteps] = useState<{ titleRu: string; titleEn: string }[]>([]);
+  const [newStepTitle, setNewStepTitle] = useState('');
   
   const { createTemplate } = useTasks();
+  const { createSteps } = useTaskSteps();
   const { children } = useChildren();
 
   const locale = language === 'ru' ? ru : undefined;
@@ -124,6 +128,17 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
     );
   };
 
+  const addStep = () => {
+    if (newStepTitle.trim()) {
+      setSteps([...steps, { titleRu: newStepTitle.trim(), titleEn: newStepTitle.trim() }]);
+      setNewStepTitle('');
+    }
+  };
+
+  const removeStep = (index: number) => {
+    setSteps(steps.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (data: TaskFormData) => {
     if (taskType === 'recurring' && selectedDays.length === 0) {
       toast.error('Выберите хотя бы один день недели');
@@ -140,7 +155,7 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
 
     setIsSubmitting(true);
     try {
-      await createTemplate.mutateAsync({
+      const template = await createTemplate.mutateAsync({
         title_ru: data.titleRu,
         title_en: data.titleEn || data.titleRu,
         description_ru: data.descriptionRu || null,
@@ -157,6 +172,18 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
         one_time_date: taskType === 'one_time' ? format(oneTimeDate, 'yyyy-MM-dd') : null,
       });
+
+      // Create steps if any
+      if (steps.length > 0) {
+        await createSteps.mutateAsync(
+          steps.map((step, index) => ({
+            template_id: template.id,
+            title_ru: step.titleRu,
+            title_en: step.titleEn,
+            order_index: index,
+          }))
+        );
+      }
       
       toast.success('Задача создана!');
       setOpen(false);
@@ -169,6 +196,8 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
       setStartDate(new Date());
       setEndDate(undefined);
       setOneTimeDate(new Date());
+      setSteps([]);
+      setNewStepTitle('');
     } catch (error: any) {
       toast.error(error.message || 'Ошибка при создании задачи');
     } finally {
@@ -516,10 +545,68 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
             )}
           </div>
 
+          {/* Steps / Checklist */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <ListChecks className="w-4 h-4" />
+              {language === 'ru' ? 'Шаги (чек-лист)' : 'Steps (checklist)'}
+            </Label>
+            
+            {steps.length > 0 && (
+              <div className="space-y-2">
+                {steps.map((step, index) => (
+                  <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
+                    <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
+                    <span className="flex-1 text-sm">{step.titleRu}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => removeStep(index)}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <Input
+                placeholder={language === 'ru' ? 'Добавить шаг...' : 'Add step...'}
+                value={newStepTitle}
+                onChange={(e) => setNewStepTitle(e.target.value)}
+                className="rounded-xl flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addStep();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-xl"
+                onClick={addStep}
+                disabled={!newStepTitle.trim()}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {language === 'ru' 
+                ? 'Шаги помогают разбить задачу на части и отслеживать прогресс'
+                : 'Steps help break down tasks and track progress'}
+            </p>
+          </div>
+
           {/* Days of Week (for recurring) */}
           {taskType === 'recurring' && (
             <div className="space-y-2">
-              <Label>Дни недели</Label>
+              <Label>{language === 'ru' ? 'Дни недели' : 'Days of week'}</Label>
               <div className="flex gap-2">
                 {weekDays.map((day) => (
                   <button
@@ -538,7 +625,7 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
                 ))}
               </div>
               {selectedDays.length === 0 && (
-                <p className="text-sm text-destructive">Выберите хотя бы один день</p>
+                <p className="text-sm text-destructive">{language === 'ru' ? 'Выберите хотя бы один день' : 'Select at least one day'}</p>
               )}
             </div>
           )}

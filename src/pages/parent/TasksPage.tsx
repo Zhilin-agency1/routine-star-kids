@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react';
-import { Calendar, MoreVertical, ClipboardList, Trash2, Edit } from 'lucide-react';
+import { Calendar, MoreVertical, ClipboardList, Trash2, Edit, ListChecks } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
+import { StepChecklist } from '@/components/StepChecklist';
 import { useChildren } from '@/hooks/useChildren';
 import { useTasks } from '@/hooks/useTasks';
 import { useAllTodayTasks } from '@/hooks/useAllTodayTasks';
+import { useTaskSteps } from '@/hooks/useTaskSteps';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -134,6 +136,12 @@ export const TasksPage = () => {
                           )}
                           <CoinBadge amount={task.rewardAmount} size="sm" />
                         </div>
+                        
+                        {/* Step checklist for tasks with steps */}
+                        <StepChecklist 
+                          templateId={task.templateId} 
+                          instanceId={task.id}
+                        />
                       </div>
                     </div>
                   </div>

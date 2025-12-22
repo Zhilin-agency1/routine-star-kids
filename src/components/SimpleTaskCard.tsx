@@ -1,60 +1,122 @@
-import { Check } from 'lucide-react';
+import { useState } from 'react';
+import { Check, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CoinBadge } from './ui/CoinBadge';
+import { TaskDetailsDialog } from './TaskDetailsDialog';
+import { useTaskSteps, useStepCompletions } from '@/hooks/useTaskSteps';
 
 interface SimpleTaskCardProps {
   task: {
     id: string;
+    templateId?: string;
     title: { ru: string; en: string };
+    description?: { ru: string; en: string };
     icon?: string;
     rewardAmount: number;
     state: 'todo' | 'doing' | 'done' | 'skipped' | 'cancelled';
+    endDate?: string | null;
   };
   onComplete?: () => void;
   showCheckbox?: boolean;
+  canToggleSteps?: boolean;
 }
 
-export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true }: SimpleTaskCardProps) => {
+export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true, canToggleSteps = false }: SimpleTaskCardProps) => {
   const { language } = useLanguage();
+  const [dialogOpen, setDialogOpen] = useState(false);
   const isDone = task.state === 'done';
+  
+  // Get steps count for indicator
+  const { steps } = useTaskSteps(task.templateId);
+  const { completions } = useStepCompletions(task.id);
+  
+  const hasSteps = steps.length > 0;
+  const hasDescription = !!(task.description?.ru || task.description?.en);
+  const hasDetails = hasSteps || hasDescription;
+  const remainingSteps = steps.length - completions.length;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't open dialog if clicking on checkbox
+    if ((e.target as HTMLElement).closest('button')) return;
+    if (hasDetails) {
+      setDialogOpen(true);
+    }
+  };
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3 bg-card rounded-xl p-3 transition-all",
-        isDone && "opacity-60"
-      )}
-    >
-      {/* Checkbox */}
-      {showCheckbox && (
-        <button
-          onClick={() => !isDone && onComplete?.()}
-          disabled={isDone}
-          className={cn(
-            "w-7 h-7 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all",
-            isDone 
-              ? "bg-success border-success" 
-              : "border-muted-foreground/30 hover:border-primary"
+    <>
+      <div
+        className={cn(
+          "flex items-center gap-3 bg-card rounded-xl p-3 transition-all",
+          isDone && "opacity-60",
+          hasDetails && "cursor-pointer hover:bg-card/80"
+        )}
+        onClick={handleCardClick}
+      >
+        {/* Checkbox */}
+        {showCheckbox && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isDone) onComplete?.();
+            }}
+            disabled={isDone}
+            className={cn(
+              "w-7 h-7 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all",
+              isDone 
+                ? "bg-success border-success" 
+                : "border-muted-foreground/30 hover:border-primary"
+            )}
+          >
+            {isDone && <Check className="w-4 h-4 text-success-foreground" strokeWidth={3} />}
+          </button>
+        )}
+
+        {/* Icon */}
+        <span className="text-2xl flex-shrink-0">{task.icon || '✨'}</span>
+
+        {/* Title and steps indicator */}
+        <div className="flex-1 min-w-0">
+          <span className={cn(
+            "font-medium text-sm block",
+            isDone && "line-through text-muted-foreground"
+          )}>
+            {task.title[language]}
+          </span>
+          
+          {hasSteps && !isDone && remainingSteps > 0 && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+              <ListChecks className="w-3 h-3" />
+              {language === 'ru' 
+                ? `${remainingSteps} шаг${remainingSteps === 1 ? '' : remainingSteps < 5 ? 'а' : 'ов'}`
+                : `${remainingSteps} step${remainingSteps === 1 ? '' : 's'} left`}
+            </span>
           )}
-        >
-          {isDone && <Check className="w-4 h-4 text-success-foreground" strokeWidth={3} />}
-        </button>
+        </div>
+
+        {/* Reward */}
+        <CoinBadge amount={task.rewardAmount} size="sm" />
+      </div>
+
+      {/* Details Dialog */}
+      {hasDetails && task.templateId && (
+        <TaskDetailsDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          task={{
+            id: task.id,
+            templateId: task.templateId,
+            title: task.title,
+            description: task.description,
+            icon: task.icon,
+            rewardAmount: task.rewardAmount,
+            state: task.state,
+            endDate: task.endDate,
+          }}
+          canToggleSteps={canToggleSteps}
+        />
       )}
-
-      {/* Icon */}
-      <span className="text-2xl flex-shrink-0">{task.icon || '✨'}</span>
-
-      {/* Title */}
-      <span className={cn(
-        "flex-1 font-medium text-sm",
-        isDone && "line-through text-muted-foreground"
-      )}>
-        {task.title[language]}
-      </span>
-
-      {/* Reward */}
-      <CoinBadge amount={task.rewardAmount} size="sm" />
-    </div>
+    </>
   );
 };

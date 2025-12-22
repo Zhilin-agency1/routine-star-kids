@@ -7,6 +7,8 @@ import { useSchedule } from '@/hooks/useSchedule';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { SimpleTaskCard } from '@/components/SimpleTaskCard';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { format } from 'date-fns';
+import { ru, enUS } from 'date-fns/locale';
 
 export const FamilyTodayPage = () => {
   const { language } = useLanguage();
@@ -14,6 +16,14 @@ export const FamilyTodayPage = () => {
   const { instances } = useAllTodayTasks();
   const { completeTask } = useTasks();
   const { todayActivities } = useSchedule();
+
+  // Get current date formatted
+  const currentDate = useMemo(() => {
+    const now = new Date();
+    const locale = language === 'ru' ? ru : enUS;
+    // Format: "22 декабря 2024, воскресенье" or "December 22, 2024, Sunday"
+    return format(now, language === 'ru' ? "d MMMM yyyy, EEEE" : "MMMM d, yyyy, EEEE", { locale });
+  }, [language]);
 
   // Normalize instances to task format
   const tasks = useMemo(() => {
@@ -25,10 +35,15 @@ export const FamilyTodayPage = () => {
         ru: instance.template?.title_ru || '',
         en: instance.template?.title_en || '',
       },
+      description: {
+        ru: instance.template?.description_ru || '',
+        en: instance.template?.description_en || '',
+      },
       rewardAmount: instance.template?.reward_amount || 0,
       state: instance.state as 'todo' | 'doing' | 'done' | 'skipped' | 'cancelled',
       icon: instance.template?.icon || '✨',
       rewardGranted: instance.reward_granted,
+      endDate: instance.template?.end_date || null,
     }));
   }, [instances]);
 
@@ -64,10 +79,15 @@ export const FamilyTodayPage = () => {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Header */}
-      <h1 className="text-2xl font-bold">
-        {language === 'ru' ? 'Сегодня' : 'Today'}
-      </h1>
+      {/* Header with date */}
+      <div>
+        <h1 className="text-2xl font-bold">
+          {language === 'ru' ? 'Сегодня' : 'Today'}
+        </h1>
+        <p className="text-sm text-muted-foreground capitalize">
+          {currentDate}
+        </p>
+      </div>
 
       {/* Children columns */}
       <div className="overflow-x-auto -mx-4 px-4 pb-2">

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Settings, Users, Calendar, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
@@ -9,11 +10,13 @@ import { EditChildProfileDialog } from '@/components/EditChildProfileDialog';
 import { Progress } from '@/components/ui/progress';
 import { useTasks } from '@/hooks/useTasks';
 import { differenceInDays, parseISO, format } from 'date-fns';
+import type { Child } from '@/hooks/useChildren';
 
 export const ChildrenPage = () => {
   const { t, language } = useLanguage();
   const { children } = useApp();
   const { templates } = useTasks();
+  const [editingChild, setEditingChild] = useState<Child | null>(null);
 
   // Get multi-day tasks (tasks with end_date set and spanning multiple days)
   const getChildLongRunningTasks = (childId: string) => {
@@ -67,11 +70,14 @@ export const ChildrenPage = () => {
                     </div>
                   </div>
 
-                  <EditChildProfileDialog child={child}>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <Settings className="w-5 h-5" />
-                    </Button>
-                  </EditChildProfileDialog>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="rounded-full"
+                    onClick={() => setEditingChild(child as Child)}
+                  >
+                    <Settings className="w-5 h-5" />
+                  </Button>
                 </div>
 
                 {/* Long-running tasks section */}
@@ -132,6 +138,15 @@ export const ChildrenPage = () => {
           <p className="text-muted-foreground mb-4">{language === 'ru' ? 'Добавьте первого ребёнка, чтобы начать' : 'Add your first child to get started'}</p>
           <AddChildDialog />
         </div>
+      )}
+
+      {/* Edit Child Dialog */}
+      {editingChild && (
+        <EditChildProfileDialog
+          child={editingChild}
+          open={!!editingChild}
+          onOpenChange={(open) => !open && setEditingChild(null)}
+        />
       )}
     </div>
   );

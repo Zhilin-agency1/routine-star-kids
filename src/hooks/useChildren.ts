@@ -69,7 +69,7 @@ export const useChildren = () => {
     },
   });
 
-  // Update child balance
+  // Update child balance - uses atomic database function
   const updateBalance = useMutation({
     mutationFn: async ({ childId, amount, type, note }: { 
       childId: string; 
@@ -77,38 +77,24 @@ export const useChildren = () => {
       type: 'earn' | 'spend' | 'adjust';
       note?: string;
     }) => {
-      if (!family) throw new Error('Family not found');
+      // Calculate the actual amount based on type
+      const actualAmount = type === 'spend' ? -Math.abs(amount) : amount;
       
-      const child = children.find(c => c.id === childId);
-      if (!child) throw new Error('Child not found');
+      // Use atomic database function to prevent race conditions
+      const { data, error } = await supabase.rpc('adjust_child_balance', {
+        p_child_id: childId,
+        p_amount: actualAmount,
+        p_note: note || null,
+      });
       
-      const newBalance = type === 'spend' 
-        ? child.balance - Math.abs(amount)
-        : child.balance + amount;
+      if (error) throw error;
       
-      // Update balance
-      const { error: balanceError } = await supabase
-        .from('children')
-        .update({ balance: newBalance })
-        .eq('id', childId);
+      const result = data as { success: boolean; error?: string; new_balance?: number };
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update balance');
+      }
       
-      if (balanceError) throw balanceError;
-      
-      // Create transaction record
-      const { error: txError } = await supabase
-        .from('transactions')
-        .insert({
-          family_id: family.id,
-          child_id: childId,
-          transaction_type: type,
-          amount: type === 'spend' ? -Math.abs(amount) : amount,
-          source: 'manual',
-          note,
-        });
-      
-      if (txError) throw txError;
-      
-      return newBalance;
+      return result.new_balance || 0;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['children'] });

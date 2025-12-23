@@ -85,72 +85,26 @@ export const useStore = () => {
     },
   });
 
-  // Purchase item
+  // Purchase item - uses atomic database function
   const purchaseItem = useMutation({
     mutationFn: async ({ itemId, childId }: { itemId: string; childId: string }) => {
-      if (!family) throw new Error('Family not found');
+      // Use atomic database function to prevent race conditions
+      const { data, error } = await supabase.rpc('purchase_store_item', {
+        p_item_id: itemId,
+        p_child_id: childId,
+      });
       
-      // Get item and child
-      const { data: item, error: itemError } = await supabase
-        .from('store_items')
-        .select('*')
-        .eq('id', itemId)
-        .single();
+      if (error) throw error;
       
-      if (itemError) throw itemError;
-      if (!item) throw new Error('Item not found');
-      
-      const { data: child, error: childError } = await supabase
-        .from('children')
-        .select('balance')
-        .eq('id', childId)
-        .single();
-      
-      if (childError) throw childError;
-      if (!child) throw new Error('Child not found');
-      
-      if (child.balance < item.price) {
-        throw new Error('Insufficient balance');
+      const result = data as { success: boolean; error?: string; purchase_id?: string; price?: number; balance?: number };
+      if (!result.success) {
+        if (result.error === 'Insufficient balance') {
+          throw new Error('Insufficient balance');
+        }
+        throw new Error(result.error || 'Failed to purchase item');
       }
       
-      // Create purchase
-      const { data: purchase, error: purchaseError } = await supabase
-        .from('purchases')
-        .insert({
-          family_id: family.id,
-          child_id: childId,
-          store_item_id: itemId,
-          price_at_purchase: item.price,
-          status: 'requested',
-        })
-        .select()
-        .single();
-      
-      if (purchaseError) throw purchaseError;
-      
-      // Update child balance
-      const { error: balanceError } = await supabase
-        .from('children')
-        .update({ balance: child.balance - item.price })
-        .eq('id', childId);
-      
-      if (balanceError) throw balanceError;
-      
-      // Create transaction
-      const { error: txError } = await supabase
-        .from('transactions')
-        .insert({
-          family_id: family.id,
-          child_id: childId,
-          transaction_type: 'spend',
-          amount: -item.price,
-          source: 'store_purchase',
-          source_id: purchase.id,
-        });
-      
-      if (txError) throw txError;
-      
-      return purchase as Purchase;
+      return { id: result.purchase_id, price: result.price } as { id: string; price: number };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['children'] });

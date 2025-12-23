@@ -174,67 +174,23 @@ export const useJobBoard = () => {
     },
   });
 
-  // Complete job claim
+  // Complete job claim - uses atomic database function
   const completeJobClaim = useMutation({
     mutationFn: async ({ claimId, childId }: { claimId: string; childId: string }) => {
-      if (!family) throw new Error('Family not found');
+      // Use atomic database function to prevent race conditions
+      const { data, error } = await supabase.rpc('complete_job_claim_with_reward', {
+        p_claim_id: claimId,
+        p_child_id: childId,
+      });
       
-      // Get the claim with job info
-      const { data: claim, error: claimError } = await supabase
-        .from('job_claims')
-        .select(`
-          *,
-          job:job_board_items(*)
-        `)
-        .eq('id', claimId)
-        .single();
+      if (error) throw error;
       
-      if (claimError) throw claimError;
-      if (!claim) throw new Error('Claim not found');
+      const result = data as { success: boolean; error?: string; reward?: number };
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to complete job claim');
+      }
       
-      const claimWithJob = claim as unknown as JobClaim & { job: JobBoardItem };
-      const rewardAmount = claimWithJob.job.reward_amount;
-      
-      // Update claim status
-      const { error: updateError } = await supabase
-        .from('job_claims')
-        .update({ status: 'done' })
-        .eq('id', claimId);
-      
-      if (updateError) throw updateError;
-      
-      // Get child balance
-      const { data: child, error: childError } = await supabase
-        .from('children')
-        .select('balance')
-        .eq('id', childId)
-        .single();
-      
-      if (childError) throw childError;
-      
-      // Update balance
-      const { error: balanceError } = await supabase
-        .from('children')
-        .update({ balance: (child?.balance || 0) + rewardAmount })
-        .eq('id', childId);
-      
-      if (balanceError) throw balanceError;
-      
-      // Create transaction
-      const { error: txError } = await supabase
-        .from('transactions')
-        .insert({
-          family_id: family.id,
-          child_id: childId,
-          transaction_type: 'earn',
-          amount: rewardAmount,
-          source: 'job_claim',
-          source_id: claimId,
-        });
-      
-      if (txError) throw txError;
-      
-      return { rewardAmount };
+      return { rewardAmount: result.reward || 0 };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job_claims'] });

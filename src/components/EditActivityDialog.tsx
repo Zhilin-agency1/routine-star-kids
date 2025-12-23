@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +21,27 @@ const weekDays = [
   { value: 0, labelRu: 'Вс', labelEn: 'Sun' },
 ];
 
+const activitySchema = z.object({
+  titleRu: z.string()
+    .trim()
+    .min(1, { message: 'Название обязательно' })
+    .max(100, { message: 'Название не должно превышать 100 символов' }),
+  titleEn: z.string()
+    .trim()
+    .max(100, { message: 'Title should not exceed 100 characters' })
+    .optional(),
+  time: z.string().min(1, { message: 'Время обязательно' }),
+  duration: z.number()
+    .min(5, { message: 'Минимум 5 минут' })
+    .max(480, { message: 'Максимум 8 часов' }),
+  location: z.string()
+    .trim()
+    .max(200, { message: 'Место не должно превышать 200 символов' })
+    .optional(),
+});
+
+type ActivityFormData = z.infer<typeof activitySchema>;
+
 interface EditActivityDialogProps {
   activity: ActivitySchedule | null;
   open: boolean;
@@ -29,25 +53,33 @@ export const EditActivityDialog = ({ activity, open, onOpenChange }: EditActivit
   const { updateActivity, deleteActivity } = useSchedule();
   const { toast } = useToast();
   
-  const [titleRu, setTitleRu] = useState('');
-  const [titleEn, setTitleEn] = useState('');
-  const [time, setTime] = useState('09:00');
-  const [duration, setDuration] = useState(60);
-  const [location, setLocation] = useState('');
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const form = useForm<ActivityFormData>({
+    resolver: zodResolver(activitySchema),
+    defaultValues: {
+      titleRu: '',
+      titleEn: '',
+      time: '09:00',
+      duration: 60,
+      location: '',
+    },
+  });
+
   useEffect(() => {
-    if (activity) {
-      setTitleRu(activity.title_ru);
-      setTitleEn(activity.title_en);
-      setTime(activity.time);
-      setDuration(activity.duration);
-      setLocation(activity.location || '');
+    if (activity && open) {
+      form.reset({
+        titleRu: activity.title_ru,
+        titleEn: activity.title_en,
+        time: activity.time,
+        duration: activity.duration,
+        location: activity.location || '',
+      });
       setSelectedDays(activity.recurring_days || []);
     }
-  }, [activity]);
+  }, [activity, open, form]);
 
   const toggleDay = (day: number) => {
     setSelectedDays(prev => 
@@ -57,18 +89,18 @@ export const EditActivityDialog = ({ activity, open, onOpenChange }: EditActivit
     );
   };
 
-  const handleSubmit = async () => {
-    if (!activity || !titleRu.trim()) return;
+  const handleSubmit = async (data: ActivityFormData) => {
+    if (!activity) return;
     
     setIsSubmitting(true);
     try {
       await updateActivity.mutateAsync({
         id: activity.id,
-        title_ru: titleRu.trim(),
-        title_en: titleEn.trim() || titleRu.trim(),
-        time,
-        duration,
-        location: location.trim() || null,
+        title_ru: data.titleRu,
+        title_en: data.titleEn?.trim() || data.titleRu,
+        time: data.time,
+        duration: data.duration,
+        location: data.location?.trim() || null,
         recurring_days: selectedDays,
       });
       
@@ -116,23 +148,29 @@ export const EditActivityDialog = ({ activity, open, onOpenChange }: EditActivit
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label>{language === 'ru' ? 'Название' : 'Title'}</Label>
             <Input
-              value={titleRu}
-              onChange={(e) => setTitleRu(e.target.value)}
+              {...form.register('titleRu')}
               placeholder={language === 'ru' ? 'Название занятия' : 'Activity title'}
+              maxLength={100}
             />
+            {form.formState.errors.titleRu && (
+              <p className="text-sm text-destructive">{form.formState.errors.titleRu.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>{language === 'ru' ? 'Название (EN)' : 'Title (EN)'}</Label>
             <Input
-              value={titleEn}
-              onChange={(e) => setTitleEn(e.target.value)}
+              {...form.register('titleEn')}
               placeholder="Activity title in English"
+              maxLength={100}
             />
+            {form.formState.errors.titleEn && (
+              <p className="text-sm text-destructive">{form.formState.errors.titleEn.message}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -140,29 +178,36 @@ export const EditActivityDialog = ({ activity, open, onOpenChange }: EditActivit
               <Label>{language === 'ru' ? 'Время' : 'Time'}</Label>
               <Input
                 type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
+                {...form.register('time')}
               />
+              {form.formState.errors.time && (
+                <p className="text-sm text-destructive">{form.formState.errors.time.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>{language === 'ru' ? 'Длительность (мин)' : 'Duration (min)'}</Label>
               <Input
                 type="number"
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
                 min={5}
                 max={480}
+                {...form.register('duration', { valueAsNumber: true })}
               />
+              {form.formState.errors.duration && (
+                <p className="text-sm text-destructive">{form.formState.errors.duration.message}</p>
+              )}
             </div>
           </div>
 
           <div className="space-y-2">
             <Label>{language === 'ru' ? 'Место' : 'Location'}</Label>
             <Input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              {...form.register('location')}
               placeholder={language === 'ru' ? 'Где проходит занятие' : 'Where the activity takes place'}
+              maxLength={200}
             />
+            {form.formState.errors.location && (
+              <p className="text-sm text-destructive">{form.formState.errors.location.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -187,6 +232,7 @@ export const EditActivityDialog = ({ activity, open, onOpenChange }: EditActivit
 
           <div className="flex gap-2 pt-4">
             <Button
+              type="button"
               variant="destructive"
               onClick={handleDelete}
               disabled={isSubmitting || isDeleting}
@@ -199,6 +245,7 @@ export const EditActivityDialog = ({ activity, open, onOpenChange }: EditActivit
               )}
             </Button>
             <Button
+              type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting || isDeleting}
@@ -207,8 +254,8 @@ export const EditActivityDialog = ({ activity, open, onOpenChange }: EditActivit
               {language === 'ru' ? 'Отмена' : 'Cancel'}
             </Button>
             <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting || isDeleting || !titleRu.trim()}
+              type="submit"
+              disabled={isSubmitting || isDeleting}
               className="flex-1"
             >
               {isSubmitting ? (
@@ -218,7 +265,7 @@ export const EditActivityDialog = ({ activity, open, onOpenChange }: EditActivit
               )}
             </Button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -174,69 +174,23 @@ export const useTasks = (childId?: string, date?: Date) => {
     },
   });
 
-  // Complete task (update state + grant reward)
+  // Complete task (update state + grant reward) - uses atomic database function
   const completeTask = useMutation({
     mutationFn: async ({ instanceId, childId }: { instanceId: string; childId: string }) => {
-      // Get the task instance with template
-      const { data: instance, error: fetchError } = await supabase
-        .from('task_instances')
-        .select(`
-          *,
-          template:task_templates(*)
-        `)
-        .eq('id', instanceId)
-        .single();
+      // Use atomic database function to prevent race conditions
+      const { data, error } = await supabase.rpc('complete_task_with_reward', {
+        p_instance_id: instanceId,
+        p_child_id: childId,
+      });
       
-      if (fetchError) throw fetchError;
-      if (!instance || !family) throw new Error('Task not found');
+      if (error) throw error;
       
-      const taskWithTemplate = instance as unknown as TaskWithTemplate;
-      const rewardAmount = taskWithTemplate.template.reward_amount;
+      const result = data as { success: boolean; error?: string; reward?: number };
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to complete task');
+      }
       
-      // Update task instance
-      const { error: updateError } = await supabase
-        .from('task_instances')
-        .update({
-          state: 'done',
-          completed_at: new Date().toISOString(),
-          reward_granted: true,
-        })
-        .eq('id', instanceId);
-      
-      if (updateError) throw updateError;
-      
-      // Get current child balance
-      const { data: child, error: childError } = await supabase
-        .from('children')
-        .select('balance')
-        .eq('id', childId)
-        .single();
-      
-      if (childError) throw childError;
-      
-      // Update child balance
-      const { error: balanceError } = await supabase
-        .from('children')
-        .update({ balance: (child?.balance || 0) + rewardAmount })
-        .eq('id', childId);
-      
-      if (balanceError) throw balanceError;
-      
-      // Create transaction
-      const { error: txError } = await supabase
-        .from('transactions')
-        .insert({
-          family_id: family.id,
-          child_id: childId,
-          transaction_type: 'earn',
-          amount: rewardAmount,
-          source: 'task_instance',
-          source_id: instanceId,
-        });
-      
-      if (txError) throw txError;
-      
-      return { rewardAmount };
+      return { rewardAmount: result.reward || 0 };
     },
     onMutate: async ({ instanceId }) => {
       // Cancel outgoing refetches
@@ -278,75 +232,23 @@ export const useTasks = (childId?: string, date?: Date) => {
     },
   });
 
-  // Uncomplete task (revert from done to todo and remove reward)
+  // Uncomplete task (revert from done to todo and remove reward) - uses atomic database function
   const uncompleteTask = useMutation({
     mutationFn: async ({ instanceId, childId }: { instanceId: string; childId: string }) => {
-      // Get the task instance with template
-      const { data: instance, error: fetchError } = await supabase
-        .from('task_instances')
-        .select(`
-          *,
-          template:task_templates(*)
-        `)
-        .eq('id', instanceId)
-        .single();
+      // Use atomic database function to prevent race conditions
+      const { data, error } = await supabase.rpc('uncomplete_task_with_refund', {
+        p_instance_id: instanceId,
+        p_child_id: childId,
+      });
       
-      if (fetchError) throw fetchError;
-      if (!instance || !family) throw new Error('Task not found');
+      if (error) throw error;
       
-      const taskWithTemplate = instance as unknown as TaskWithTemplate;
-      const rewardAmount = taskWithTemplate.template.reward_amount;
-      const wasRewardGranted = taskWithTemplate.reward_granted;
-      
-      // Update task instance back to todo
-      const { error: updateError } = await supabase
-        .from('task_instances')
-        .update({
-          state: 'todo',
-          completed_at: null,
-          reward_granted: false,
-        })
-        .eq('id', instanceId);
-      
-      if (updateError) throw updateError;
-      
-      // If reward was granted, subtract it from balance
-      if (wasRewardGranted) {
-        // Get current child balance
-        const { data: child, error: childError } = await supabase
-          .from('children')
-          .select('balance')
-          .eq('id', childId)
-          .single();
-        
-        if (childError) throw childError;
-        
-        // Update child balance (subtract reward)
-        const newBalance = Math.max(0, (child?.balance || 0) - rewardAmount);
-        const { error: balanceError } = await supabase
-          .from('children')
-          .update({ balance: newBalance })
-          .eq('id', childId);
-        
-        if (balanceError) throw balanceError;
-        
-        // Create reversal transaction
-        const { error: txError } = await supabase
-          .from('transactions')
-          .insert({
-            family_id: family.id,
-            child_id: childId,
-            transaction_type: 'reversal',
-            amount: -rewardAmount,
-            source: 'task_instance',
-            source_id: instanceId,
-            note: 'Task completion cancelled',
-          });
-        
-        if (txError) throw txError;
+      const result = data as { success: boolean; error?: string; refunded?: boolean; amount?: number };
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to uncomplete task');
       }
       
-      return { rewardAmount };
+      return { rewardAmount: result.amount || 0 };
     },
     onMutate: async ({ instanceId }) => {
       // Cancel outgoing refetches

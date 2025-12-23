@@ -800,6 +800,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_child_balance: {
+        Args: { p_amount: number; p_child_id: string; p_note?: string }
+        Returns: Json
+      }
+      complete_job_claim_with_reward: {
+        Args: { p_child_id: string; p_claim_id: string }
+        Returns: Json
+      }
+      complete_task_with_reward: {
+        Args: { p_child_id: string; p_instance_id: string }
+        Returns: Json
+      }
       get_child_family_id: { Args: { _user_id: string }; Returns: string }
       get_user_family_id: { Args: { _user_id: string }; Returns: string }
       is_child_in_family: {
@@ -813,6 +825,14 @@ export type Database = {
       is_family_owner: {
         Args: { _family_id: string; _user_id: string }
         Returns: boolean
+      }
+      purchase_store_item: {
+        Args: { p_child_id: string; p_item_id: string }
+        Returns: Json
+      }
+      uncomplete_task_with_refund: {
+        Args: { p_child_id: string; p_instance_id: string }
+        Returns: Json
       }
     }
     Enums: {

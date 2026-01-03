@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChildren } from '@/hooks/useChildren';
-import { useDayTemplates, DayTemplateWithTasks } from '@/hooks/useDayTemplates';
+import { useDayTemplates, DayTemplateWithTasks, PRESET_TEMPLATES } from '@/hooks/useDayTemplates';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -44,25 +44,6 @@ import {
   DrawerFooter,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-
-// School Day preset template - the one preset we show
-const SCHOOL_DAY_PRESET = {
-  preset_key: 'school_day',
-  name_ru: 'Школьный день',
-  name_en: 'School Day',
-  tasks: [
-    { title_ru: 'Проснуться и заправить кровать', title_en: 'Wake up & make bed', icon: '🛏️', time: '07:00', reward_amount: 5, duration_minutes: 5 },
-    { title_ru: 'Почистить зубы и одеться', title_en: 'Brush teeth & get dressed', icon: '🪥', time: '07:10', reward_amount: 5, duration_minutes: 10 },
-    { title_ru: 'Завтрак', title_en: 'Breakfast', icon: '🍳', time: '07:20', reward_amount: 0, duration_minutes: 15 },
-    { title_ru: 'Собрать рюкзак / проверить школьные вещи', title_en: 'Pack backpack / check school items', icon: '🎒', time: '07:35', reward_amount: 5, duration_minutes: 5 },
-    { title_ru: 'Перекус и короткий отдых (без экранов)', title_en: 'Snack & short rest (no screens)', icon: '🍎', time: '15:00', reward_amount: 0, duration_minutes: 15 },
-    { title_ru: 'Домашнее задание / школьная работа', title_en: 'Homework / school task', icon: '📚', time: '15:30', reward_amount: 10, duration_minutes: 40 },
-    { title_ru: 'Помощь по дому', title_en: 'Help around the house', icon: '🧹', time: '16:30', reward_amount: 5, duration_minutes: 15 },
-    { title_ru: 'Свободное время / хобби', title_en: 'Free play / hobby time', icon: '🎮', time: '17:00', reward_amount: 0, duration_minutes: 25 },
-    { title_ru: 'Подготовить одежду на завтра', title_en: 'Prepare clothes for tomorrow', icon: '👕', time: '20:00', reward_amount: 5, duration_minutes: 5 },
-    { title_ru: 'Почистить зубы и вечерняя рутина', title_en: 'Brush teeth & bedtime routine', icon: '🌙', time: '20:30', reward_amount: 5, duration_minutes: 10 },
-  ],
-};
 
 interface AddFromTemplateDialogProps {
   trigger?: React.ReactNode;
@@ -114,9 +95,17 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
     }
   };
 
+  const getSelectedPreset = () => {
+    if (selectedTemplate?.type === 'preset' && selectedTemplate?.key) {
+      return PRESET_TEMPLATES.find(p => p.preset_key === selectedTemplate.key);
+    }
+    return null;
+  };
+
   const getTemplateName = () => {
-    if (selectedTemplate?.type === 'preset') {
-      return language === 'ru' ? SCHOOL_DAY_PRESET.name_ru : SCHOOL_DAY_PRESET.name_en;
+    const preset = getSelectedPreset();
+    if (preset) {
+      return language === 'ru' ? preset.name_ru : preset.name_en;
     }
     if (selectedTemplate?.template) {
       return language === 'ru' ? selectedTemplate.template.name_ru : selectedTemplate.template.name_en;
@@ -125,8 +114,9 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
   };
 
   const getTemplateTasks = () => {
-    if (selectedTemplate?.type === 'preset') {
-      return SCHOOL_DAY_PRESET.tasks;
+    const preset = getSelectedPreset();
+    if (preset) {
+      return preset.tasks;
     }
     if (selectedTemplate?.template) {
       return selectedTemplate.template.tasks.map(t => ({
@@ -135,10 +125,15 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
         icon: t.icon || '✨',
         time: t.time || undefined,
         reward_amount: t.reward_amount,
-        duration_minutes: undefined,
+        duration_minutes: undefined as number | undefined,
       }));
     }
     return [];
+  };
+
+  const getDefaultApplyMode = () => {
+    const preset = getSelectedPreset();
+    return preset?.default_mode || 'replace';
   };
 
   const getTargetDate = () => {
@@ -184,6 +179,13 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
 
   const handleSelectTemplate = (type: 'preset' | 'user', key?: string, template?: DayTemplateWithTasks) => {
     setSelectedTemplate({ type, key, template });
+    // Set default apply mode based on template
+    if (type === 'preset' && key) {
+      const preset = PRESET_TEMPLATES.find(p => p.preset_key === key);
+      if (preset) {
+        setApplyMode(preset.default_mode);
+      }
+    }
     setStep('configure');
   };
 
@@ -210,7 +212,7 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
       if (scheduleType === 'one_time') {
         const result = await applyTemplate.mutateAsync({
           templateId: selectedTemplate?.template?.id,
-          presetKey: selectedTemplate?.type === 'preset' ? SCHOOL_DAY_PRESET.preset_key : undefined,
+          presetKey: selectedTemplate?.type === 'preset' ? selectedTemplate?.key : undefined,
           childIds: selectedChildren,
           date: targetDate,
           mode: applyMode,
@@ -219,7 +221,7 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
       } else {
         const result = await applyRecurringTemplate.mutateAsync({
           templateId: selectedTemplate?.template?.id,
-          presetKey: selectedTemplate?.type === 'preset' ? SCHOOL_DAY_PRESET.preset_key : undefined,
+          presetKey: selectedTemplate?.type === 'preset' ? selectedTemplate?.key : undefined,
           childIds: selectedChildren,
           startDate: targetDate,
           recurringDays: selectedDays,
@@ -249,32 +251,45 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
 
   const totalReward = getTemplateTasks().reduce((sum, t) => sum + t.reward_amount, 0);
 
+  // Preset icons for display
+  const presetIcons: Record<string, string> = {
+    'school_day': '📚',
+    'after_school_reset': '🏠',
+    'weekend_clean_help': '🧹',
+  };
+
   // Template selection step content
   const selectStepContent = (
     <div className="space-y-4 py-4 px-1">
-      {/* Preset template */}
+      {/* Preset templates */}
       <div className="space-y-2">
         <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-          {language === 'ru' ? 'Готовый шаблон' : 'Preset Template'}
+          {language === 'ru' ? 'Готовые шаблоны' : 'Preset Templates'}
         </Label>
-        <button
-          type="button"
-          className="w-full flex items-center gap-3 p-4 min-h-[72px] rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
-          onClick={() => handleSelectTemplate('preset', SCHOOL_DAY_PRESET.preset_key)}
-        >
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
-            📚
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm sm:text-base">
-              {language === 'ru' ? SCHOOL_DAY_PRESET.name_ru : SCHOOL_DAY_PRESET.name_en}
-            </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {SCHOOL_DAY_PRESET.tasks.length} {language === 'ru' ? 'задач' : 'tasks'} • +{totalReward} 🪙
-            </p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-        </button>
+        {PRESET_TEMPLATES.map(preset => {
+          const presetReward = preset.tasks.reduce((sum, t) => sum + t.reward_amount, 0);
+          return (
+            <button
+              key={preset.preset_key}
+              type="button"
+              className="w-full flex items-center gap-3 p-4 min-h-[72px] rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
+              onClick={() => handleSelectTemplate('preset', preset.preset_key)}
+            >
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
+                {presetIcons[preset.preset_key] || '📋'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm sm:text-base">
+                  {language === 'ru' ? preset.name_ru : preset.name_en}
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  {preset.tasks.length} {language === 'ru' ? 'задач' : 'tasks'} • +{presetReward} 🪙
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            </button>
+          );
+        })}
       </div>
 
       {/* User templates */}

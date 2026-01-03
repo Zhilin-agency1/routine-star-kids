@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Users, CheckCircle, Gift, Sparkles, ChevronRight, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
+  DialogClose,
 } from '@/components/ui/dialog';
 
 interface ParentOnboardingDialogProps {
@@ -124,12 +123,18 @@ export const ParentOnboardingDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm sm:max-w-md p-0 gap-0 overflow-hidden">
-        {/* Skip button */}
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        handleSkip();
+      }
+    }}>
+      <DialogContent className="max-w-sm sm:max-w-md p-0 gap-0 overflow-hidden [&>button:last-child]:hidden">
+        {/* Custom close button - higher z-index, proper button element */}
         <button
+          type="button"
           onClick={handleSkip}
-          className="absolute right-4 top-4 p-2 text-muted-foreground hover:text-foreground transition-colors z-10"
+          aria-label="Close"
+          className="absolute right-4 top-4 p-2 text-muted-foreground hover:text-foreground transition-colors z-50 rounded-sm hover:bg-muted"
         >
           <X className="w-5 h-5" />
         </button>

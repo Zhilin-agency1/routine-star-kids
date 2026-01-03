@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Calendar, Briefcase, Trophy, ShoppingBag, BarChart3, ListTodo, Users, LogOut, LogIn, ChevronDown, Check, Pencil } from 'lucide-react';
+import { Home, Calendar, Briefcase, Trophy, ShoppingBag, BarChart3, ListTodo, Users, LogOut, LogIn, ChevronDown, Check, Pencil, LayoutTemplate } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -54,6 +54,7 @@ const personalNavItems: NavItem[] = [
 const parentNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_dashboard', path: '/parent' },
   { icon: ListTodo, labelKey: 'nav_tasks', path: '/parent/tasks' },
+  { icon: LayoutTemplate, labelKey: 'nav_templates', path: '/parent/templates' },
   { icon: Briefcase, labelKey: 'nav_job_board', path: '/parent/jobs' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/parent/store' },
   { icon: BarChart3, labelKey: 'nav_reports', path: '/parent/reports' },
@@ -68,6 +69,7 @@ const translations: Record<string, { en: string; ru: string }> = {
   nav_job_board: { en: 'Job Board', ru: 'Биржа' },
   nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
   nav_tasks: { en: 'Tasks', ru: 'Задачи' },
+  nav_templates: { en: 'Templates', ru: 'Шаблоны' },
   nav_reports: { en: 'Reports', ru: 'Отчёты' },
 };
 

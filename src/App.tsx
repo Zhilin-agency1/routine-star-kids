@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppProvider } from "@/contexts/AppContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ParentOnlyRoute } from "@/components/ParentOnlyRoute";
 import { FamilySetup } from "@/components/FamilySetup";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
@@ -197,7 +198,9 @@ const App = () => (
                     <ProtectedRoute>
                       <FamilySetup>
                         <Layout>
-                          <TemplatesPage />
+                          <ParentOnlyRoute>
+                            <TemplatesPage />
+                          </ParentOnlyRoute>
                         </Layout>
                       </FamilySetup>
                     </ProtectedRoute>

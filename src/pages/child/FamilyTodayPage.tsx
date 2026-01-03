@@ -6,6 +6,7 @@ import { useChildren } from '@/hooks/useChildren';
 import { useAllTodayTasks } from '@/hooks/useAllTodayTasks';
 import { useTasks } from '@/hooks/useTasks';
 import { useSchedule } from '@/hooks/useSchedule';
+import { useApp } from '@/contexts/AppContext';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { SimpleTaskCard } from '@/components/SimpleTaskCard';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,11 +16,15 @@ import { ru, enUS } from 'date-fns/locale';
 
 export const FamilyTodayPage = () => {
   const { language } = useLanguage();
+  const { role } = useApp();
   const { children } = useChildren();
   const { instances } = useAllTodayTasks();
   const { completeTask } = useTasks();
   const { todayActivities } = useSchedule();
   const navigate = useNavigate();
+  
+  // Only show templates/planning features for parents
+  const canManageTemplates = role === 'parent';
 
   // Get current date formatted
   const currentDate = useMemo(() => {
@@ -98,8 +103,8 @@ export const FamilyTodayPage = () => {
           </p>
         </div>
         
-        {/* Primary CTA: Apply Template (if anyone has no tasks) */}
-        {hasChildWithNoTasks && (
+        {/* Primary CTA: Apply Template (only for parents) */}
+        {canManageTemplates && hasChildWithNoTasks && (
           <Button
             onClick={() => navigate('/parent/templates')}
             size="sm"
@@ -168,17 +173,21 @@ export const FamilyTodayPage = () => {
                     <div className="text-center py-6 bg-card/50 rounded-xl">
                       <span className="text-2xl block mb-2">📋</span>
                       <p className="text-sm text-muted-foreground mb-3">
-                        {language === 'ru' ? 'Нет плана' : 'No plan'}
+                        {language === 'ru' 
+                          ? (canManageTemplates ? 'Нет плана' : 'План ещё не готов') 
+                          : (canManageTemplates ? 'No plan' : 'No plan yet')}
                       </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate('/parent/templates')}
-                        className="min-h-[40px]"
-                      >
-                        <LayoutTemplate className="w-4 h-4 mr-2" />
-                        {language === 'ru' ? 'Применить шаблон' : 'Apply template'}
-                      </Button>
+                      {canManageTemplates && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate('/parent/templates')}
+                          className="min-h-[40px]"
+                        >
+                          <LayoutTemplate className="w-4 h-4 mr-2" />
+                          {language === 'ru' ? 'Применить шаблон' : 'Apply template'}
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     childTasks.map(task => (

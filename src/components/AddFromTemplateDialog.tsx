@@ -250,6 +250,7 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
   };
 
   const totalReward = getTemplateTasks().reduce((sum, t) => sum + t.reward_amount, 0);
+  const [isTemplateExpanded, setIsTemplateExpanded] = useState(false);
 
   // Preset icons for display
   const presetIcons: Record<string, string> = {
@@ -356,8 +357,8 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
             </Button>
           )}
         </div>
-        <div className="space-y-1.5 max-h-28 overflow-y-auto">
-          {getTemplateTasks().slice(0, 4).map((task, i) => (
+        <div className={`space-y-1.5 ${isTemplateExpanded ? 'max-h-48' : 'max-h-28'} overflow-y-auto`}>
+          {(isTemplateExpanded ? getTemplateTasks() : getTemplateTasks().slice(0, 4)).map((task, i) => (
             <div key={i} className="flex items-center gap-2 text-xs sm:text-sm">
               <span>{task.icon}</span>
               <span className="truncate flex-1">{language === 'ru' ? task.title_ru : task.title_en}</span>
@@ -366,12 +367,19 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
               )}
             </div>
           ))}
-          {getTemplateTasks().length > 4 && (
-            <p className="text-xs text-muted-foreground">
-              +{getTemplateTasks().length - 4} {language === 'ru' ? 'ещё' : 'more'}...
-            </p>
-          )}
         </div>
+        {getTemplateTasks().length > 4 && (
+          <button
+            type="button"
+            onClick={() => setIsTemplateExpanded(!isTemplateExpanded)}
+            className="text-xs text-primary hover:text-primary/80 font-medium mt-2 transition-colors"
+          >
+            {isTemplateExpanded 
+              ? (language === 'ru' ? 'Скрыть' : 'Hide')
+              : `+${getTemplateTasks().length - 4} ${language === 'ru' ? 'ещё' : 'more'}...`
+            }
+          </button>
+        )}
       </div>
 
       {/* Select children */}

@@ -38,7 +38,7 @@ const parentNavItems: NavItem[] = [
 
 const translations: Record<string, { en: string; ru: string }> = {
   nav_today: { en: 'Today', ru: 'Сегодня' },
-  nav_schedule: { en: 'Schedule', ru: 'Расписание' },
+  nav_schedule: { en: 'Plan', ru: 'План' },
   nav_templates: { en: 'Templates', ru: 'Шаблоны' },
   nav_exchange: { en: 'Tasks', ru: 'Задания' },
   nav_rewards: { en: 'Rewards', ru: 'Награды' },
@@ -47,6 +47,7 @@ const translations: Record<string, { en: string; ru: string }> = {
   nav_tasks: { en: 'Tasks', ru: 'Задания' },
   nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
   nav_reports: { en: 'Reports', ru: 'Отчёты' },
+  nav_overview: { en: 'Overview', ru: 'Обзор' },
 };
 
 export const BottomNav = () => {

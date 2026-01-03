@@ -62,8 +62,8 @@ export const Header = () => {
                         </div>
                         <div className="text-left">
                           <div className="flex items-center gap-1">
-                            <p className="font-bold text-lg leading-tight">
-                              {language === 'ru' ? 'Общий дашборд' : 'Family Dashboard'}
+                        <p className="font-bold text-lg leading-tight">
+                              {language === 'ru' ? 'Обзор' : 'Overview'}
                             </p>
                             <ChevronDown className="w-4 h-4 text-muted-foreground" />
                           </div>
@@ -110,8 +110,8 @@ export const Header = () => {
                       <Trophy className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium">
-                        {language === 'ru' ? 'Общий дашборд' : 'Family Dashboard'}
+                    <p className="font-medium">
+                        {language === 'ru' ? 'Обзор' : 'Overview'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {language === 'ru' ? 'Все дети' : 'All children'}

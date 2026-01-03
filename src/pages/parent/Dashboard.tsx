@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { TrendingUp, CheckCircle, Users, Undo2, MapPin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChildren } from '@/hooks/useChildren';
@@ -9,6 +9,7 @@ import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { TaskChooserDialog } from '@/components/TaskChooserDialog';
 import { AddChildDialog } from '@/components/AddChildDialog';
+import { ParentOnboardingDialog } from '@/components/ParentOnboardingDialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -32,6 +33,24 @@ export const ParentDashboard = () => {
   const { instances } = useAllTodayTasks();
   const { completeTask, uncompleteTask, updateInstanceState } = useTasks();
   const { todayActivities } = useSchedule();
+
+  // Onboarding state
+  const ONBOARDING_KEY = 'kids_routine_parent_onboarding_completed';
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const completed = localStorage.getItem(ONBOARDING_KEY);
+    if (!completed) {
+      // Show onboarding after a brief delay
+      const timer = setTimeout(() => setShowOnboarding(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
 
   // Normalize instances to task format
   const tasks = useMemo(() => {
@@ -125,6 +144,12 @@ export const ParentDashboard = () => {
   const activityColor = 'border-l-primary';
 
   return (
+    <>
+    <ParentOnboardingDialog
+      open={showOnboarding}
+      onOpenChange={setShowOnboarding}
+      onComplete={handleOnboardingComplete}
+    />
     <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -294,5 +319,6 @@ export const ParentDashboard = () => {
         />
       </section>
     </div>
+    </>
   );
 };

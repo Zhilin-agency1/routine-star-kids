@@ -18,12 +18,13 @@ export const translations = {
     nav_dashboard: "Dashboard",
     nav_children: "Children",
     nav_tasks: "Tasks",
-    nav_schedule: "Schedule",
+    nav_schedule: "Plan",
     nav_store: "Store",
-    nav_job_board: "Job Board",
+    nav_job_board: "Tasks",
     nav_reports: "Reports",
     nav_today: "Today",
     nav_goals: "Goals",
+    nav_overview: "Overview",
     
     // Roles
     role_parent: "Parent",
@@ -89,13 +90,14 @@ export const translations = {
     // Navigation
     nav_dashboard: "Главная",
     nav_children: "Дети",
-    nav_tasks: "Задачи",
-    nav_schedule: "Расписание",
+    nav_tasks: "Задания",
+    nav_schedule: "План",
     nav_store: "Магазин",
-    nav_job_board: "Биржа труда",
+    nav_job_board: "Задания",
     nav_reports: "Отчёты",
     nav_today: "Сегодня",
     nav_goals: "Цели",
+    nav_overview: "Обзор",
     
     // Roles
     role_parent: "Родитель",

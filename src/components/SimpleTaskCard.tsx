@@ -23,7 +23,7 @@ interface SimpleTaskCardProps {
 }
 
 export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true, canToggleSteps = false }: SimpleTaskCardProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [dialogOpen, setDialogOpen] = useState(false);
   const isDone = task.state === 'done';
   
@@ -43,6 +43,13 @@ export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true, canToggl
     if (task.templateId) {
       setDialogOpen(true);
     }
+  };
+
+  const getStepsText = () => {
+    if (remainingSteps === 1) {
+      return `1 ${t('step_left')}`;
+    }
+    return `${remainingSteps} ${t('steps_left')}`;
   };
 
   return (
@@ -89,9 +96,7 @@ export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true, canToggl
           {hasSteps && !isDone && remainingSteps > 0 && (
             <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
               <ListChecks className="w-3 h-3" />
-              {language === 'ru' 
-                ? `${remainingSteps} шаг${remainingSteps === 1 ? '' : remainingSteps < 5 ? 'а' : 'ов'}`
-                : `${remainingSteps} step${remainingSteps === 1 ? '' : 's'} left`}
+              {getStepsText()}
             </span>
           )}
         </div>

@@ -27,8 +27,8 @@ const avatarEmojis = [
 const childSchema = z.object({
   name: z.string()
     .trim()
-    .min(1, { message: 'Имя обязательно' })
-    .max(50, { message: 'Имя не должно превышать 50 символов' }),
+    .min(1)
+    .max(50),
 });
 
 type ChildFormData = z.infer<typeof childSchema>;
@@ -46,7 +46,7 @@ export const EditChildProfileDialog = ({
   onOpenChange,
   onSuccess 
 }: EditChildProfileDialogProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [selectedAvatar, setSelectedAvatar] = useState(child.avatar_url || avatarEmojis[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateChild } = useChildren();
@@ -75,24 +75,14 @@ export const EditChildProfileDialog = ({
         avatar_url: selectedAvatar,
       });
       
-      toast.success(language === 'ru' ? 'Профиль обновлён!' : 'Profile updated!');
+      toast.success(t('profile_updated'));
       onOpenChange(false);
       onSuccess?.(result);
     } catch (error: any) {
-      toast.error(error.message || (language === 'ru' ? 'Ошибка при обновлении' : 'Update failed'));
+      toast.error(error.message || t('update_failed'));
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const t = {
-    title: language === 'ru' ? 'Редактировать профиль' : 'Edit Profile',
-    description: language === 'ru' ? 'Измените имя или аватар' : 'Change name or avatar',
-    selectAvatar: language === 'ru' ? 'Выберите аватар' : 'Select avatar',
-    name: language === 'ru' ? 'Имя' : 'Name',
-    namePlaceholder: language === 'ru' ? 'Как зовут ребёнка?' : "Child's name",
-    cancel: language === 'ru' ? 'Отмена' : 'Cancel',
-    save: language === 'ru' ? 'Сохранить' : 'Save',
   };
 
   return (
@@ -101,17 +91,17 @@ export const EditChildProfileDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            {t.title}
+            {t('edit_profile')}
           </DialogTitle>
           <DialogDescription>
-            {t.description}
+            {t('change_name_avatar')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           {/* Avatar Selection */}
           <div className="space-y-3">
-            <Label>{t.selectAvatar}</Label>
+            <Label>{t('select_avatar')}</Label>
             <div className="grid grid-cols-8 gap-2">
               {avatarEmojis.map((emoji) => (
                 <button
@@ -133,15 +123,15 @@ export const EditChildProfileDialog = ({
 
           {/* Name Input */}
           <div className="space-y-2">
-            <Label htmlFor="edit-child-name">{t.name}</Label>
+            <Label htmlFor="edit-child-name">{t('name_label')}</Label>
             <Input
               id="edit-child-name"
-              placeholder={t.namePlaceholder}
+              placeholder={t('name_placeholder')}
               className="rounded-xl"
               {...form.register('name')}
             />
             {form.formState.errors.name && (
-              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+              <p className="text-sm text-destructive">{t('name_required')}</p>
             )}
           </div>
 
@@ -153,7 +143,7 @@ export const EditChildProfileDialog = ({
               className="flex-1 rounded-xl"
               onClick={() => onOpenChange(false)}
             >
-              {t.cancel}
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -165,7 +155,7 @@ export const EditChildProfileDialog = ({
               ) : (
                 <Pencil className="w-4 h-4 mr-2" />
               )}
-              {t.save}
+              {t('save')}
             </Button>
           </div>
         </form>

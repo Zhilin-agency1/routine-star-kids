@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Loader2, User } from 'lucide-react';
 import { useChildren } from '@/hooks/useChildren';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,14 +32,16 @@ const avatarEmojis = [
   '🧸', '🎈', '⭐', '🌈', '🚀', '🎸', '⚽', '🎨',
 ];
 
+// Schema with dynamic messages based on language is not possible with zod
+// We'll use generic messages and override display in the form
 const childSchema = z.object({
   name: z.string()
     .trim()
-    .min(1, { message: 'Имя обязательно' })
-    .max(50, { message: 'Имя не должно превышать 50 символов' }),
+    .min(1)
+    .max(50),
   balance: z.number()
-    .min(0, { message: 'Баланс не может быть отрицательным' })
-    .max(10000, { message: 'Баланс не должен превышать 10000' }),
+    .min(0)
+    .max(10000),
   languagePreference: z.enum(['ru', 'en']),
 });
 
@@ -49,6 +52,7 @@ interface AddChildDialogProps {
 }
 
 export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
+  const { t, language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState(avatarEmojis[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,12 +76,12 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
         balance: data.balance,
         language_preference: data.languagePreference,
       });
-      toast.success(`${data.name} добавлен в семью!`);
+      toast.success(`${data.name} ${t('child_added')}`);
       setOpen(false);
       form.reset();
       setSelectedAvatar(avatarEmojis[0]);
     } catch (error: any) {
-      toast.error(error.message || 'Ошибка при добавлении ребёнка');
+      toast.error(error.message || t('add_child_error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -89,7 +93,7 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
         {trigger || (
           <Button size="sm" className="rounded-xl">
             <Plus className="w-4 h-4 mr-1" />
-            Добавить ребёнка
+            {t('add_child')}
           </Button>
         )}
       </DialogTrigger>
@@ -97,17 +101,17 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            Добавить ребёнка
+            {t('add_child_title')}
           </DialogTitle>
           <DialogDescription>
-            Заполните информацию о ребёнке
+            {t('child_info_desc')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           {/* Avatar Selection */}
           <div className="space-y-3">
-            <Label>Выберите аватар</Label>
+            <Label>{t('select_avatar')}</Label>
             <div className="grid grid-cols-8 gap-2">
               {avatarEmojis.map((emoji) => (
                 <button
@@ -129,21 +133,21 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
 
           {/* Name Input */}
           <div className="space-y-2">
-            <Label htmlFor="child-name">Имя</Label>
+            <Label htmlFor="child-name">{t('name_label')}</Label>
             <Input
               id="child-name"
-              placeholder="Как зовут ребёнка?"
+              placeholder={t('name_placeholder')}
               className="rounded-xl"
               {...form.register('name')}
             />
             {form.formState.errors.name && (
-              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+              <p className="text-sm text-destructive">{t('name_required')}</p>
             )}
           </div>
 
           {/* Initial Balance */}
           <div className="space-y-2">
-            <Label htmlFor="child-balance">Начальный баланс монет</Label>
+            <Label htmlFor="child-balance">{t('initial_balance')}</Label>
             <div className="relative">
               <Input
                 id="child-balance"
@@ -157,16 +161,16 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xl">🪙</span>
             </div>
             {form.formState.errors.balance && (
-              <p className="text-sm text-destructive">{form.formState.errors.balance.message}</p>
+              <p className="text-sm text-destructive">{t('balance_negative')}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Можно начать с нуля или дать бонус для старта
+              {t('balance_tip')}
             </p>
           </div>
 
           {/* Language Preference */}
           <div className="space-y-2">
-            <Label>Язык интерфейса</Label>
+            <Label>{t('interface_language')}</Label>
             <Select
               value={form.watch('languagePreference')}
               onValueChange={(value: 'ru' | 'en') => form.setValue('languagePreference', value)}
@@ -189,7 +193,7 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
               className="flex-1 rounded-xl"
               onClick={() => setOpen(false)}
             >
-              Отмена
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -201,7 +205,7 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
               ) : (
                 <Plus className="w-4 h-4 mr-2" />
               )}
-              Добавить
+              {t('add')}
             </Button>
           </div>
         </form>

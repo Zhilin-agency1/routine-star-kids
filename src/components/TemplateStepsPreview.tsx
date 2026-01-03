@@ -10,7 +10,7 @@ interface TemplateStepsPreviewProps {
 }
 
 export const TemplateStepsPreview = ({ templateId, compact = false }: TemplateStepsPreviewProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { steps, isLoading } = useTaskSteps(templateId);
 
   if (isLoading || steps.length === 0) {
@@ -21,7 +21,7 @@ export const TemplateStepsPreview = ({ templateId, compact = false }: TemplateSt
     return (
       <span className="text-xs px-1.5 py-0.5 bg-muted rounded-full flex items-center gap-1">
         <ListChecks className="w-3 h-3" />
-        {steps.length} {language === 'ru' ? 'шагов' : 'steps'}
+        {steps.length} {t('steps')}
       </span>
     );
   }
@@ -30,7 +30,7 @@ export const TemplateStepsPreview = ({ templateId, compact = false }: TemplateSt
     <div className="mt-2 pt-2 border-t border-border/30">
       <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1">
         <ListChecks className="w-3 h-3" />
-        {language === 'ru' ? 'Шаги:' : 'Steps:'}
+        {t('steps_label')}
       </p>
       <div className="space-y-1">
         {steps.map((step, index) => (

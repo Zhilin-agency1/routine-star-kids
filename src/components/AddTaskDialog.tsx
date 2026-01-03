@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -83,15 +83,21 @@ type TaskFormData = z.infer<typeof taskSchema>;
 
 interface AddTaskDialogProps {
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialCategory?: 'routine' | 'activity';
 }
 
-export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
+export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, initialCategory }: AddTaskDialogProps) => {
   const { language } = useLanguage();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
+  
   const [selectedIcon, setSelectedIcon] = useState(taskIcons[0]);
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [taskType, setTaskType] = useState<'recurring' | 'one_time'>('recurring');
-  const [taskCategory, setTaskCategory] = useState<'routine' | 'activity'>('routine');
+  const [taskCategory, setTaskCategory] = useState<'routine' | 'activity'>(initialCategory || 'routine');
   const [hasTime, setHasTime] = useState(true);
   const [hasEndTime, setHasEndTime] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date());
@@ -232,16 +238,20 @@ export const AddTaskDialog = ({ trigger }: AddTaskDialogProps) => {
     }
   };
 
+  // Effect to sync initialCategory when dialog opens
+  useEffect(() => {
+    if (open && initialCategory) {
+      setTaskCategory(initialCategory);
+    }
+  }, [open, initialCategory]);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button size="sm" className="rounded-xl">
-            <Plus className="w-4 h-4 mr-1" />
-            Добавить задачу
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

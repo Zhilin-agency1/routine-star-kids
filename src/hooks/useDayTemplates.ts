@@ -10,7 +10,7 @@ export interface DayTemplateWithTasks extends DayTemplate {
   tasks: DayTemplateTask[];
 }
 
-// Preset templates data
+// Preset templates data - kept for backwards compatibility
 export const PRESET_TEMPLATES = [
   {
     preset_key: 'school_morning',
@@ -25,67 +25,22 @@ export const PRESET_TEMPLATES = [
       { title_ru: 'Собрать рюкзак', title_en: 'Pack backpack', icon: '🎒', time: '07:50', reward_amount: 3 },
     ],
   },
+  // School Day - the main preset template
   {
-    preset_key: 'after_school',
-    name_ru: 'После школы',
-    name_en: 'After School Reset',
+    preset_key: 'school_day',
+    name_ru: 'Школьный день',
+    name_en: 'School Day',
     tasks: [
-      { title_ru: 'Разобрать рюкзак', title_en: 'Unpack backpack', icon: '🎒', time: '14:00', reward_amount: 3 },
-      { title_ru: 'Переодеться в домашнее', title_en: 'Change clothes', icon: '👕', time: '14:10', reward_amount: 2 },
-      { title_ru: 'Пообедать', title_en: 'Have lunch', icon: '🍽️', time: '14:20', reward_amount: 3 },
-      { title_ru: 'Отдохнуть 30 минут', title_en: 'Rest for 30 min', icon: '😌', time: '14:45', reward_amount: 2 },
-      { title_ru: 'Рассказать о дне в школе', title_en: 'Share about school day', icon: '💬', time: '15:15', reward_amount: 3 },
-    ],
-  },
-  {
-    preset_key: 'homework_reading',
-    name_ru: 'Уроки и чтение',
-    name_en: 'Homework + Reading',
-    tasks: [
-      { title_ru: 'Подготовить рабочее место', title_en: 'Set up workspace', icon: '📚', time: '16:00', reward_amount: 2 },
-      { title_ru: 'Сделать математику', title_en: 'Do math homework', icon: '🔢', time: '16:05', reward_amount: 5 },
-      { title_ru: 'Сделать русский/английский', title_en: 'Do language homework', icon: '✏️', time: '16:35', reward_amount: 5 },
-      { title_ru: 'Читать 20 минут', title_en: 'Read for 20 min', icon: '📖', time: '17:05', reward_amount: 5 },
-      { title_ru: 'Собрать всё в портфель', title_en: 'Pack everything', icon: '🎒', time: '17:30', reward_amount: 2 },
-    ],
-  },
-  {
-    preset_key: 'evening_routine',
-    name_ru: 'Вечерняя рутина',
-    name_en: 'Evening Routine',
-    tasks: [
-      { title_ru: 'Убрать игрушки', title_en: 'Clean up toys', icon: '🧸', time: '19:00', reward_amount: 3 },
-      { title_ru: 'Поужинать', title_en: 'Have dinner', icon: '🍝', time: '19:30', reward_amount: 2 },
-      { title_ru: 'Принять душ/ванну', title_en: 'Take shower/bath', icon: '🛁', time: '20:00', reward_amount: 3 },
-      { title_ru: 'Почистить зубы', title_en: 'Brush teeth', icon: '🪥', time: '20:20', reward_amount: 2 },
-      { title_ru: 'Надеть пижаму', title_en: 'Put on pajamas', icon: '👔', time: '20:25', reward_amount: 2 },
-      { title_ru: 'Почитать книжку', title_en: 'Read a book', icon: '📚', time: '20:30', reward_amount: 3 },
-      { title_ru: 'Лечь спать', title_en: 'Go to bed', icon: '😴', time: '21:00', reward_amount: 3 },
-    ],
-  },
-  {
-    preset_key: 'weekend_clean',
-    name_ru: 'Выходные: уборка',
-    name_en: 'Weekend Clean & Help',
-    tasks: [
-      { title_ru: 'Заправить кровать', title_en: 'Make bed', icon: '🛏️', time: '09:00', reward_amount: 3 },
-      { title_ru: 'Убрать в комнате', title_en: 'Clean room', icon: '🧹', time: '10:00', reward_amount: 5 },
-      { title_ru: 'Пропылесосить', title_en: 'Vacuum', icon: '🧹', time: '10:30', reward_amount: 5 },
-      { title_ru: 'Помочь с посудой', title_en: 'Help with dishes', icon: '🍽️', time: '13:00', reward_amount: 4 },
-      { title_ru: 'Вынести мусор', title_en: 'Take out trash', icon: '🗑️', time: '14:00', reward_amount: 3 },
-      { title_ru: 'Полить цветы', title_en: 'Water plants', icon: '🌱', time: '15:00', reward_amount: 3 },
-    ],
-  },
-  {
-    preset_key: 'bored_rescue',
-    name_ru: 'Мне скучно',
-    name_en: '"I\'m Bored" Rescue Plan',
-    tasks: [
-      { title_ru: 'Порисовать 15 мин', title_en: 'Draw for 15 min', icon: '🎨', time: '10:00', reward_amount: 3 },
-      { title_ru: 'Построить что-то из лего', title_en: 'Build with Lego', icon: '🧱', time: '10:30', reward_amount: 4 },
-      { title_ru: 'Поиграть на улице', title_en: 'Play outside', icon: '⚽', time: '11:00', reward_amount: 5 },
-      { title_ru: 'Сделать поделку', title_en: 'Do a craft', icon: '✂️', time: '14:00', reward_amount: 4 },
-      { title_ru: 'Помочь приготовить еду', title_en: 'Help cook', icon: '👨‍🍳', time: '17:00', reward_amount: 5 },
+      { title_ru: 'Проснуться и заправить кровать', title_en: 'Wake up & make bed', icon: '🛏️', time: '07:00', reward_amount: 5 },
+      { title_ru: 'Почистить зубы и одеться', title_en: 'Brush teeth & get dressed', icon: '🪥', time: '07:10', reward_amount: 5 },
+      { title_ru: 'Завтрак', title_en: 'Breakfast', icon: '🍳', time: '07:20', reward_amount: 0 },
+      { title_ru: 'Собрать рюкзак / проверить школьные вещи', title_en: 'Pack backpack / check school items', icon: '🎒', time: '07:35', reward_amount: 5 },
+      { title_ru: 'Перекус и короткий отдых (без экранов)', title_en: 'Snack & short rest (no screens)', icon: '🍎', time: '15:00', reward_amount: 0 },
+      { title_ru: 'Домашнее задание / школьная работа', title_en: 'Homework / school task', icon: '📚', time: '15:30', reward_amount: 10 },
+      { title_ru: 'Помощь по дому', title_en: 'Help around the house', icon: '🧹', time: '16:30', reward_amount: 5 },
+      { title_ru: 'Свободное время / хобби', title_en: 'Free play / hobby time', icon: '🎮', time: '17:00', reward_amount: 0 },
+      { title_ru: 'Подготовить одежду на завтра', title_en: 'Prepare clothes for tomorrow', icon: '👕', time: '20:00', reward_amount: 5 },
+      { title_ru: 'Почистить зубы и вечерняя рутина', title_en: 'Brush teeth & bedtime routine', icon: '🌙', time: '20:30', reward_amount: 5 },
     ],
   },
 ];
@@ -375,6 +330,8 @@ export const useDayTemplates = () => {
       const dateStr = `${year}-${month}-${day}`;
 
       // For each child
+      let totalTasksCreated = 0;
+      
       for (const childId of childIds) {
         // If replace mode, delete existing tasks for that date
         if (mode === 'replace') {
@@ -396,8 +353,36 @@ export const useDayTemplates = () => {
           }
         }
 
+        // For 'add' mode, get existing task titles for deduplication
+        let existingTitles: Set<string> = new Set();
+        if (mode === 'add') {
+          const { data: existingInstances } = await supabase
+            .from('task_instances')
+            .select('template_id, task_templates!inner(title_ru, title_en)')
+            .eq('child_id', childId)
+            .gte('due_datetime', `${dateStr}T00:00:00`)
+            .lte('due_datetime', `${dateStr}T23:59:59.999`);
+
+          if (existingInstances) {
+            existingInstances.forEach((i: any) => {
+              if (i.task_templates) {
+                existingTitles.add(i.task_templates.title_ru?.toLowerCase());
+                existingTitles.add(i.task_templates.title_en?.toLowerCase());
+              }
+            });
+          }
+        }
+
         // Create task templates and instances for each task
         for (const task of tasks) {
+          // Skip duplicates in add mode (by title)
+          if (mode === 'add') {
+            if (existingTitles.has(task.title_ru.toLowerCase()) || 
+                existingTitles.has(task.title_en.toLowerCase())) {
+              continue;
+            }
+          }
+
           // Calculate due datetime
           let timeStr = '09:00:00';
           if (task.time) {
@@ -438,6 +423,138 @@ export const useDayTemplates = () => {
             });
 
           if (instanceError) throw instanceError;
+          
+          totalTasksCreated++;
+        }
+      }
+
+      return { success: true, tasksCreated: totalTasksCreated };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task_instances'] });
+      queryClient.invalidateQueries({ queryKey: ['task_templates'] });
+      queryClient.invalidateQueries({ queryKey: ['all_today_tasks'] });
+    },
+  });
+
+  // Apply recurring template - creates weekly recurring tasks
+  const applyRecurringTemplate = useMutation({
+    mutationFn: async ({
+      templateId,
+      presetKey,
+      childIds,
+      startDate,
+      recurringDays,
+      mode,
+    }: {
+      templateId?: string;
+      presetKey?: string;
+      childIds: string[];
+      startDate: Date;
+      recurringDays: number[];
+      mode: 'replace' | 'add';
+    }) => {
+      if (!family) throw new Error('Family not found');
+
+      // Get template tasks - either from DB or preset
+      let tasks: Array<{
+        title_ru: string;
+        title_en: string;
+        description_ru?: string;
+        description_en?: string;
+        icon: string;
+        time?: string;
+        reward_amount: number;
+      }> = [];
+
+      if (templateId) {
+        const { data: dbTasks, error: tasksError } = await supabase
+          .from('day_template_tasks')
+          .select('*')
+          .eq('day_template_id', templateId)
+          .order('order_index', { ascending: true });
+
+        if (tasksError) throw tasksError;
+        tasks = dbTasks.map(t => ({
+          title_ru: t.title_ru,
+          title_en: t.title_en,
+          description_ru: t.description_ru || undefined,
+          description_en: t.description_en || undefined,
+          icon: t.icon || '✨',
+          time: t.time || undefined,
+          reward_amount: t.reward_amount,
+        }));
+      } else if (presetKey) {
+        const preset = PRESET_TEMPLATES.find(p => p.preset_key === presetKey);
+        if (!preset) throw new Error('Preset not found');
+        tasks = preset.tasks.map(t => ({
+          title_ru: t.title_ru,
+          title_en: t.title_en,
+          icon: t.icon,
+          time: t.time,
+          reward_amount: t.reward_amount,
+        }));
+      } else {
+        throw new Error('Either templateId or presetKey required');
+      }
+
+      // Format start date
+      const year = startDate.getFullYear();
+      const month = String(startDate.getMonth() + 1).padStart(2, '0');
+      const day = String(startDate.getDate()).padStart(2, '0');
+      const startDateStr = `${year}-${month}-${day}`;
+
+      // For each child, create recurring task templates
+      for (const childId of childIds) {
+        // If mode is replace, we need to find and potentially deactivate existing recurring tasks
+        // For simplicity in MVP, replace mode just creates new recurring tasks
+        // Users can manually clean up old ones if needed
+
+        // Get existing task titles for deduplication in 'add' mode
+        let existingTitles: Set<string> = new Set();
+        if (mode === 'add') {
+          const { data: existingTemplates } = await supabase
+            .from('task_templates')
+            .select('title_ru, title_en')
+            .eq('family_id', family.id)
+            .eq('child_id', childId)
+            .eq('task_type', 'recurring')
+            .eq('status', 'active');
+          
+          if (existingTemplates) {
+            existingTemplates.forEach(t => {
+              existingTitles.add(t.title_ru);
+              existingTitles.add(t.title_en);
+            });
+          }
+        }
+
+        // Create recurring task templates for each task
+        for (const task of tasks) {
+          // Skip duplicates in add mode
+          if (mode === 'add' && (existingTitles.has(task.title_ru) || existingTitles.has(task.title_en))) {
+            continue;
+          }
+
+          const { error: templateError } = await supabase
+            .from('task_templates')
+            .insert({
+              family_id: family.id,
+              child_id: childId,
+              title_ru: task.title_ru,
+              title_en: task.title_en,
+              description_ru: task.description_ru,
+              description_en: task.description_en,
+              icon: task.icon,
+              reward_amount: task.reward_amount,
+              task_type: 'recurring',
+              recurring_days: recurringDays,
+              recurring_time: task.time ? `${task.time}:00` : '09:00:00',
+              start_date: startDateStr,
+              task_category: 'routine',
+            });
+
+          if (templateError) throw templateError;
         }
       }
 
@@ -460,5 +577,6 @@ export const useDayTemplates = () => {
     updateTemplate,
     deleteTemplate,
     applyTemplate,
+    applyRecurringTemplate,
   };
 };

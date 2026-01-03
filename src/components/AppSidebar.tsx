@@ -45,9 +45,10 @@ const familyNavItems: NavItem[] = [
 
 // Personal child navigation (when viewMode is 'personal')
 const personalNavItems: NavItem[] = [
+  { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Trophy, labelKey: 'nav_rewards', path: '/rewards' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/store' },
-  { icon: Briefcase, labelKey: 'nav_job_board', path: '/jobs' },
+  { icon: Briefcase, labelKey: 'nav_extra_tasks', path: '/jobs' },
 ];
 
 // Parent navigation
@@ -63,10 +64,11 @@ const parentNavItems: NavItem[] = [
 const translations: Record<string, { en: string; ru: string }> = {
   nav_today: { en: 'Today', ru: 'Сегодня' },
   nav_schedule: { en: 'Schedule', ru: 'Расписание' },
-  nav_exchange: { en: 'Exchange', ru: 'Биржа' },
+  nav_exchange: { en: 'Exchange', ru: 'Задания' },
   nav_rewards: { en: 'Rewards', ru: 'Награды' },
   nav_store: { en: 'Store', ru: 'Магазин' },
   nav_job_board: { en: 'Job Board', ru: 'Биржа' },
+  nav_extra_tasks: { en: 'Extra Tasks', ru: 'Подработки' },
   nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
   nav_tasks: { en: 'Tasks', ru: 'Задачи' },
   nav_templates: { en: 'Templates', ru: 'Шаблоны' },
@@ -122,6 +124,7 @@ export const AppSidebar = () => {
   const handleSelectChild = (child: typeof currentChild) => {
     setCurrentChild(child);
     setViewMode('personal');
+    navigate('/');
   };
 
   const handleSelectFamily = () => {

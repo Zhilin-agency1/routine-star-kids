@@ -11,11 +11,12 @@ export const FamilyJobBoardPage = () => {
 
   const activeJobs = jobBoardItems.filter(job => job.active);
 
+  // Filter jobs by selected child context (stays in family mode)
   const handleSelectChild = (childId: string) => {
     const child = children.find(c => c.id === childId);
     if (child) {
       setCurrentChild(child);
-      setViewMode('personal');
+      // Stay in family mode - just use child as filter context
     }
   };
 

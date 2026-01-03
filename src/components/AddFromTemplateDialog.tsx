@@ -243,7 +243,7 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
       toast.success(successMsg);
       handleOpenChange(false);
     } catch (error) {
-      toast.error(language === 'ru' ? 'Ошибка применения шаблона' : 'Error applying template');
+      toast.error(language === 'ru' ? 'Ошибка применения плана' : 'Error applying plan');
     } finally {
       setIsApplying(false);
     }
@@ -265,7 +265,7 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
       {/* Preset templates */}
       <div className="space-y-2">
         <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-          {language === 'ru' ? 'Готовые шаблоны' : 'Preset Templates'}
+          {language === 'ru' ? 'Готовые' : 'Presets'}
         </Label>
         {PRESET_TEMPLATES.map(preset => {
           const presetReward = preset.tasks.reduce((sum, t) => sum + t.reward_amount, 0);
@@ -297,7 +297,7 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
       {userTemplates.length > 0 && (
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-            {language === 'ru' ? 'Мои шаблоны' : 'My Templates'}
+            {language === 'ru' ? 'Мои планы' : 'My Plans'}
           </Label>
           {userTemplates.map(template => (
             <button
@@ -332,7 +332,7 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
           onClick={handleEditOrDuplicate}
         >
           <Copy className="w-4 h-4 mr-1" />
-          {language === 'ru' ? 'Создать свой шаблон' : 'Create custom template'}
+          {language === 'ru' ? 'Создать свой план' : 'Create custom plan'}
         </Button>
       </div>
     </div>
@@ -586,8 +586,8 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
       <FileText className="w-5 h-5" />
       <span>
         {step === 'select'
-          ? (language === 'ru' ? 'Выбрать шаблон' : 'Select Template')
-          : (language === 'ru' ? 'Применить шаблон' : 'Apply Template')}
+          ? (language === 'ru' ? 'Выбрать план' : 'Select Plan')
+          : (language === 'ru' ? 'Применить план' : 'Apply Plan')}
       </span>
     </div>
   );

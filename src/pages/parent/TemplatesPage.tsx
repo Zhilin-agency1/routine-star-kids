@@ -89,7 +89,7 @@ export const TemplatesPage = () => {
     setIsCopying(presetKey);
     try {
       await createFromPreset.mutateAsync(presetKey);
-      toast.success(language === 'ru' ? 'Шаблон скопирован!' : 'Template copied!');
+      toast.success(language === 'ru' ? 'План скопирован!' : 'Plan copied!');
     } catch (error) {
       toast.error(language === 'ru' ? 'Ошибка копирования' : 'Copy error');
     } finally {
@@ -106,7 +106,7 @@ export const TemplatesPage = () => {
     if (!templateToDelete) return;
     try {
       await deleteTemplate.mutateAsync(templateToDelete);
-      toast.success(language === 'ru' ? 'Шаблон удалён' : 'Template deleted');
+      toast.success(language === 'ru' ? 'План удалён' : 'Plan deleted');
     } catch (error) {
       toast.error(language === 'ru' ? 'Ошибка удаления' : 'Delete error');
     } finally {
@@ -138,7 +138,7 @@ export const TemplatesPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">
-            {language === 'ru' ? 'Шаблоны дня' : 'Day Templates'}
+            {language === 'ru' ? 'Планы дня' : 'Day Plans'}
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">
             {language === 'ru' 
@@ -156,7 +156,7 @@ export const TemplatesPage = () => {
       {templates.length > 0 && (
         <section>
           <h2 className="text-base sm:text-lg font-semibold mb-3">
-            {language === 'ru' ? 'Мои шаблоны' : 'My Templates'}
+            {language === 'ru' ? 'Мои планы' : 'My Plans'}
           </h2>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {templates.map(template => (
@@ -250,7 +250,7 @@ export const TemplatesPage = () => {
       {/* Preset Templates */}
       <section>
         <h2 className="text-base sm:text-lg font-semibold mb-3">
-          {language === 'ru' ? 'Готовые шаблоны' : 'Preset Templates'}
+          {language === 'ru' ? 'Готовые' : 'Presets'}
         </h2>
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {presets.map(preset => (
@@ -361,12 +361,12 @@ export const TemplatesPage = () => {
         <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === 'ru' ? 'Удалить шаблон?' : 'Delete template?'}
+              {language === 'ru' ? 'Удалить план?' : 'Delete plan?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {language === 'ru'
-                ? 'Это действие нельзя отменить. Шаблон будет удалён навсегда.'
-                : 'This action cannot be undone. The template will be permanently deleted.'}
+                ? 'Это действие нельзя отменить. План будет удалён навсегда.'
+                : 'This action cannot be undone. The plan will be permanently deleted.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">

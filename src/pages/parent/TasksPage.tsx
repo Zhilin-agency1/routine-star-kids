@@ -82,7 +82,7 @@ export const TasksPage = () => {
     if (!deletingTemplateId) return;
     try {
       await deleteTemplate.mutateAsync(deletingTemplateId);
-      toast.success(language === 'ru' ? 'Шаблон удалён' : 'Template deleted');
+      toast.success(language === 'ru' ? 'План удалён' : 'Plan deleted');
       setDeletingTemplateId(null);
     } catch (error) {
       toast.error(language === 'ru' ? 'Ошибка при удалении' : 'Failed to delete');
@@ -101,7 +101,7 @@ export const TasksPage = () => {
             trigger={
               <Button variant="outline" size="sm" className="rounded-xl">
                 <FileText className="w-4 h-4 mr-1" />
-                {language === 'ru' ? 'Из шаблона' : 'From Template'}
+                {language === 'ru' ? 'Из плана' : 'From Plan'}
               </Button>
             }
           />
@@ -115,7 +115,7 @@ export const TasksPage = () => {
             {language === 'ru' ? 'Сегодня' : 'Today'} ({todayTasks.length})
           </TabsTrigger>
           <TabsTrigger value="templates">
-            {language === 'ru' ? 'Шаблоны' : 'Templates'} ({templates.length})
+            {language === 'ru' ? 'Планы' : 'Plans'} ({templates.length})
           </TabsTrigger>
         </TabsList>
 
@@ -301,10 +301,10 @@ export const TasksPage = () => {
                 <ClipboardList className="w-10 h-10 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                {language === 'ru' ? 'Нет шаблонов задач' : 'No task templates'}
+                {language === 'ru' ? 'Нет планов' : 'No plans'}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {language === 'ru' ? 'Создайте первый шаблон задачи' : 'Create your first task template'}
+                {language === 'ru' ? 'Создайте первый план' : 'Create your first plan'}
               </p>
               <TaskChooserDialog />
             </div>
@@ -317,7 +317,7 @@ export const TasksPage = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === 'ru' ? 'Удалить шаблон задачи?' : 'Delete task template?'}
+              {language === 'ru' ? 'Удалить план?' : 'Delete plan?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {language === 'ru' 

@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { GroweeCharacter } from '@/components/ui/GroweeCharacter';
 
 const loginSchema = z.object({
   email: z.string()
@@ -213,20 +214,18 @@ export const AuthPage = () => {
   // Email confirmation screen
   if (authView === 'confirm-email') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-md">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-primary mx-auto mb-4 flex items-center justify-center shadow-lg">
-              <span className="text-3xl">👨‍👩‍👧</span>
-            </div>
-            <h1 className="text-3xl font-bold text-foreground">{t('app_name')}</h1>
+            <GroweeCharacter size="lg" mood="encouraging" className="mx-auto mb-4" />
+            <h1 className="text-3xl font-bold text-foreground">Growee</h1>
           </div>
 
           {/* Confirmation Card */}
-          <div className="bg-card rounded-3xl shadow-xl p-6 border border-border text-center">
-            <div className="w-16 h-16 rounded-full bg-success/10 mx-auto mb-4 flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-success" />
+          <div className="bg-card rounded-3xl p-6 border border-border text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/30 mx-auto mb-4 flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-secondary" />
             </div>
             
             <h2 className="text-xl font-bold mb-2">
@@ -275,23 +274,21 @@ export const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary mx-auto mb-4 flex items-center justify-center shadow-lg">
-            <span className="text-3xl">👨‍👩‍👧</span>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">{t('app_name')}</h1>
+          <GroweeCharacter size="lg" mood="happy" animate className="mx-auto mb-4" />
+          <h1 className="text-3xl font-bold text-foreground">Growee</h1>
           <p className="text-muted-foreground mt-2">
             {language === 'ru' 
-              ? 'Управляйте задачами и наградами вашей семьи'
-              : 'Manage your family\'s tasks and rewards'}
+              ? 'Расти каждый день'
+              : 'Grow every day'}
           </p>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-card rounded-3xl shadow-xl p-6 border border-border">
+        <div className="bg-card rounded-3xl p-6 border border-border">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'login' | 'signup')}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login" className="rounded-xl">

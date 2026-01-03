@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { CoinBadge } from './ui/CoinBadge';
 import { ChildAvatar } from './ui/ChildAvatar';
 import { NotificationBell } from './NotificationBell';
+import { GroweeCharacter } from './ui/GroweeCharacter';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -47,7 +48,7 @@ export const Header = () => {
   // Mobile: full header with logo
   if (isMobile) {
     return (
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b-2 border-border safe-area-top shadow-sm">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border safe-area-top">
         <div className="flex items-center justify-between h-16 px-4">
           {/* Left: Avatar & Name or Logo */}
           <div className="flex items-center gap-3">
@@ -145,9 +146,7 @@ export const Header = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Users className="w-4 h-4 text-primary-foreground" />
-                </div>
+                <GroweeCharacter size="xs" />
                 <span className="font-bold text-lg">{t('app_name')}</span>
               </div>
             )}

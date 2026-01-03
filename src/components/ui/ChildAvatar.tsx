@@ -27,7 +27,7 @@ export const ChildAvatar = ({
     <div className={cn("flex flex-col items-center gap-1", className)}>
       <div 
         className={cn(
-          "rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-soft",
+          "rounded-full bg-primary/30 flex items-center justify-center",
           sizeClasses[size]
         )}
       >

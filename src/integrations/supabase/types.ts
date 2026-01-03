@@ -781,6 +781,66 @@ export type Database = {
           },
         ]
       }
+      template_events: {
+        Row: {
+          apply_mode: string
+          apply_scope: string
+          children_count: number
+          created_at: string
+          family_id: string
+          id: string
+          preset_key: string | null
+          target_date: string
+          tasks_created_count: number
+          tasks_skipped_duplicates_count: number
+          template_id: string | null
+          template_name: string
+        }
+        Insert: {
+          apply_mode: string
+          apply_scope: string
+          children_count?: number
+          created_at?: string
+          family_id: string
+          id?: string
+          preset_key?: string | null
+          target_date: string
+          tasks_created_count?: number
+          tasks_skipped_duplicates_count?: number
+          template_id?: string | null
+          template_name: string
+        }
+        Update: {
+          apply_mode?: string
+          apply_scope?: string
+          children_count?: number
+          created_at?: string
+          family_id?: string
+          id?: string
+          preset_key?: string | null
+          target_date?: string
+          tasks_created_count?: number
+          tasks_skipped_duplicates_count?: number
+          template_id?: string | null
+          template_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_events_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_events_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "day_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number

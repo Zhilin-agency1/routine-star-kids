@@ -10,37 +10,57 @@ export interface DayTemplateWithTasks extends DayTemplate {
   tasks: DayTemplateTask[];
 }
 
-// Preset templates data - kept for backwards compatibility
+// Preset templates data
 export const PRESET_TEMPLATES = [
-  {
-    preset_key: 'school_morning',
-    name_ru: 'Школьное утро',
-    name_en: 'School Morning',
-    tasks: [
-      { title_ru: 'Проснуться и встать', title_en: 'Wake up', icon: '⏰', time: '07:00', reward_amount: 2 },
-      { title_ru: 'Заправить кровать', title_en: 'Make bed', icon: '🛏️', time: '07:05', reward_amount: 3 },
-      { title_ru: 'Умыться и почистить зубы', title_en: 'Wash up and brush teeth', icon: '🪥', time: '07:10', reward_amount: 3 },
-      { title_ru: 'Одеться', title_en: 'Get dressed', icon: '👕', time: '07:20', reward_amount: 2 },
-      { title_ru: 'Позавтракать', title_en: 'Eat breakfast', icon: '🥣', time: '07:30', reward_amount: 3 },
-      { title_ru: 'Собрать рюкзак', title_en: 'Pack backpack', icon: '🎒', time: '07:50', reward_amount: 3 },
-    ],
-  },
-  // School Day - the main preset template
+  // School Day - main preset
   {
     preset_key: 'school_day',
     name_ru: 'Школьный день',
     name_en: 'School Day',
+    default_mode: 'replace' as const,
     tasks: [
-      { title_ru: 'Проснуться и заправить кровать', title_en: 'Wake up & make bed', icon: '🛏️', time: '07:00', reward_amount: 5 },
-      { title_ru: 'Почистить зубы и одеться', title_en: 'Brush teeth & get dressed', icon: '🪥', time: '07:10', reward_amount: 5 },
-      { title_ru: 'Завтрак', title_en: 'Breakfast', icon: '🍳', time: '07:20', reward_amount: 0 },
-      { title_ru: 'Собрать рюкзак / проверить школьные вещи', title_en: 'Pack backpack / check school items', icon: '🎒', time: '07:35', reward_amount: 5 },
-      { title_ru: 'Перекус и короткий отдых (без экранов)', title_en: 'Snack & short rest (no screens)', icon: '🍎', time: '15:00', reward_amount: 0 },
-      { title_ru: 'Домашнее задание / школьная работа', title_en: 'Homework / school task', icon: '📚', time: '15:30', reward_amount: 10 },
-      { title_ru: 'Помощь по дому', title_en: 'Help around the house', icon: '🧹', time: '16:30', reward_amount: 5 },
-      { title_ru: 'Свободное время / хобби', title_en: 'Free play / hobby time', icon: '🎮', time: '17:00', reward_amount: 0 },
-      { title_ru: 'Подготовить одежду на завтра', title_en: 'Prepare clothes for tomorrow', icon: '👕', time: '20:00', reward_amount: 5 },
-      { title_ru: 'Почистить зубы и вечерняя рутина', title_en: 'Brush teeth & bedtime routine', icon: '🌙', time: '20:30', reward_amount: 5 },
+      { title_ru: 'Проснуться и заправить кровать', title_en: 'Wake up & make bed', icon: '🛏️', time: '07:00', reward_amount: 5, duration_minutes: 5 },
+      { title_ru: 'Почистить зубы и одеться', title_en: 'Brush teeth & get dressed', icon: '🪥', time: '07:10', reward_amount: 5, duration_minutes: 10 },
+      { title_ru: 'Завтрак', title_en: 'Breakfast', icon: '🍳', time: '07:20', reward_amount: 0, duration_minutes: 15 },
+      { title_ru: 'Собрать рюкзак / проверить школьные вещи', title_en: 'Pack backpack / check school items', icon: '🎒', time: '07:35', reward_amount: 5, duration_minutes: 5 },
+      { title_ru: 'Перекус и короткий отдых (без экранов)', title_en: 'Snack & short rest (no screens)', icon: '🍎', time: '15:00', reward_amount: 0, duration_minutes: 15 },
+      { title_ru: 'Домашнее задание / школьная работа', title_en: 'Homework / school task', icon: '📚', time: '15:30', reward_amount: 10, duration_minutes: 40 },
+      { title_ru: 'Помощь по дому', title_en: 'Help around the house', icon: '🧹', time: '16:30', reward_amount: 5, duration_minutes: 15 },
+      { title_ru: 'Свободное время / хобби', title_en: 'Free play / hobby time', icon: '🎮', time: '17:00', reward_amount: 0, duration_minutes: 25 },
+      { title_ru: 'Подготовить одежду на завтра', title_en: 'Prepare clothes for tomorrow', icon: '👕', time: '20:00', reward_amount: 5, duration_minutes: 5 },
+      { title_ru: 'Почистить зубы и вечерняя рутина', title_en: 'Brush teeth & bedtime routine', icon: '🌙', time: '20:30', reward_amount: 5, duration_minutes: 10 },
+    ],
+  },
+  // After School Reset
+  {
+    preset_key: 'after_school_reset',
+    name_ru: 'После школы',
+    name_en: 'After School Reset',
+    default_mode: 'add' as const,
+    tasks: [
+      { title_ru: 'Перекус и вода', title_en: 'Snack & water', icon: '🍎', time: '14:30', reward_amount: 0, duration_minutes: 10 },
+      { title_ru: '15 мин тишины (без экранов)', title_en: '15 min quiet reset (no screens)', icon: '😌', time: '14:45', reward_amount: 0, duration_minutes: 15 },
+      { title_ru: 'Домашнее задание / школьная работа', title_en: 'Homework / school task', icon: '📚', time: '15:00', reward_amount: 10, duration_minutes: 35 },
+      { title_ru: 'Быстрая уборка комнаты', title_en: 'Quick room reset', icon: '🧹', time: '15:45', reward_amount: 5, duration_minutes: 10 },
+      { title_ru: 'Собрать / подготовить на завтра', title_en: 'Pack / prep for tomorrow', icon: '🎒', time: '16:00', reward_amount: 5, duration_minutes: 5 },
+      { title_ru: 'Свободное время / хобби', title_en: 'Free play / hobby time', icon: '🎮', time: '16:10', reward_amount: 0, duration_minutes: 20 },
+    ],
+  },
+  // Weekend Clean & Help
+  {
+    preset_key: 'weekend_clean_help',
+    name_ru: 'Выходные: уборка и помощь',
+    name_en: 'Weekend Clean & Help',
+    default_mode: 'replace' as const,
+    tasks: [
+      { title_ru: 'Заправить кровать + убрать одежду', title_en: 'Make bed + quick clothes pick-up', icon: '🛏️', time: '09:00', reward_amount: 5, duration_minutes: 10 },
+      { title_ru: 'Завтрак', title_en: 'Breakfast', icon: '🍳', time: '09:15', reward_amount: 0, duration_minutes: 15 },
+      { title_ru: 'Уборка комнаты: пол свободен + игрушки на месте', title_en: 'Room tidy: floor clear + toys in place', icon: '🧸', time: '09:30', reward_amount: 10, duration_minutes: 15 },
+      { title_ru: 'Помощь: посуда / мусор / протереть стол', title_en: 'Help task: dishes / trash / wipe table', icon: '🍽️', time: '09:50', reward_amount: 10, duration_minutes: 15 },
+      { title_ru: 'Обучение: чтение или практика навыков', title_en: 'Learning block: reading or skill practice', icon: '📖', time: '10:10', reward_amount: 5, duration_minutes: 20 },
+      { title_ru: 'Прогулка / движение на свежем воздухе', title_en: 'Outdoor time / movement', icon: '🚴', time: '10:35', reward_amount: 0, duration_minutes: 30 },
+      { title_ru: 'Семейная уборка: всё на места', title_en: 'Family reset: put things back', icon: '🏠', time: '11:10', reward_amount: 5, duration_minutes: 5 },
+      { title_ru: 'Свободное время', title_en: 'Free time', icon: '🎉', time: '11:20', reward_amount: 0, duration_minutes: 30 },
     ],
   },
 ];
@@ -289,8 +309,17 @@ export const useDayTemplates = () => {
         time?: string;
         reward_amount: number;
       }> = [];
+      let templateName = '';
 
       if (templateId) {
+        // Get template info
+        const { data: templateData } = await supabase
+          .from('day_templates')
+          .select('name_ru, name_en')
+          .eq('id', templateId)
+          .single();
+        templateName = templateData?.name_en || templateData?.name_ru || 'Custom Template';
+
         // Get tasks from database template
         const { data: dbTasks, error: tasksError } = await supabase
           .from('day_template_tasks')
@@ -312,6 +341,7 @@ export const useDayTemplates = () => {
         // Get tasks from preset
         const preset = PRESET_TEMPLATES.find(p => p.preset_key === presetKey);
         if (!preset) throw new Error('Preset not found');
+        templateName = preset.name_en;
         tasks = preset.tasks.map(t => ({
           title_ru: t.title_ru,
           title_en: t.title_en,
@@ -331,6 +361,7 @@ export const useDayTemplates = () => {
 
       // For each child
       let totalTasksCreated = 0;
+      let totalTasksSkipped = 0;
       
       for (const childId of childIds) {
         // If replace mode, delete existing tasks for that date
@@ -379,6 +410,7 @@ export const useDayTemplates = () => {
           if (mode === 'add') {
             if (existingTitles.has(task.title_ru.toLowerCase()) || 
                 existingTitles.has(task.title_en.toLowerCase())) {
+              totalTasksSkipped++;
               continue;
             }
           }
@@ -428,7 +460,21 @@ export const useDayTemplates = () => {
         }
       }
 
-      return { success: true, tasksCreated: totalTasksCreated };
+      // Log template_applied event
+      await supabase.from('template_events').insert({
+        family_id: family.id,
+        template_id: templateId || null,
+        preset_key: presetKey || null,
+        template_name: templateName,
+        apply_mode: mode,
+        apply_scope: 'one_time',
+        target_date: dateStr,
+        children_count: childIds.length,
+        tasks_created_count: totalTasksCreated,
+        tasks_skipped_duplicates_count: totalTasksSkipped,
+      });
+
+      return { success: true, tasksCreated: totalTasksCreated, tasksSkipped: totalTasksSkipped };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task_instances'] });
@@ -466,8 +512,17 @@ export const useDayTemplates = () => {
         time?: string;
         reward_amount: number;
       }> = [];
+      let templateName = '';
 
       if (templateId) {
+        // Get template info
+        const { data: templateData } = await supabase
+          .from('day_templates')
+          .select('name_ru, name_en')
+          .eq('id', templateId)
+          .single();
+        templateName = templateData?.name_en || templateData?.name_ru || 'Custom Template';
+
         const { data: dbTasks, error: tasksError } = await supabase
           .from('day_template_tasks')
           .select('*')
@@ -487,6 +542,7 @@ export const useDayTemplates = () => {
       } else if (presetKey) {
         const preset = PRESET_TEMPLATES.find(p => p.preset_key === presetKey);
         if (!preset) throw new Error('Preset not found');
+        templateName = preset.name_en;
         tasks = preset.tasks.map(t => ({
           title_ru: t.title_ru,
           title_en: t.title_en,
@@ -504,12 +560,11 @@ export const useDayTemplates = () => {
       const day = String(startDate.getDate()).padStart(2, '0');
       const startDateStr = `${year}-${month}-${day}`;
 
+      let totalTasksCreated = 0;
+      let totalTasksSkipped = 0;
+
       // For each child, create recurring task templates
       for (const childId of childIds) {
-        // If mode is replace, we need to find and potentially deactivate existing recurring tasks
-        // For simplicity in MVP, replace mode just creates new recurring tasks
-        // Users can manually clean up old ones if needed
-
         // Get existing task titles for deduplication in 'add' mode
         let existingTitles: Set<string> = new Set();
         if (mode === 'add') {
@@ -533,6 +588,7 @@ export const useDayTemplates = () => {
         for (const task of tasks) {
           // Skip duplicates in add mode
           if (mode === 'add' && (existingTitles.has(task.title_ru) || existingTitles.has(task.title_en))) {
+            totalTasksSkipped++;
             continue;
           }
 
@@ -555,10 +611,25 @@ export const useDayTemplates = () => {
             });
 
           if (templateError) throw templateError;
+          totalTasksCreated++;
         }
       }
 
-      return { success: true, tasksCreated: tasks.length * childIds.length };
+      // Log template_applied event
+      await supabase.from('template_events').insert({
+        family_id: family.id,
+        template_id: templateId || null,
+        preset_key: presetKey || null,
+        template_name: templateName,
+        apply_mode: mode,
+        apply_scope: 'recurring',
+        target_date: startDateStr,
+        children_count: childIds.length,
+        tasks_created_count: totalTasksCreated,
+        tasks_skipped_duplicates_count: totalTasksSkipped,
+      });
+
+      return { success: true, tasksCreated: totalTasksCreated, tasksSkipped: totalTasksSkipped };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task_instances'] });

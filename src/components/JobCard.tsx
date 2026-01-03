@@ -9,9 +9,10 @@ import { Button } from './ui/button';
 interface JobCardProps {
   job: JobBoardItem;
   onTake?: () => void;
+  disabled?: boolean;
 }
 
-export const JobCard = ({ job, onTake }: JobCardProps) => {
+export const JobCard = ({ job, onTake, disabled = false }: JobCardProps) => {
   const { language, t } = useLanguage();
   const { takeJob } = useApp();
   const [isTaken, setIsTaken] = useState(false);
@@ -20,6 +21,7 @@ export const JobCard = ({ job, onTake }: JobCardProps) => {
   const description = language === 'ru' ? (job.description_ru || '') : (job.description_en || '');
 
   const handleTake = () => {
+    if (disabled) return;
     takeJob(job.id);
     setIsTaken(true);
     onTake?.();
@@ -29,7 +31,7 @@ export const JobCard = ({ job, onTake }: JobCardProps) => {
     <div 
       className={cn(
         "bg-card-job rounded-2xl p-4 shadow-card interactive-card",
-        isTaken && "opacity-60"
+        (isTaken || disabled) && "opacity-60"
       )}
     >
       <div className="flex items-start gap-3">
@@ -51,7 +53,7 @@ export const JobCard = ({ job, onTake }: JobCardProps) => {
             <Button
               size="sm"
               onClick={handleTake}
-              disabled={isTaken}
+              disabled={isTaken || disabled}
               className={cn(
                 "rounded-xl font-semibold",
                 isTaken 

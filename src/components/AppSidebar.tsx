@@ -37,9 +37,11 @@ interface NavItem {
 }
 
 // Family dashboard navigation (when viewMode is 'family')
+// Family mode = planning and control - includes Schedule & Templates
 const familyNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Calendar, labelKey: 'nav_schedule', path: '/schedule' },
+  { icon: LayoutTemplate, labelKey: 'nav_templates', path: '/parent/templates' },
   { icon: Briefcase, labelKey: 'nav_exchange', path: '/exchange' },
 ];
 
@@ -64,14 +66,14 @@ const parentNavItems: NavItem[] = [
 const translations: Record<string, { en: string; ru: string }> = {
   nav_today: { en: 'Today', ru: 'Сегодня' },
   nav_schedule: { en: 'Schedule', ru: 'Расписание' },
-  nav_exchange: { en: 'Exchange', ru: 'Задания' },
+  nav_templates: { en: 'Templates', ru: 'Шаблоны' },
+  nav_exchange: { en: 'Tasks', ru: 'Задания' },
   nav_rewards: { en: 'Rewards', ru: 'Награды' },
   nav_store: { en: 'Store', ru: 'Магазин' },
   nav_job_board: { en: 'Job Board', ru: 'Биржа' },
-  nav_extra_tasks: { en: 'Extra Tasks', ru: 'Подработки' },
+  nav_extra_tasks: { en: 'Extra', ru: 'Ещё' },
   nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
   nav_tasks: { en: 'Tasks', ru: 'Задачи' },
-  nav_templates: { en: 'Templates', ru: 'Шаблоны' },
   nav_reports: { en: 'Reports', ru: 'Отчёты' },
 };
 

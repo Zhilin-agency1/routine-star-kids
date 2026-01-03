@@ -18,10 +18,12 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChildren } from '@/hooks/useChildren';
 import { useDayTemplates, DayTemplateWithTasks } from '@/hooks/useDayTemplates';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { PaywallDialog } from './PaywallDialog';
@@ -34,6 +36,14 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 
 // School Day preset template - the one preset we show
 const SCHOOL_DAY_PRESET = {
@@ -66,7 +76,8 @@ type ScheduleType = 'one_time' | 'recurring';
 export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenChange }: AddFromTemplateDialogProps) => {
   const { language } = useLanguage();
   const { children } = useChildren();
-  const { templates: userTemplates, applyTemplate, applyRecurringTemplate, createFromPreset } = useDayTemplates();
+  const { templates: userTemplates, applyTemplate, applyRecurringTemplate } = useDayTemplates();
+  const isMobile = useIsMobile();
   
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -158,7 +169,6 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
   };
 
   const toggleDay = (dayIndex: number) => {
-    // Convert Sun=0, Mon=1... to Mon=1, Tue=2..., Sun=0
     const day = dayIndex === 6 ? 0 : dayIndex + 1;
     setSelectedDays(prev =>
       prev.includes(day)
@@ -194,12 +204,10 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
 
     setIsApplying(true);
     try {
-      const tasks = getTemplateTasks();
       const targetDate = getTargetDate();
       let tasksCreated = 0;
 
       if (scheduleType === 'one_time') {
-        // One-time application
         const result = await applyTemplate.mutateAsync({
           templateId: selectedTemplate?.template?.id,
           presetKey: selectedTemplate?.type === 'preset' ? SCHOOL_DAY_PRESET.preset_key : undefined,
@@ -209,7 +217,6 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
         });
         tasksCreated = result.tasksCreated;
       } else {
-        // Recurring application - create recurring tasks
         const result = await applyRecurringTemplate.mutateAsync({
           templateId: selectedTemplate?.template?.id,
           presetKey: selectedTemplate?.type === 'preset' ? SCHOOL_DAY_PRESET.preset_key : undefined,
@@ -242,341 +249,386 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
 
   const totalReward = getTemplateTasks().reduce((sum, t) => sum + t.reward_amount, 0);
 
+  // Template selection step content
+  const selectStepContent = (
+    <div className="space-y-4 py-4 px-1">
+      {/* Preset template */}
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+          {language === 'ru' ? 'Готовый шаблон' : 'Preset Template'}
+        </Label>
+        <button
+          type="button"
+          className="w-full flex items-center gap-3 p-4 min-h-[72px] rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
+          onClick={() => handleSelectTemplate('preset', SCHOOL_DAY_PRESET.preset_key)}
+        >
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
+            📚
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm sm:text-base">
+              {language === 'ru' ? SCHOOL_DAY_PRESET.name_ru : SCHOOL_DAY_PRESET.name_en}
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {SCHOOL_DAY_PRESET.tasks.length} {language === 'ru' ? 'задач' : 'tasks'} • +{totalReward} 🪙
+            </p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+        </button>
+      </div>
+
+      {/* User templates */}
+      {userTemplates.length > 0 && (
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+            {language === 'ru' ? 'Мои шаблоны' : 'My Templates'}
+          </Label>
+          {userTemplates.map(template => (
+            <button
+              key={template.id}
+              type="button"
+              className="w-full flex items-center gap-3 p-4 min-h-[72px] rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
+              onClick={() => handleSelectTemplate('user', undefined, template)}
+            >
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-2xl flex-shrink-0">
+                ✨
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold truncate text-sm sm:text-base">
+                  {language === 'ru' ? template.name_ru : template.name_en}
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  {template.tasks.length} {language === 'ru' ? 'задач' : 'tasks'}
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Edit/Duplicate hint */}
+      <div className="flex items-center justify-center pt-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground text-xs sm:text-sm"
+          onClick={handleEditOrDuplicate}
+        >
+          <Copy className="w-4 h-4 mr-1" />
+          {language === 'ru' ? 'Создать свой шаблон' : 'Create custom template'}
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Configure step content
+  const configureStepContent = (
+    <div className="space-y-5 py-4 px-1">
+      {/* Template preview */}
+      <div className="bg-primary/5 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h3 className="font-semibold text-sm sm:text-base truncate">{getTemplateName()}</h3>
+          {selectedTemplate?.type === 'preset' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs flex-shrink-0"
+              onClick={handleEditOrDuplicate}
+            >
+              <Edit className="w-3 h-3 mr-1" />
+              {language === 'ru' ? 'Изменить' : 'Edit'}
+            </Button>
+          )}
+        </div>
+        <div className="space-y-1.5 max-h-28 overflow-y-auto">
+          {getTemplateTasks().slice(0, 4).map((task, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs sm:text-sm">
+              <span>{task.icon}</span>
+              <span className="truncate flex-1">{language === 'ru' ? task.title_ru : task.title_en}</span>
+              {task.reward_amount > 0 && (
+                <CoinBadge amount={task.reward_amount} size="sm" />
+              )}
+            </div>
+          ))}
+          {getTemplateTasks().length > 4 && (
+            <p className="text-xs text-muted-foreground">
+              +{getTemplateTasks().length - 4} {language === 'ru' ? 'ещё' : 'more'}...
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Select children */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-2 text-sm">
+            <Users className="w-4 h-4" />
+            {language === 'ru' ? 'Для кого' : 'For whom'}
+          </Label>
+          <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-xs">
+            {selectedChildren.length === children.length
+              ? (language === 'ru' ? 'Снять всё' : 'Deselect all')
+              : (language === 'ru' ? 'Выбрать всех' : 'Select all')}
+          </Button>
+        </div>
+        <div className="space-y-2">
+          {children.map(child => (
+            <label
+              key={child.id}
+              className={`flex items-center gap-3 p-3 min-h-[48px] rounded-xl border cursor-pointer transition-colors ${
+                selectedChildren.includes(child.id)
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <Checkbox
+                checked={selectedChildren.includes(child.id)}
+                onCheckedChange={() => handleChildToggle(child.id)}
+              />
+              <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
+              <span className="font-medium text-sm sm:text-base">{child.name}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Schedule type */}
+      <div className="space-y-3">
+        <Label className="flex items-center gap-2 text-sm">
+          <Clock className="w-4 h-4" />
+          {language === 'ru' ? 'Как применить' : 'How to apply'}
+        </Label>
+        <RadioGroup
+          value={scheduleType}
+          onValueChange={(v) => setScheduleType(v as ScheduleType)}
+          className="grid grid-cols-2 gap-2"
+        >
+          <label
+            className={`flex items-center justify-center gap-2 p-3 min-h-[48px] rounded-xl border cursor-pointer transition-colors ${
+              scheduleType === 'one_time'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <RadioGroupItem value="one_time" />
+            <span className="text-xs sm:text-sm">{language === 'ru' ? 'На один день' : 'One-time'}</span>
+          </label>
+          <label
+            className={`flex items-center justify-center gap-2 p-3 min-h-[48px] rounded-xl border cursor-pointer transition-colors ${
+              scheduleType === 'recurring'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <RadioGroupItem value="recurring" />
+            <span className="text-xs sm:text-sm">{language === 'ru' ? 'Еженедельно' : 'Weekly'}</span>
+          </label>
+        </RadioGroup>
+      </div>
+
+      {/* Date selection for one-time */}
+      {scheduleType === 'one_time' && (
+        <div className="space-y-3">
+          <Label className="flex items-center gap-2 text-sm">
+            <Calendar className="w-4 h-4" />
+            {language === 'ru' ? 'На какой день' : 'For which day'}
+          </Label>
+          <RadioGroup
+            value={selectedDate}
+            onValueChange={(v) => setSelectedDate(v as 'today' | 'tomorrow')}
+            className="grid grid-cols-2 gap-2"
+          >
+            <label
+              className={`flex items-center justify-center gap-2 p-3 min-h-[48px] rounded-xl border cursor-pointer transition-colors ${
+                selectedDate === 'today'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <RadioGroupItem value="today" />
+              <span className="text-sm">{language === 'ru' ? 'Сегодня' : 'Today'}</span>
+            </label>
+            <label
+              className={`flex items-center justify-center gap-2 p-3 min-h-[48px] rounded-xl border cursor-pointer transition-colors ${
+                selectedDate === 'tomorrow'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <RadioGroupItem value="tomorrow" />
+              <span className="text-sm">{language === 'ru' ? 'Завтра' : 'Tomorrow'}</span>
+            </label>
+          </RadioGroup>
+          <p className="text-xs text-muted-foreground text-center">
+            {formatDate(getTargetDate())}
+          </p>
+        </div>
+      )}
+
+      {/* Days selection for recurring */}
+      {scheduleType === 'recurring' && (
+        <div className="space-y-3">
+          <Label className="flex items-center gap-2 text-sm">
+            <Calendar className="w-4 h-4" />
+            {language === 'ru' ? 'Дни недели' : 'Days of week'}
+          </Label>
+          <div className="flex gap-1.5 justify-center flex-wrap">
+            {weekDays.map((day, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => toggleDay(i)}
+                className={`w-10 h-10 rounded-xl text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
+                  isDaySelected(i)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted hover:bg-muted/80'
+                }`}
+              >
+                {day.substring(0, 2)}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            {language === 'ru' ? `Начиная с ${formatDate(getTargetDate())}` : `Starting ${formatDate(getTargetDate())}`}
+          </p>
+        </div>
+      )}
+
+      {/* Apply mode - confirmation */}
+      <div className="space-y-3">
+        <Label className="text-sm">{language === 'ru' ? 'Режим применения' : 'Apply mode'}</Label>
+        <RadioGroup
+          value={applyMode}
+          onValueChange={(v) => setApplyMode(v as 'replace' | 'add')}
+          className="space-y-2"
+        >
+          <label
+            className={`flex items-start gap-3 p-3 min-h-[64px] rounded-xl border cursor-pointer transition-colors ${
+              applyMode === 'replace'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <RadioGroupItem value="replace" className="mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Replace className="w-4 h-4 text-warning flex-shrink-0" />
+                <span className="font-medium text-sm">
+                  {language === 'ru' ? 'Заменить план' : 'Replace plan for that day'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {language === 'ru' ? 'Начать с чистого листа' : 'Start fresh with this template'}
+              </p>
+            </div>
+          </label>
+          <label
+            className={`flex items-start gap-3 p-3 min-h-[64px] rounded-xl border cursor-pointer transition-colors ${
+              applyMode === 'add'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <RadioGroupItem value="add" className="mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Plus className="w-4 h-4 text-success flex-shrink-0" />
+                <span className="font-medium text-sm">
+                  {language === 'ru' ? 'Добавить к плану' : 'Add to existing tasks'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {language === 'ru' ? 'Сохранить текущие задачи' : 'Keep current tasks and add these'}
+              </p>
+            </div>
+          </label>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  const header = (
+    <div className="flex items-center gap-2">
+      {step === 'configure' && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="w-8 h-8 -ml-2"
+          onClick={() => setStep('select')}
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+      )}
+      <FileText className="w-5 h-5" />
+      <span>
+        {step === 'select'
+          ? (language === 'ru' ? 'Выбрать шаблон' : 'Select Template')
+          : (language === 'ru' ? 'Применить шаблон' : 'Apply Template')}
+      </span>
+    </div>
+  );
+
+  const footer = step === 'configure' ? (
+    <div className="flex flex-col sm:flex-row gap-2 w-full pb-safe">
+      <Button variant="outline" onClick={() => handleOpenChange(false)} className="w-full sm:w-auto sm:flex-1">
+        {language === 'ru' ? 'Отмена' : 'Cancel'}
+      </Button>
+      <Button
+        onClick={handleApply}
+        disabled={isApplying || selectedChildren.length === 0}
+        className="w-full sm:w-auto sm:flex-1"
+      >
+        {isApplying ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : (
+          <Check className="w-4 h-4 mr-2" />
+        )}
+        {language === 'ru' ? 'Применить' : 'Apply'}
+      </Button>
+    </div>
+  ) : null;
+
+  // Use Drawer on mobile, Dialog on desktop
+  if (isMobile) {
+    return (
+      <>
+        <Drawer open={open} onOpenChange={handleOpenChange}>
+          {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader className="px-4">
+              <DrawerTitle>{header}</DrawerTitle>
+            </DrawerHeader>
+            <ScrollArea className="flex-1 px-4 overflow-y-auto">
+              {step === 'select' ? selectStepContent : configureStepContent}
+            </ScrollArea>
+            {footer && (
+              <DrawerFooter className="px-4">
+                {footer}
+              </DrawerFooter>
+            )}
+          </DrawerContent>
+        </Drawer>
+
+        <PaywallDialog open={showPaywall} onOpenChange={setShowPaywall} />
+      </>
+    );
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {step === 'configure' && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="w-8 h-8 -ml-2"
-                  onClick={() => setStep('select')}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-              )}
-              <FileText className="w-5 h-5" />
-              {step === 'select'
-                ? (language === 'ru' ? 'Выбрать шаблон' : 'Select Template')
-                : (language === 'ru' ? 'Применить шаблон' : 'Apply Template')}
-            </DialogTitle>
+            <DialogTitle>{header}</DialogTitle>
           </DialogHeader>
-
-          {step === 'select' ? (
-            <div className="space-y-4 py-4">
-              {/* Preset template */}
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-                  {language === 'ru' ? 'Готовый шаблон' : 'Preset Template'}
-                </Label>
-                <button
-                  type="button"
-                  className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
-                  onClick={() => handleSelectTemplate('preset', SCHOOL_DAY_PRESET.preset_key)}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl">
-                    📚
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold">
-                      {language === 'ru' ? SCHOOL_DAY_PRESET.name_ru : SCHOOL_DAY_PRESET.name_en}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {SCHOOL_DAY_PRESET.tasks.length} {language === 'ru' ? 'задач' : 'tasks'} • +{totalReward} 🪙
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                </button>
-              </div>
-
-              {/* User templates */}
-              {userTemplates.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-                    {language === 'ru' ? 'Мои шаблоны' : 'My Templates'}
-                  </Label>
-                  {userTemplates.map(template => (
-                    <button
-                      key={template.id}
-                      type="button"
-                      className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
-                      onClick={() => handleSelectTemplate('user', undefined, template)}
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-2xl">
-                        ✨
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">
-                          {language === 'ru' ? template.name_ru : template.name_en}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {template.tasks.length} {language === 'ru' ? 'задач' : 'tasks'}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Edit/Duplicate hint */}
-              <div className="flex items-center justify-center gap-2 pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  onClick={handleEditOrDuplicate}
-                >
-                  <Copy className="w-4 h-4 mr-1" />
-                  {language === 'ru' ? 'Создать свой шаблон' : 'Create custom template'}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-5 py-4">
-              {/* Template preview */}
-              <div className="bg-primary/5 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold">{getTemplateName()}</h3>
-                  {selectedTemplate?.type === 'preset' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={handleEditOrDuplicate}
-                    >
-                      <Edit className="w-3 h-3 mr-1" />
-                      {language === 'ru' ? 'Изменить' : 'Edit'}
-                    </Button>
-                  )}
-                </div>
-                <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                  {getTemplateTasks().slice(0, 5).map((task, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <span>{task.icon}</span>
-                      <span className="truncate">{language === 'ru' ? task.title_ru : task.title_en}</span>
-                      {task.reward_amount > 0 && (
-                        <CoinBadge amount={task.reward_amount} size="sm" />
-                      )}
-                    </div>
-                  ))}
-                  {getTemplateTasks().length > 5 && (
-                    <p className="text-xs text-muted-foreground">
-                      +{getTemplateTasks().length - 5} {language === 'ru' ? 'ещё' : 'more'}...
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Select children */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    {language === 'ru' ? 'Для кого' : 'For whom'}
-                  </Label>
-                  <Button variant="ghost" size="sm" onClick={handleSelectAll}>
-                    {selectedChildren.length === children.length
-                      ? (language === 'ru' ? 'Снять всё' : 'Deselect all')
-                      : (language === 'ru' ? 'Выбрать всех' : 'Select all')}
-                  </Button>
-                </div>
-                <div className="grid gap-2">
-                  {children.map(child => (
-                    <label
-                      key={child.id}
-                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                        selectedChildren.includes(child.id)
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <Checkbox
-                        checked={selectedChildren.includes(child.id)}
-                        onCheckedChange={() => handleChildToggle(child.id)}
-                      />
-                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
-                      <span className="font-medium">{child.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Schedule type */}
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  {language === 'ru' ? 'Как применить' : 'How to apply'}
-                </Label>
-                <RadioGroup
-                  value={scheduleType}
-                  onValueChange={(v) => setScheduleType(v as ScheduleType)}
-                  className="grid grid-cols-2 gap-2"
-                >
-                  <label
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-colors ${
-                      scheduleType === 'one_time'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="one_time" />
-                    <span className="text-sm">{language === 'ru' ? 'На один день' : 'One-time'}</span>
-                  </label>
-                  <label
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-colors ${
-                      scheduleType === 'recurring'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="recurring" />
-                    <span className="text-sm">{language === 'ru' ? 'Еженедельно' : 'Weekly'}</span>
-                  </label>
-                </RadioGroup>
-              </div>
-
-              {/* Date selection for one-time */}
-              {scheduleType === 'one_time' && (
-                <div className="space-y-3">
-                  <Label className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {language === 'ru' ? 'На какой день' : 'For which day'}
-                  </Label>
-                  <RadioGroup
-                    value={selectedDate}
-                    onValueChange={(v) => setSelectedDate(v as 'today' | 'tomorrow')}
-                    className="grid grid-cols-2 gap-2"
-                  >
-                    <label
-                      className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-colors ${
-                        selectedDate === 'today'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <RadioGroupItem value="today" />
-                      <span>{language === 'ru' ? 'Сегодня' : 'Today'}</span>
-                    </label>
-                    <label
-                      className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-colors ${
-                        selectedDate === 'tomorrow'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <RadioGroupItem value="tomorrow" />
-                      <span>{language === 'ru' ? 'Завтра' : 'Tomorrow'}</span>
-                    </label>
-                  </RadioGroup>
-                  <p className="text-sm text-muted-foreground text-center">
-                    {formatDate(getTargetDate())}
-                  </p>
-                </div>
-              )}
-
-              {/* Days selection for recurring */}
-              {scheduleType === 'recurring' && (
-                <div className="space-y-3">
-                  <Label className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {language === 'ru' ? 'Дни недели' : 'Days of week'}
-                  </Label>
-                  <div className="flex gap-1.5 justify-center">
-                    {weekDays.map((day, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => toggleDay(i)}
-                        className={`w-10 h-10 rounded-xl text-sm font-medium transition-colors ${
-                          isDaySelected(i)
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted hover:bg-muted/80'
-                        }`}
-                      >
-                        {day.substring(0, 2)}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground text-center">
-                    {language === 'ru' ? `Начиная с ${formatDate(getTargetDate())}` : `Starting ${formatDate(getTargetDate())}`}
-                  </p>
-                </div>
-              )}
-
-              {/* Apply mode - confirmation */}
-              <div className="space-y-3">
-                <Label>{language === 'ru' ? 'Режим применения' : 'Apply mode'}</Label>
-                <RadioGroup
-                  value={applyMode}
-                  onValueChange={(v) => setApplyMode(v as 'replace' | 'add')}
-                  className="space-y-2"
-                >
-                  <label
-                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                      applyMode === 'replace'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="replace" className="mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Replace className="w-4 h-4 text-warning" />
-                        <span className="font-medium">
-                          {language === 'ru' ? 'Заменить план' : 'Replace plan for that day'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {language === 'ru' ? 'Начать с чистого листа' : 'Start fresh with this template'}
-                      </p>
-                    </div>
-                  </label>
-                  <label
-                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                      applyMode === 'add'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="add" className="mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-success" />
-                        <span className="font-medium">
-                          {language === 'ru' ? 'Добавить к плану' : 'Add to existing tasks'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {language === 'ru' ? 'Сохранить текущие задачи и добавить новые' : 'Keep current tasks and add these'}
-                      </p>
-                    </div>
-                  </label>
-                </RadioGroup>
-              </div>
-            </div>
-          )}
-
-          {step === 'configure' && (
-            <DialogFooter>
-              <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                {language === 'ru' ? 'Отмена' : 'Cancel'}
-              </Button>
-              <Button
-                onClick={handleApply}
-                disabled={isApplying || selectedChildren.length === 0}
-              >
-                {isApplying ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Check className="w-4 h-4 mr-2" />
-                )}
-                {language === 'ru' ? 'Применить' : 'Apply'}
-              </Button>
+          <ScrollArea className="flex-1 overflow-y-auto pr-2">
+            {step === 'select' ? selectStepContent : configureStepContent}
+          </ScrollArea>
+          {footer && (
+            <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
+              {footer}
             </DialogFooter>
           )}
         </DialogContent>

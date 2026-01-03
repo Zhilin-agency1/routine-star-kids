@@ -7,7 +7,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { useSchedule } from '@/hooks/useSchedule';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { CoinBadge } from '@/components/ui/CoinBadge';
-import { AddTaskDialog } from '@/components/AddTaskDialog';
+import { TaskChooserDialog } from '@/components/TaskChooserDialog';
 import { AddChildDialog } from '@/components/AddChildDialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -132,7 +132,7 @@ export const ParentDashboard = () => {
           <h1 className="text-2xl font-bold">{t('dashboard_title')}</h1>
           <p className="text-muted-foreground">{t('today')}</p>
         </div>
-        <AddTaskDialog />
+        <TaskChooserDialog />
       </div>
 
       {/* Summary Cards */}
@@ -276,7 +276,7 @@ export const ParentDashboard = () => {
 
       {/* Quick Actions */}
       <section className="grid grid-cols-2 gap-3">
-        <AddTaskDialog
+        <TaskChooserDialog
           trigger={
             <button className="bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl p-4 text-center transition-colors w-full">
               <span className="text-2xl block mb-1">➕</span>

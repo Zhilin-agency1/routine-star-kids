@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Calendar, MoreVertical, ClipboardList, Trash2, Edit, ListChecks, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, MoreVertical, ClipboardList, Trash2, Edit, ListChecks, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
-import { AddTaskDialog } from '@/components/AddTaskDialog';
+import { TaskChooserDialog } from '@/components/TaskChooserDialog';
+import { AddFromTemplateDialog } from '@/components/AddFromTemplateDialog';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { StepChecklist, StepProgressBadge } from '@/components/StepChecklist';
 import { useChildren } from '@/hooks/useChildren';
@@ -95,7 +96,17 @@ export const TasksPage = () => {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{t('nav_tasks')}</h1>
         </div>
-        <AddTaskDialog />
+        <div className="flex items-center gap-2">
+          <AddFromTemplateDialog 
+            trigger={
+              <Button variant="outline" size="sm" className="rounded-xl">
+                <FileText className="w-4 h-4 mr-1" />
+                {language === 'ru' ? 'Из шаблона' : 'From Template'}
+              </Button>
+            }
+          />
+          <TaskChooserDialog />
+        </div>
       </div>
 
       <Tabs defaultValue="today" className="w-full">
@@ -172,7 +183,7 @@ export const TasksPage = () => {
               <p className="text-muted-foreground mb-4">
                 {language === 'ru' ? 'Создайте задачу или дождитесь расписания' : 'Create a task or wait for schedule'}
               </p>
-              <AddTaskDialog />
+              <TaskChooserDialog />
             </div>
           )}
         </TabsContent>
@@ -295,7 +306,7 @@ export const TasksPage = () => {
               <p className="text-muted-foreground mb-4">
                 {language === 'ru' ? 'Создайте первый шаблон задачи' : 'Create your first task template'}
               </p>
-              <AddTaskDialog />
+              <TaskChooserDialog />
             </div>
           )}
         </TabsContent>

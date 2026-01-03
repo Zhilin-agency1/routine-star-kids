@@ -27,11 +27,21 @@ export const Header = () => {
   const handleSelectChild = (child: typeof currentChild) => {
     setCurrentChild(child);
     setViewMode('personal');
+    navigate('/');
   };
 
   const handleSelectFamily = () => {
     setViewMode('family');
     navigate('/');
+  };
+
+  const handleRoleChange = (newRole: 'child' | 'parent') => {
+    setRole(newRole);
+    if (newRole === 'parent') {
+      navigate('/parent');
+    } else {
+      navigate('/');
+    }
   };
 
   // Mobile: full header with logo
@@ -177,10 +187,10 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setRole('child')}>
+                <DropdownMenuItem onClick={() => handleRoleChange('child')}>
                   👶 {t('role_child')} {role === 'child' && '✓'}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRole('parent')}>
+                <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
                   👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -238,10 +248,10 @@ export const Header = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setRole('child')}>
+          <DropdownMenuItem onClick={() => handleRoleChange('child')}>
             👶 {t('role_child')} {role === 'child' && '✓'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setRole('parent')}>
+          <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
             👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
           </DropdownMenuItem>
           <DropdownMenuSeparator />

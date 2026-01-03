@@ -54,11 +54,11 @@ export const translations = {
     coins_to_go: "coins to go",
     purchased: "Purchased!",
     
-    // Job Board
-    job_board_title: "Job Board",
-    take_job: "Take Job",
-    job_taken: "Job taken!",
-    extra_tasks: "Extra tasks for more coins",
+    // Tasks (Extra)
+    job_board_title: "Tasks",
+    take_job: "Take Task",
+    job_taken: "Task taken!",
+    extra_tasks: "Extra tasks for rewards",
     
     // Schedule
     schedule_title: "My Schedule",
@@ -126,11 +126,11 @@ export const translations = {
     coins_to_go: "монет до покупки",
     purchased: "Куплено!",
     
-    // Job Board
-    job_board_title: "Биржа труда",
+    // Tasks (Extra)
+    job_board_title: "Задания",
     take_job: "Взять задание",
     job_taken: "Задание взято!",
-    extra_tasks: "Дополнительные задания за монеты",
+    extra_tasks: "Дополнительные задания за награды",
     
     // Schedule
     schedule_title: "Моё расписание",

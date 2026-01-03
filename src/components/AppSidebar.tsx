@@ -50,7 +50,7 @@ const personalNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Trophy, labelKey: 'nav_rewards', path: '/rewards' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/store' },
-  { icon: Briefcase, labelKey: 'nav_extra_tasks', path: '/jobs' },
+  { icon: Briefcase, labelKey: 'nav_tasks', path: '/jobs' },
 ];
 
 // Parent navigation
@@ -70,10 +70,9 @@ const translations: Record<string, { en: string; ru: string }> = {
   nav_exchange: { en: 'Tasks', ru: 'Задания' },
   nav_rewards: { en: 'Rewards', ru: 'Награды' },
   nav_store: { en: 'Store', ru: 'Магазин' },
-  nav_job_board: { en: 'Job Board', ru: 'Биржа' },
-  nav_extra_tasks: { en: 'Extra', ru: 'Ещё' },
+  nav_job_board: { en: 'Tasks', ru: 'Задания' },
+  nav_tasks: { en: 'Tasks', ru: 'Задания' },
   nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
-  nav_tasks: { en: 'Tasks', ru: 'Задачи' },
   nav_reports: { en: 'Reports', ru: 'Отчёты' },
 };
 

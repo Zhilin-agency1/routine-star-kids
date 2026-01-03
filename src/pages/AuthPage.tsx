@@ -218,7 +218,7 @@ export const AuthPage = () => {
         <div className="w-full max-w-md">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <GroweeCharacter size="lg" mood="encouraging" className="mx-auto mb-4" />
+            <GroweeCharacter size="lg" className="mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-foreground">Growee</h1>
           </div>
 
@@ -278,7 +278,7 @@ export const AuthPage = () => {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <GroweeCharacter size="lg" mood="happy" animate className="mx-auto mb-4" />
+          <GroweeCharacter size="lg" animate className="mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-foreground">Growee</h1>
           <p className="text-muted-foreground mt-2">
             {language === 'ru' 

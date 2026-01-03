@@ -89,9 +89,15 @@ export const TodayBoard = () => {
       {/* Empty state */}
       {totalTasks === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">🎉</div>
-          <p className="text-xl font-bold text-foreground">{t('no_tasks')}</p>
-          <p className="text-muted-foreground mt-2">{t('great_job')}</p>
+          <div className="text-6xl mb-4">📋</div>
+          <p className="text-xl font-bold text-foreground">
+            {language === 'ru' ? 'Нет плана на сегодня' : 'No plan for today'}
+          </p>
+          <p className="text-muted-foreground mt-2">
+            {language === 'ru' 
+              ? 'Попроси родителя применить шаблон дня!' 
+              : 'Ask your parent to apply a day template!'}
+          </p>
         </div>
       )}
     </div>

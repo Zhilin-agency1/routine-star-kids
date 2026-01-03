@@ -124,6 +124,97 @@ export type Database = {
           },
         ]
       }
+      day_template_tasks: {
+        Row: {
+          created_at: string
+          day_template_id: string
+          description_en: string | null
+          description_ru: string | null
+          icon: string | null
+          id: string
+          order_index: number
+          reward_amount: number
+          time: string | null
+          title_en: string
+          title_ru: string
+        }
+        Insert: {
+          created_at?: string
+          day_template_id: string
+          description_en?: string | null
+          description_ru?: string | null
+          icon?: string | null
+          id?: string
+          order_index?: number
+          reward_amount?: number
+          time?: string | null
+          title_en: string
+          title_ru: string
+        }
+        Update: {
+          created_at?: string
+          day_template_id?: string
+          description_en?: string | null
+          description_ru?: string | null
+          icon?: string | null
+          id?: string
+          order_index?: number
+          reward_amount?: number
+          time?: string | null
+          title_en?: string
+          title_ru?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_template_tasks_day_template_id_fkey"
+            columns: ["day_template_id"]
+            isOneToOne: false
+            referencedRelation: "day_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      day_templates: {
+        Row: {
+          created_at: string
+          family_id: string
+          id: string
+          is_preset: boolean
+          name_en: string
+          name_ru: string
+          preset_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          family_id: string
+          id?: string
+          is_preset?: boolean
+          name_en: string
+          name_ru: string
+          preset_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          family_id?: string
+          id?: string
+          is_preset?: boolean
+          name_en?: string
+          name_ru?: string
+          preset_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_templates_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       families: {
         Row: {
           created_at: string

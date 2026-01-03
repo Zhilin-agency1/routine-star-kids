@@ -1,4 +1,6 @@
 export const translations = {
+  app_name: { en: 'Growee', ru: 'Growee' },
+  app_tagline: { en: 'Grow every day', ru: 'Расти каждый день' },
   en: {
     // Common
     app_name: "Kids Routine",

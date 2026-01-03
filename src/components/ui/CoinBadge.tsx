@@ -34,7 +34,7 @@ export const CoinBadge = ({
   return (
     <div 
       className={cn(
-        "inline-flex items-center rounded-full bg-coin/20 text-coin-foreground font-bold",
+        "inline-flex items-center rounded-full bg-accent/40 text-foreground font-bold",
         sizeClasses[size],
         animate && "animate-bounce-in",
         className

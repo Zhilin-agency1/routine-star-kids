@@ -6,120 +6,126 @@
 
 @layer base {
   :root {
-    /* Kids Routine - Playful & Cheerful Theme */
-    --background: 45 30% 98%;
-    --foreground: 220 25% 20%;
+    /* Growee - Calm & Supportive Theme */
+    /* Cream White background #FAF6E8 */
+    --background: 47 58% 94%;
+    /* Deep Green text #5E8C31 */
+    --foreground: 87 48% 37%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 25% 20%;
+    /* Cream-tinted card */
+    --card: 47 50% 97%;
+    --card-foreground: 87 48% 37%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 20%;
+    --popover: 47 50% 97%;
+    --popover-foreground: 87 48% 37%;
 
-    /* Cheerful Teal */
-    --primary: 174 72% 45%;
-    --primary-foreground: 0 0% 100%;
+    /* Soft Green primary #CBE7B0 */
+    --primary: 87 54% 80%;
+    --primary-foreground: 87 48% 25%;
 
-    /* Warm Coral */
-    --secondary: 12 85% 65%;
-    --secondary-foreground: 0 0% 100%;
+    /* Deep Green for emphasis */
+    --secondary: 87 48% 37%;
+    --secondary-foreground: 47 58% 94%;
 
-    /* Soft Lavender */
-    --muted: 250 30% 95%;
-    --muted-foreground: 220 15% 45%;
+    /* Lemon Chiffon muted #FFF7AE */
+    --muted: 52 100% 84%;
+    --muted-foreground: 87 40% 35%;
 
-    /* Playful Yellow */
-    --accent: 45 95% 60%;
-    --accent-foreground: 220 25% 20%;
+    /* Warm Yellow accent #FFE28A */
+    --accent: 45 100% 77%;
+    --accent-foreground: 87 48% 25%;
 
-    /* Success Green */
-    --success: 145 65% 45%;
-    --success-foreground: 0 0% 100%;
+    /* Success - Deep Green */
+    --success: 87 48% 37%;
+    --success-foreground: 47 58% 94%;
 
-    /* Warning Orange */
-    --warning: 35 95% 55%;
-    --warning-foreground: 220 25% 20%;
+    /* Warning - Warm Yellow */
+    --warning: 45 100% 77%;
+    --warning-foreground: 87 48% 25%;
 
-    --destructive: 0 75% 60%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 88%;
-    --input: 220 20% 88%;
-    --ring: 174 72% 45%;
+    /* Soft borders */
+    --border: 87 30% 85%;
+    --input: 87 30% 85%;
+    --ring: 87 48% 37%;
 
     --radius: 1rem;
 
-    /* Coin color */
-    --coin: 45 95% 55%;
-    --coin-foreground: 220 25% 20%;
+    /* Coin - Warm Yellow */
+    --coin: 45 100% 77%;
+    --coin-foreground: 87 48% 25%;
 
-    /* Card variants */
-    --card-task: 174 60% 96%;
-    --card-store: 12 70% 96%;
-    --card-job: 250 50% 96%;
-    --card-schedule: 145 50% 96%;
+    /* Card variants - all soft and flat */
+    --card-task: 87 40% 92%;
+    --card-store: 45 70% 92%;
+    --card-job: 52 60% 92%;
+    --card-schedule: 87 35% 94%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 47 50% 96%;
+    --sidebar-foreground: 87 48% 37%;
+    --sidebar-primary: 87 48% 37%;
+    --sidebar-primary-foreground: 47 58% 94%;
+    --sidebar-accent: 87 40% 90%;
+    --sidebar-accent-foreground: 87 48% 37%;
+    --sidebar-border: 87 30% 88%;
+    --sidebar-ring: 87 48% 37%;
   }
 
   .dark {
-    --background: 220 25% 12%;
-    --foreground: 45 30% 95%;
+    /* Dark mode with same color feel */
+    --background: 87 20% 12%;
+    --foreground: 47 50% 90%;
 
-    --card: 220 25% 16%;
-    --card-foreground: 45 30% 95%;
+    --card: 87 20% 16%;
+    --card-foreground: 47 50% 90%;
 
-    --popover: 220 25% 16%;
-    --popover-foreground: 45 30% 95%;
+    --popover: 87 20% 16%;
+    --popover-foreground: 47 50% 90%;
 
-    --primary: 174 72% 50%;
-    --primary-foreground: 220 25% 10%;
+    --primary: 87 45% 70%;
+    --primary-foreground: 87 30% 15%;
 
-    --secondary: 12 75% 60%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 87 40% 60%;
+    --secondary-foreground: 87 20% 10%;
 
-    --muted: 220 20% 22%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 87 15% 22%;
+    --muted-foreground: 47 40% 70%;
 
-    --accent: 45 90% 55%;
-    --accent-foreground: 220 25% 10%;
+    --accent: 45 90% 65%;
+    --accent-foreground: 87 30% 15%;
 
-    --success: 145 60% 50%;
-    --success-foreground: 220 25% 10%;
+    --success: 87 45% 50%;
+    --success-foreground: 87 20% 10%;
 
-    --warning: 35 90% 50%;
-    --warning-foreground: 220 25% 10%;
+    --warning: 45 85% 60%;
+    --warning-foreground: 87 30% 15%;
 
-    --destructive: 0 70% 55%;
+    --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 25%;
-    --input: 220 20% 25%;
-    --ring: 174 72% 50%;
+    --border: 87 15% 25%;
+    --input: 87 15% 25%;
+    --ring: 87 45% 60%;
 
-    --coin: 45 90% 50%;
-    --coin-foreground: 220 25% 10%;
+    --coin: 45 85% 55%;
+    --coin-foreground: 87 30% 15%;
 
-    --card-task: 174 40% 18%;
-    --card-store: 12 40% 18%;
-    --card-job: 250 30% 18%;
-    --card-schedule: 145 30% 18%;
+    --card-task: 87 25% 18%;
+    --card-store: 45 25% 18%;
+    --card-job: 52 20% 18%;
+    --card-schedule: 87 20% 20%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 87 20% 10%;
+    --sidebar-foreground: 47 50% 90%;
+    --sidebar-primary: 87 45% 65%;
+    --sidebar-primary-foreground: 87 20% 10%;
+    --sidebar-accent: 87 15% 18%;
+    --sidebar-accent-foreground: 47 50% 90%;
+    --sidebar-border: 87 15% 20%;
+    --sidebar-ring: 87 45% 60%;
   }
 }
 
@@ -215,22 +221,22 @@
   z-index: 9999;
 }
 
-/* Task card drag states */
+/* Task card drag states - flat design */
 .task-card-dragging {
-  @apply opacity-75 scale-105 shadow-xl rotate-2;
+  @apply opacity-75 scale-102 rotate-1;
 }
 
-/* Smooth transitions for interactive elements */
+/* Smooth transitions for interactive elements - no shadows */
 .interactive-card {
   @apply transition-all duration-200 ease-out;
 }
 
 .interactive-card:hover {
-  @apply -translate-y-1 shadow-lg;
+  @apply -translate-y-0.5;
 }
 
 .interactive-card:active {
-  @apply scale-98 shadow-md;
+  @apply scale-98;
 }
 
 /* Custom scrollbar */

@@ -7,6 +7,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { CoinBadge } from '@/components/ui/CoinBadge';
+import { GroweeCharacter } from '@/components/ui/GroweeCharacter';
 import { EditChildProfileDialog } from '@/components/EditChildProfileDialog';
 import {
   Sidebar,
@@ -137,9 +138,7 @@ export const AppSidebar = () => {
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-            <Users className="w-4 h-4 text-primary-foreground" />
-          </div>
+          <GroweeCharacter size="xs" />
           {!isCollapsed && (
             <span className="font-bold text-lg">{t('app_name')}</span>
           )}

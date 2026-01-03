@@ -25,10 +25,12 @@ export const JobBoardPage = () => {
           <Briefcase className="w-6 h-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">{t('job_board_title')}</h1>
+          <h1 className="text-2xl font-bold">
+            {language === 'ru' ? 'Задания' : 'Tasks'}
+          </h1>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
-            {t('extra_tasks')}
+            {language === 'ru' ? 'Дополнительные задания за награды' : 'Extra tasks for rewards'}
           </p>
         </div>
       </div>

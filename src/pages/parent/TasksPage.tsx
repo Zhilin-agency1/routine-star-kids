@@ -101,7 +101,7 @@ export const TasksPage = () => {
             trigger={
               <Button variant="outline" size="sm" className="rounded-xl">
                 <FileText className="w-4 h-4 mr-1" />
-                {language === 'ru' ? 'Из плана' : 'From Plan'}
+                {language === 'ru' ? 'Из шаблона' : 'From Template'}
               </Button>
             }
           />
@@ -115,7 +115,7 @@ export const TasksPage = () => {
             {language === 'ru' ? 'Сегодня' : 'Today'} ({todayTasks.length})
           </TabsTrigger>
           <TabsTrigger value="templates">
-            {language === 'ru' ? 'Планы' : 'Plans'} ({templates.length})
+            {language === 'ru' ? 'Мои планы' : 'My Plans'} ({templates.length})
           </TabsTrigger>
         </TabsList>
 
@@ -301,10 +301,10 @@ export const TasksPage = () => {
                 <ClipboardList className="w-10 h-10 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                {language === 'ru' ? 'Нет планов' : 'No plans'}
+                {language === 'ru' ? 'Нет своих планов' : 'No custom plans'}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {language === 'ru' ? 'Создайте первый план' : 'Create your first plan'}
+                {language === 'ru' ? 'Создайте свой план' : 'Create your own plan'}
               </p>
               <TaskChooserDialog />
             </div>

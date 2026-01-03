@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Plus, Copy, Trash2, MoreVertical, Play, Clock, Loader2 } from 'lucide-react';
+import { Plus, Copy, Trash2, MoreVertical, Play, Clock, Loader2, Eye } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useDayTemplates, PRESET_TEMPLATES, DayTemplateWithTasks } from '@/hooks/useDayTemplates';
+import { useDayTemplates, DayTemplateWithTasks, PRESET_TEMPLATES } from '@/hooks/useDayTemplates';
+import { PresetTemplate } from '@/components/TemplatePreviewDialog';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { ApplyTemplateDialog } from '@/components/ApplyTemplateDialog';
 import { EditDayTemplateDialog } from '@/components/EditDayTemplateDialog';
+import { TemplatePreviewDialog } from '@/components/TemplatePreviewDialog';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import {
   DropdownMenu,
@@ -37,6 +38,40 @@ export const TemplatesPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState<string | null>(null);
+  
+  // Preview dialog state
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<DayTemplateWithTasks | undefined>();
+  const [previewPreset, setPreviewPreset] = useState<PresetTemplate | undefined>();
+
+  const handleOpenPreview = (template?: DayTemplateWithTasks, preset?: PresetTemplate) => {
+    setPreviewTemplate(template);
+    setPreviewPreset(preset);
+    setPreviewDialogOpen(true);
+  };
+
+  const handlePreviewApply = () => {
+    setPreviewDialogOpen(false);
+    if (previewTemplate) {
+      handleApplyTemplate(previewTemplate);
+    } else if (previewPreset) {
+      handleApplyPreset(previewPreset.preset_key);
+    }
+  };
+
+  const handlePreviewDuplicate = async () => {
+    if (previewPreset) {
+      setPreviewDialogOpen(false);
+      await handleCopyPreset(previewPreset.preset_key);
+    }
+  };
+
+  const handlePreviewEdit = () => {
+    if (previewTemplate) {
+      setPreviewDialogOpen(false);
+      handleEditTemplate(previewTemplate);
+    }
+  };
 
   const handleApplyTemplate = (template: DayTemplateWithTasks) => {
     setSelectedTemplate(template);
@@ -127,7 +162,8 @@ export const TemplatesPage = () => {
             {templates.map(template => (
               <div
                 key={template.id}
-                className="bg-card rounded-2xl p-4 shadow-card border border-border"
+                className="bg-card rounded-2xl p-4 shadow-card border border-border cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => handleOpenPreview(template, undefined)}
               >
                 <div className="flex items-start justify-between mb-3 gap-2">
                   <div className="min-w-0 flex-1">
@@ -144,7 +180,12 @@ export const TemplatesPage = () => {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-9 w-9 flex-shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -167,27 +208,35 @@ export const TemplatesPage = () => {
                 </div>
 
                 {/* Preview tasks */}
-                <ScrollArea className="h-20 sm:h-24 mb-3">
-                  <div className="space-y-1">
-                    {template.tasks.slice(0, 4).map((task, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
-                        <span>{task.icon}</span>
-                        <span className="truncate">
-                          {language === 'ru' ? task.title_ru : task.title_en}
-                        </span>
-                      </div>
-                    ))}
-                    {template.tasks.length > 4 && (
-                      <p className="text-xs text-muted-foreground">
-                        +{template.tasks.length - 4} {language === 'ru' ? 'ещё' : 'more'}
-                      </p>
-                    )}
-                  </div>
-                </ScrollArea>
+                <div className="space-y-1 mb-3">
+                  {template.tasks.slice(0, 4).map((task, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
+                      <span>{task.icon}</span>
+                      <span className="truncate">
+                        {language === 'ru' ? task.title_ru : task.title_en}
+                      </span>
+                    </div>
+                  ))}
+                  {template.tasks.length > 4 && (
+                    <button 
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPreview(template, undefined);
+                      }}
+                    >
+                      <Eye className="w-3 h-3" />
+                      +{template.tasks.length - 4} {language === 'ru' ? 'ещё' : 'more'}
+                    </button>
+                  )}
+                </div>
 
                 <Button
                   className="w-full rounded-xl"
-                  onClick={() => handleApplyTemplate(template)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleApplyTemplate(template);
+                  }}
                 >
                   <Play className="w-4 h-4 mr-2" />
                   {language === 'ru' ? 'Применить' : 'Apply'}
@@ -207,7 +256,8 @@ export const TemplatesPage = () => {
           {presets.map(preset => (
             <div
               key={preset.preset_key}
-              className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-4 border border-border"
+              className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-4 border border-border cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => handleOpenPreview(undefined, preset)}
             >
               <div className="flex items-start justify-between mb-3 gap-2">
                 <div className="min-w-0 flex-1">
@@ -226,7 +276,10 @@ export const TemplatesPage = () => {
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 flex-shrink-0"
-                  onClick={() => handleCopyPreset(preset.preset_key)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCopyPreset(preset.preset_key);
+                  }}
                   disabled={isCopying === preset.preset_key}
                 >
                   {isCopying === preset.preset_key ? (
@@ -238,27 +291,35 @@ export const TemplatesPage = () => {
               </div>
 
               {/* Preview tasks */}
-              <ScrollArea className="h-20 sm:h-24 mb-3">
-                <div className="space-y-1">
-                  {preset.tasks.slice(0, 4).map((task, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
-                      <span>{task.icon}</span>
-                      <span className="truncate">
-                        {language === 'ru' ? task.title_ru : task.title_en}
-                      </span>
-                    </div>
-                  ))}
-                  {preset.tasks.length > 4 && (
-                    <p className="text-xs text-muted-foreground">
-                      +{preset.tasks.length - 4} {language === 'ru' ? 'ещё' : 'more'}
-                    </p>
-                  )}
-                </div>
-              </ScrollArea>
+              <div className="space-y-1 mb-3">
+                {preset.tasks.slice(0, 4).map((task, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
+                    <span>{task.icon}</span>
+                    <span className="truncate">
+                      {language === 'ru' ? task.title_ru : task.title_en}
+                    </span>
+                  </div>
+                ))}
+                {preset.tasks.length > 4 && (
+                  <button 
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenPreview(undefined, preset);
+                    }}
+                  >
+                    <Eye className="w-3 h-3" />
+                    +{preset.tasks.length - 4} {language === 'ru' ? 'ещё' : 'more'}
+                  </button>
+                )}
+              </div>
 
               <Button
                 className="w-full rounded-xl"
-                onClick={() => handleApplyPreset(preset.preset_key)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleApplyPreset(preset.preset_key);
+                }}
               >
                 <Play className="w-4 h-4 mr-2" />
                 {language === 'ru' ? 'Применить' : 'Apply'}
@@ -281,6 +342,18 @@ export const TemplatesPage = () => {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         template={templateToEdit}
+      />
+
+      {/* Template Preview Dialog */}
+      <TemplatePreviewDialog
+        open={previewDialogOpen}
+        onOpenChange={setPreviewDialogOpen}
+        template={previewTemplate}
+        preset={previewPreset}
+        onApply={handlePreviewApply}
+        onDuplicate={handlePreviewDuplicate}
+        onEdit={handlePreviewEdit}
+        isUserTemplate={!!previewTemplate}
       />
 
       {/* Delete Confirmation */}

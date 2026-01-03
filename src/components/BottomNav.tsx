@@ -1,4 +1,4 @@
-import { Home, Calendar, Briefcase, Trophy, ShoppingBag, BarChart3, ListTodo } from 'lucide-react';
+import { Home, Briefcase, Trophy, ShoppingBag, BarChart3, ListTodo, Calendar, LayoutTemplate } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -11,13 +11,16 @@ interface NavItem {
 }
 
 // Family dashboard navigation (when viewMode is 'family')
+// Family mode = planning and control - includes Schedule & Templates
 const familyNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Calendar, labelKey: 'nav_schedule', path: '/schedule' },
+  { icon: LayoutTemplate, labelKey: 'nav_templates', path: '/parent/templates' },
   { icon: Briefcase, labelKey: 'nav_exchange', path: '/exchange' },
 ];
 
 // Personal child navigation (when viewMode is 'personal')
+// Child mode = execution only - NO Schedule or Templates
 const personalNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Trophy, labelKey: 'nav_rewards', path: '/rewards' },
@@ -29,19 +32,20 @@ const personalNavItems: NavItem[] = [
 const parentNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_dashboard', path: '/parent' },
   { icon: ListTodo, labelKey: 'nav_tasks', path: '/parent/tasks' },
+  { icon: LayoutTemplate, labelKey: 'nav_templates', path: '/parent/templates' },
   { icon: Briefcase, labelKey: 'nav_job_board', path: '/parent/jobs' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/parent/store' },
-  { icon: BarChart3, labelKey: 'nav_reports', path: '/parent/reports' },
 ];
 
 const translations: Record<string, { en: string; ru: string }> = {
   nav_today: { en: 'Today', ru: 'Сегодня' },
   nav_schedule: { en: 'Schedule', ru: 'Расписание' },
-  nav_exchange: { en: 'Exchange', ru: 'Задания' },
+  nav_templates: { en: 'Templates', ru: 'Шаблоны' },
+  nav_exchange: { en: 'Tasks', ru: 'Задания' },
   nav_rewards: { en: 'Rewards', ru: 'Награды' },
   nav_store: { en: 'Store', ru: 'Магазин' },
   nav_job_board: { en: 'Job Board', ru: 'Биржа' },
-  nav_extra_tasks: { en: 'Extra Tasks', ru: 'Подработки' },
+  nav_extra_tasks: { en: 'Extra', ru: 'Ещё' },
   nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
   nav_tasks: { en: 'Tasks', ru: 'Задачи' },
   nav_reports: { en: 'Reports', ru: 'Отчёты' },

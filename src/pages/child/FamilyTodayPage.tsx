@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LayoutTemplate, Play } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChildren } from '@/hooks/useChildren';
 import { useAllTodayTasks } from '@/hooks/useAllTodayTasks';
@@ -7,6 +9,7 @@ import { useSchedule } from '@/hooks/useSchedule';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { SimpleTaskCard } from '@/components/SimpleTaskCard';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ru, enUS } from 'date-fns/locale';
 
@@ -16,6 +19,7 @@ export const FamilyTodayPage = () => {
   const { instances } = useAllTodayTasks();
   const { completeTask } = useTasks();
   const { todayActivities } = useSchedule();
+  const navigate = useNavigate();
 
   // Get current date formatted
   const currentDate = useMemo(() => {
@@ -69,6 +73,7 @@ export const FamilyTodayPage = () => {
         completedCount,
         totalCount,
         progress: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
+        hasTasks: totalCount > 0 || childActivities.length > 0,
       };
     });
   }, [children, tasks, todayActivities]);
@@ -77,22 +82,39 @@ export const FamilyTodayPage = () => {
     completeTask.mutate({ instanceId: taskId, childId });
   };
 
+  // Check if any child has no tasks
+  const hasChildWithNoTasks = childColumns.some(col => !col.hasTasks);
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Header with date */}
-      <div>
-        <h1 className="text-2xl font-bold">
-          {language === 'ru' ? 'Сегодня' : 'Today'}
-        </h1>
-        <p className="text-sm text-muted-foreground capitalize">
-          {currentDate}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {language === 'ru' ? 'Сегодня' : 'Today'}
+          </h1>
+          <p className="text-sm text-muted-foreground capitalize">
+            {currentDate}
+          </p>
+        </div>
+        
+        {/* Primary CTA: Apply Template (if anyone has no tasks) */}
+        {hasChildWithNoTasks && (
+          <Button
+            onClick={() => navigate('/parent/templates')}
+            size="sm"
+            className="min-h-[44px]"
+          >
+            <LayoutTemplate className="w-4 h-4 mr-2" />
+            {language === 'ru' ? 'Шаблоны' : 'Templates'}
+          </Button>
+        )}
       </div>
 
       {/* Children columns */}
       <div className="overflow-x-auto -mx-4 px-4 pb-2">
         <div className="flex gap-3" style={{ minWidth: 'max-content' }}>
-          {childColumns.map(({ child, tasks: childTasks, activities, completedCount, totalCount, progress }) => (
+          {childColumns.map(({ child, tasks: childTasks, activities, completedCount, totalCount, progress, hasTasks }) => (
             <div 
               key={child.id} 
               className="w-[280px] flex-shrink-0"
@@ -106,6 +128,18 @@ export const FamilyTodayPage = () => {
                     {completedCount}/{totalCount} • {progress}%
                   </p>
                 </div>
+                {/* Quick action to open day */}
+                {hasTasks && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => navigate('/schedule')}
+                    title={language === 'ru' ? 'Открыть день' : 'Open day'}
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
 
               {/* Activities for today */}
@@ -130,10 +164,21 @@ export const FamilyTodayPage = () => {
               {/* Tasks List */}
               <ScrollArea className="h-[calc(100vh-320px)]">
                 <div className="space-y-2 pr-2">
-                  {childTasks.length === 0 && activities.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground bg-card/50 rounded-xl">
-                      <span className="text-2xl block mb-1">✨</span>
-                      <p className="text-sm">{language === 'ru' ? 'Нет задач' : 'No tasks'}</p>
+                  {!hasTasks ? (
+                    <div className="text-center py-6 bg-card/50 rounded-xl">
+                      <span className="text-2xl block mb-2">📋</span>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {language === 'ru' ? 'Нет плана' : 'No plan'}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/parent/templates')}
+                        className="min-h-[40px]"
+                      >
+                        <LayoutTemplate className="w-4 h-4 mr-2" />
+                        {language === 'ru' ? 'Применить шаблон' : 'Apply template'}
+                      </Button>
                     </div>
                   ) : (
                     childTasks.map(task => (

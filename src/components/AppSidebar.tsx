@@ -36,12 +36,11 @@ interface NavItem {
   path: string;
 }
 
-// Family dashboard navigation (when viewMode is 'family')
-// Family mode = planning and control - includes Schedule & Templates
+// Family dashboard navigation (when viewMode is 'family' AND role is 'child')
+// Child mode = execution only - NO Templates
 const familyNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Calendar, labelKey: 'nav_schedule', path: '/schedule' },
-  { icon: LayoutTemplate, labelKey: 'nav_templates', path: '/parent/templates' },
   { icon: Briefcase, labelKey: 'nav_exchange', path: '/exchange' },
 ];
 

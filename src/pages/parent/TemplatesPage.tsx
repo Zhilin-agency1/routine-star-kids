@@ -167,13 +167,13 @@ export const TemplatesPage = () => {
               >
                 <div className="flex items-start justify-between mb-3 gap-2">
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">
+                    <h3 className="font-semibold text-sm sm:text-base break-words leading-snug">
                       {language === 'ru' ? template.name_ru : template.name_en}
                     </h3>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1 flex-wrap">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1.5 flex-wrap">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {template.tasks.length} {language === 'ru' ? 'задач' : 'tasks'}
+                        <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{template.tasks.length} {language === 'ru' ? 'задач' : 'tasks'}</span>
                       </span>
                       <CoinBadge amount={getTotalReward(template.tasks)} size="sm" />
                     </div>
@@ -208,38 +208,38 @@ export const TemplatesPage = () => {
                 </div>
 
                 {/* Preview tasks */}
-                <div className="space-y-1 mb-3">
+                <div className="space-y-1.5 mb-3">
                   {template.tasks.slice(0, 4).map((task, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
-                      <span>{task.icon}</span>
-                      <span className="truncate">
+                    <div key={idx} className="flex items-start gap-2 text-xs sm:text-sm min-h-[24px]">
+                      <span className="flex-shrink-0">{task.icon}</span>
+                      <span className="break-words leading-snug">
                         {language === 'ru' ? task.title_ru : task.title_en}
                       </span>
                     </div>
                   ))}
                   {template.tasks.length > 4 && (
                     <button 
-                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 py-1 min-h-[32px]"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleOpenPreview(template, undefined);
                       }}
                     >
-                      <Eye className="w-3 h-3" />
-                      +{template.tasks.length - 4} {language === 'ru' ? 'ещё' : 'more'}
+                      <Eye className="w-4 h-4 flex-shrink-0" />
+                      <span>+{template.tasks.length - 4} {language === 'ru' ? 'ещё' : 'more'}</span>
                     </button>
                   )}
                 </div>
 
                 <Button
-                  className="w-full rounded-xl"
+                  className="w-full rounded-xl min-h-[44px] text-sm sm:text-base"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleApplyTemplate(template);
                   }}
                 >
-                  <Play className="w-4 h-4 mr-2" />
-                  {language === 'ru' ? 'Применить' : 'Apply'}
+                  <Play className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span>{language === 'ru' ? 'Применить' : 'Apply'}</span>
                 </Button>
               </div>
             ))}
@@ -261,13 +261,13 @@ export const TemplatesPage = () => {
             >
               <div className="flex items-start justify-between mb-3 gap-2">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm sm:text-base truncate">
+                  <h3 className="font-semibold text-sm sm:text-base break-words leading-snug">
                     {language === 'ru' ? preset.name_ru : preset.name_en}
                   </h3>
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1 flex-wrap">
+                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1.5 flex-wrap">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {preset.tasks.length} {language === 'ru' ? 'задач' : 'tasks'}
+                      <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{preset.tasks.length} {language === 'ru' ? 'задач' : 'tasks'}</span>
                     </span>
                     <CoinBadge amount={getTotalReward(preset.tasks)} size="sm" />
                   </div>
@@ -291,38 +291,38 @@ export const TemplatesPage = () => {
               </div>
 
               {/* Preview tasks */}
-              <div className="space-y-1 mb-3">
+              <div className="space-y-1.5 mb-3">
                 {preset.tasks.slice(0, 4).map((task, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
-                    <span>{task.icon}</span>
-                    <span className="truncate">
+                  <div key={idx} className="flex items-start gap-2 text-xs sm:text-sm min-h-[24px]">
+                    <span className="flex-shrink-0">{task.icon}</span>
+                    <span className="break-words leading-snug">
                       {language === 'ru' ? task.title_ru : task.title_en}
                     </span>
                   </div>
                 ))}
                 {preset.tasks.length > 4 && (
                   <button 
-                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                    className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 py-1 min-h-[32px]"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleOpenPreview(undefined, preset);
                     }}
                   >
-                    <Eye className="w-3 h-3" />
-                    +{preset.tasks.length - 4} {language === 'ru' ? 'ещё' : 'more'}
+                    <Eye className="w-4 h-4 flex-shrink-0" />
+                    <span>+{preset.tasks.length - 4} {language === 'ru' ? 'ещё' : 'more'}</span>
                   </button>
                 )}
               </div>
 
               <Button
-                className="w-full rounded-xl"
+                className="w-full rounded-xl min-h-[44px] text-sm sm:text-base"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleApplyPreset(preset.preset_key);
                 }}
               >
-                <Play className="w-4 h-4 mr-2" />
-                {language === 'ru' ? 'Применить' : 'Apply'}
+                <Play className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span>{language === 'ru' ? 'Применить' : 'Apply'}</span>
               </Button>
             </div>
           ))}

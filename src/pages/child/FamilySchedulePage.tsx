@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Filter, BookOpen, Sparkles, Pencil } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, addMonths, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -60,8 +60,26 @@ export const FamilySchedulePage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState<ActivitySchedule | null>(null);
+  
+  // Mobile detection using md breakpoint (768px)
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const locale = language === 'ru' ? ru : undefined;
+
+  // Helper function to open day view
+  const openDay = (date: Date) => {
+    setCurrentDate(date);
+    setViewMode('day');
+  };
 
   // Create a map of child_id to color index
   const childColorMap = useMemo(() => {
@@ -184,18 +202,179 @@ export const FamilySchedulePage = () => {
     return { firstDayOffset, totalRows };
   };
 
+  // Mobile Month List View Component
+  const MobileMonthListView = () => (
+    <div className="space-y-1">
+      {days.map(day => {
+        const dayItems = getItemsForDay(day);
+        const hasItems = dayItems.length > 0;
+        
+        return (
+          <button
+            key={day.toISOString()}
+            onClick={() => openDay(day)}
+            className={cn(
+              'w-full text-left rounded-xl transition-colors active:bg-muted/50',
+              hasItems ? 'p-4 border-2' : 'py-2 px-4 border',
+              isToday(day) 
+                ? 'bg-primary/10 border-primary/40' 
+                : hasItems 
+                  ? 'bg-card border-border' 
+                  : 'bg-muted/30 border-border/50'
+            )}
+          >
+            <div className={cn(
+              'flex items-center',
+              hasItems ? 'justify-between mb-2' : 'justify-between'
+            )}>
+              <span className={cn(
+                'font-bold break-words',
+                hasItems ? 'text-base' : 'text-sm',
+                isToday(day) && 'text-primary'
+              )}>
+                {format(day, 'd MMMM', { locale })}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'text-muted-foreground',
+                  hasItems ? 'text-sm' : 'text-xs'
+                )}>
+                  {format(day, 'EEEE', { locale })}
+                </span>
+                {!hasItems && (
+                  <span className="text-xs text-muted-foreground/60 font-mono">0</span>
+                )}
+              </div>
+            </div>
+            
+            {hasItems && (
+              <div className="space-y-1">
+                {dayItems.slice(0, 3).map(item => {
+                  const child = children.find(c => c.id === item.child_id);
+                  return (
+                    <div 
+                      key={item.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span className="text-xs">{child?.avatar_url || '👤'}</span>
+                      <span className="font-mono text-muted-foreground w-12 shrink-0">
+                        {item.time.slice(0, 5)}
+                      </span>
+                      <span className="font-medium break-words line-clamp-2 leading-snug">
+                        {language === 'ru' ? item.title_ru : item.title_en}
+                      </span>
+                    </div>
+                  );
+                })}
+                {dayItems.length > 3 && (
+                  <span className="inline-block text-sm text-primary font-medium underline underline-offset-2">
+                    {language === 'ru' 
+                      ? `+${dayItems.length - 3} ещё` 
+                      : `+${dayItems.length - 3} more`}
+                  </span>
+                )}
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // Mobile Week List View Component
+  const MobileWeekListView = () => (
+    <div className="space-y-2">
+      {days.map(day => {
+        const dayItems = getItemsForDay(day);
+        
+        return (
+          <button
+            key={day.toISOString()}
+            onClick={() => openDay(day)}
+            className={cn(
+              'w-full text-left rounded-xl p-4 border-2 transition-colors active:bg-muted/50 min-h-[44px]',
+              isToday(day) ? 'bg-primary/10 border-primary/40' : 'bg-card border-border'
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  'w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0',
+                  isToday(day) ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
+                )}>
+                  {format(day, 'd')}
+                </div>
+                <div>
+                  <p className={cn(
+                    'font-bold text-base break-words leading-snug',
+                    isToday(day) && 'text-primary'
+                  )}>
+                    {format(day, 'EEEE', { locale })}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(day, 'd MMMM', { locale })}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="font-bold text-lg">
+                  {dayItems.length}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {language === 'ru' 
+                    ? (dayItems.length === 1 ? 'занятие' : dayItems.length >= 2 && dayItems.length <= 4 ? 'занятия' : 'занятий')
+                    : (dayItems.length === 1 ? 'activity' : 'activities')}
+                </p>
+              </div>
+            </div>
+            
+            {dayItems.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {dayItems.slice(0, 2).map(item => {
+                  const child = children.find(c => c.id === item.child_id);
+                  const colorIndex = childColorMap.get(item.child_id) ?? 0;
+                  return (
+                    <div 
+                      key={item.id}
+                      className={cn(
+                        "text-sm px-2 py-1.5 rounded-lg border font-medium flex items-center gap-2",
+                        CHILD_COLORS_LIGHT[colorIndex]
+                      )}
+                    >
+                      <span className="shrink-0">{child?.avatar_url || '👤'}</span>
+                      <span className="break-words line-clamp-2 leading-snug">
+                        {language === 'ru' ? item.title_ru : item.title_en}
+                      </span>
+                    </div>
+                  );
+                })}
+                {dayItems.length > 2 && (
+                  <span className="inline-block text-sm text-primary font-medium underline underline-offset-2">
+                    {language === 'ru' 
+                      ? `+${dayItems.length - 2} ещё` 
+                      : `+${dayItems.length - 2} more`}
+                  </span>
+                )}
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4 animate-fade-in px-4 md:px-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-secondary/20 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-2xl bg-secondary/20 flex items-center justify-center shrink-0">
           <Calendar className="w-6 h-6 text-secondary" />
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold break-words">
             {language === 'ru' ? 'Расписание' : 'Schedule'}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground break-words">
             {language === 'ru' ? 'Все занятия семьи' : 'All family activities'}
           </p>
         </div>
@@ -208,7 +387,7 @@ export const FamilySchedulePage = () => {
             key={mode}
             onClick={() => setViewMode(mode)}
             className={cn(
-              'flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all',
+              'flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all min-h-[44px]',
               viewMode === mode 
                 ? 'bg-background shadow text-foreground' 
                 : 'text-muted-foreground hover:text-foreground'
@@ -224,28 +403,28 @@ export const FamilySchedulePage = () => {
 
       {/* Navigation */}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={navigatePrev}>
+        <Button variant="ghost" size="icon" onClick={navigatePrev} className="min-h-[44px] min-w-[44px]">
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <span className="font-semibold">
+        <span className="font-semibold text-center break-words">
           {viewMode === 'day' && format(currentDate, 'd MMMM', { locale })}
           {viewMode === 'week' && `${format(days[0], 'd MMM', { locale })} - ${format(days[days.length - 1], 'd MMM', { locale })}`}
           {viewMode === 'month' && format(currentDate, 'MMMM yyyy', { locale })}
         </span>
-        <Button variant="ghost" size="icon" onClick={navigateNext}>
+        <Button variant="ghost" size="icon" onClick={navigateNext} className="min-h-[44px] min-w-[44px]">
           <ChevronRight className="w-5 h-5" />
         </Button>
       </div>
 
       {/* Child Filter */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4">
-        <div className="flex items-center gap-1 mr-2">
+        <div className="flex items-center gap-1 mr-2 shrink-0">
           <Filter className="w-4 h-4 text-muted-foreground" />
         </div>
         <button
           onClick={() => setSelectedChildId(null)}
           className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap',
+            'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap min-h-[36px]',
             selectedChildId === null 
               ? 'bg-primary text-primary-foreground' 
               : 'bg-muted hover:bg-muted/80'
@@ -258,14 +437,14 @@ export const FamilySchedulePage = () => {
             key={child.id}
             onClick={() => setSelectedChildId(child.id)}
             className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap',
+              'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap min-h-[36px]',
               selectedChildId === child.id 
                 ? 'bg-primary text-primary-foreground' 
                 : 'bg-muted hover:bg-muted/80'
             )}
           >
             <div className={cn(
-              'w-3 h-3 rounded-full',
+              'w-3 h-3 rounded-full shrink-0',
               CHILD_COLORS[index % CHILD_COLORS.length]
             )} />
             <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
@@ -274,335 +453,195 @@ export const FamilySchedulePage = () => {
         ))}
       </div>
 
-      {/* Calendar Grid */}
+      {/* Calendar Views */}
       <ScrollArea className="h-[calc(100vh-400px)]">
         {viewMode === 'month' ? (
           <>
-            {/* MOBILE: Month List View */}
-            <div className="md:hidden space-y-2">
-              {days.map(day => {
-                const dayItems = getItemsForDay(day);
-                return (
-                  <button
-                    key={day.toISOString()}
-                    onClick={() => {
-                      setCurrentDate(day);
-                      setViewMode('day');
-                    }}
-                    className={cn(
-                      'w-full text-left rounded-xl p-4 border-2 transition-colors active:bg-muted/50',
-                      isToday(day) ? 'bg-primary/10 border-primary/40' : 'bg-card border-border'
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={cn(
-                        'font-bold text-base',
-                        isToday(day) && 'text-primary'
-                      )}>
-                        {format(day, 'd MMMM', { locale })}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {format(day, 'EEEE', { locale })}
-                      </span>
-                    </div>
-                    
-                    {dayItems.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'ru' ? 'Нет занятий' : 'No activities'}
-                      </p>
-                    ) : (
-                      <div className="space-y-1">
-                        {dayItems.slice(0, 3).map(item => {
-                          const child = children.find(c => c.id === item.child_id);
-                          return (
-                            <div 
-                              key={item.id}
-                              className="flex items-center gap-2 text-sm"
-                            >
-                              <span className="text-xs">{child?.avatar_url || '👤'}</span>
-                              <span className="font-mono text-muted-foreground w-12">
-                                {item.time.slice(0, 5)}
-                              </span>
-                              <span className="truncate font-medium break-words">
-                                {language === 'ru' ? item.title_ru : item.title_en}
-                              </span>
-                            </div>
-                          );
-                        })}
-                        {dayItems.length > 3 && (
-                          <p className="text-sm text-muted-foreground font-medium">
-                            {language === 'ru' 
-                              ? `+${dayItems.length - 3} ещё` 
-                              : `+${dayItems.length - 3} more`}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {/* MOBILE: Month List View (shows ALL days) */}
+            {isMobile && <MobileMonthListView />}
 
             {/* DESKTOP: Month Grid View */}
-            <div className="hidden md:block border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
-              {/* Day headers */}
-              <div className="grid grid-cols-7 border-b-2 border-border bg-muted">
-                {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, i) => (
-                  <div 
-                    key={i} 
-                    className={cn(
-                      "text-center text-sm font-bold py-3 uppercase tracking-wide",
-                      i < 6 && "border-r-2 border-border",
-                      i >= 5 ? "text-muted-foreground bg-muted/80" : "text-foreground"
-                    )}
-                  >
-                    {language === 'ru' ? day : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
-                  </div>
-                ))}
-              </div>
-              {/* Calendar grid */}
-              <div className="grid grid-cols-7">
-                {/* Empty cells for alignment */}
-                {Array.from({ length: getMonthGridInfo().firstDayOffset }).map((_, i) => (
-                  <div 
-                    key={`empty-${i}`} 
-                    className={cn(
-                      "aspect-square bg-muted/30 border-b-2 border-border",
-                      i < 6 && "border-r-2 border-border"
-                    )} 
-                  />
-                ))}
-                {/* Day cells */}
-                {days.map((day, index) => {
-                  const dayItems = getItemsForDay(day);
-                  const { firstDayOffset, totalRows } = getMonthGridInfo();
-                  const cellIndex = firstDayOffset + index;
-                  const dayOfWeek = cellIndex % 7;
-                  const isLastColumn = dayOfWeek === 6;
-                  const rowNumber = Math.floor(cellIndex / 7);
-                  const isLastRow = rowNumber === totalRows - 1;
-                  
-                  return (
-                    <button 
-                      key={day.toISOString()}
-                      onClick={() => {
-                        setCurrentDate(day);
-                        setViewMode('day');
-                      }}
+            {!isMobile && (
+              <div className="border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
+                {/* Day headers */}
+                <div className="grid grid-cols-7 border-b-2 border-border bg-muted">
+                  {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, i) => (
+                    <div 
+                      key={i} 
                       className={cn(
-                        'aspect-square p-1.5 transition-colors text-left hover:bg-muted/50',
-                        !isLastColumn && "border-r-2 border-border",
-                        !isLastRow && "border-b-2 border-border",
-                        isToday(day) && 'bg-primary/15',
-                        dayOfWeek >= 5 && !isToday(day) && 'bg-muted/20'
+                        "text-center text-sm font-bold py-3 uppercase tracking-wide",
+                        i < 6 && "border-r-2 border-border",
+                        i >= 5 ? "text-muted-foreground bg-muted/80" : "text-foreground"
                       )}
                     >
-                      <div className={cn(
-                        'text-sm font-bold mb-1 w-7 h-7 flex items-center justify-center rounded-full',
-                        isToday(day) ? 'text-primary-foreground bg-primary' : 'text-foreground'
-                      )}>
-                        {format(day, 'd')}
-                      </div>
-                      <div className="space-y-0.5">
-                        {dayItems.slice(0, 3).map(item => {
-                          const child = children.find(c => c.id === item.child_id);
-                          const colorIndex = childColorMap.get(item.child_id) ?? 0;
-                          return (
-                            <div 
-                              key={item.id}
-                              className={cn(
-                                "text-[9px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border-2 font-medium",
-                                CHILD_COLORS_LIGHT[colorIndex]
-                              )}
-                            >
-                              <span className="text-[10px]">{child?.avatar_url || '👤'}</span>
-                              <span className="truncate">{item.time.slice(0, 5)}</span>
-                            </div>
-                          );
-                        })}
-                        {dayItems.length > 3 && (
-                          <div className="text-[9px] text-muted-foreground text-center font-semibold">
-                            +{dayItems.length - 3}
-                          </div>
+                      {language === 'ru' ? day : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
+                    </div>
+                  ))}
+                </div>
+                {/* Calendar grid */}
+                <div className="grid grid-cols-7">
+                  {/* Empty cells for alignment */}
+                  {Array.from({ length: getMonthGridInfo().firstDayOffset }).map((_, i) => (
+                    <div 
+                      key={`empty-${i}`} 
+                      className={cn(
+                        "aspect-square bg-muted/30 border-b-2 border-border",
+                        i < 6 && "border-r-2 border-border"
+                      )} 
+                    />
+                  ))}
+                  {/* Day cells */}
+                  {days.map((day, index) => {
+                    const dayItems = getItemsForDay(day);
+                    const { firstDayOffset, totalRows } = getMonthGridInfo();
+                    const cellIndex = firstDayOffset + index;
+                    const dayOfWeek = cellIndex % 7;
+                    const isLastColumn = dayOfWeek === 6;
+                    const rowNumber = Math.floor(cellIndex / 7);
+                    const isLastRow = rowNumber === totalRows - 1;
+                    
+                    return (
+                      <button 
+                        key={day.toISOString()}
+                        onClick={() => openDay(day)}
+                        className={cn(
+                          'aspect-square p-1.5 transition-colors text-left hover:bg-muted/50',
+                          !isLastColumn && "border-r-2 border-border",
+                          !isLastRow && "border-b-2 border-border",
+                          isToday(day) && 'bg-primary/15',
+                          dayOfWeek >= 5 && !isToday(day) && 'bg-muted/20'
                         )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-        ) : viewMode === 'week' ? (
-          <>
-            {/* MOBILE: Week List View */}
-            <div className="md:hidden space-y-2">
-              {days.map(day => {
-                const dayItems = getItemsForDay(day);
-                const completedCount = 0; // Tasks don't have completion status in schedule view
-                
-                return (
-                  <button
-                    key={day.toISOString()}
-                    onClick={() => {
-                      setCurrentDate(day);
-                      setViewMode('day');
-                    }}
-                    className={cn(
-                      'w-full text-left rounded-xl p-4 border-2 transition-colors active:bg-muted/50',
-                      isToday(day) ? 'bg-primary/10 border-primary/40' : 'bg-card border-border'
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      >
                         <div className={cn(
-                          'w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg',
-                          isToday(day) ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
+                          'text-sm font-bold mb-1 w-7 h-7 flex items-center justify-center rounded-full',
+                          isToday(day) ? 'text-primary-foreground bg-primary' : 'text-foreground'
                         )}>
                           {format(day, 'd')}
                         </div>
-                        <div>
-                          <p className={cn(
-                            'font-bold text-base break-words',
-                            isToday(day) && 'text-primary'
-                          )}>
-                            {format(day, 'EEEE', { locale })}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(day, 'd MMMM', { locale })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg">
-                          {dayItems.length}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {language === 'ru' 
-                            ? (dayItems.length === 1 ? 'занятие' : dayItems.length >= 2 && dayItems.length <= 4 ? 'занятия' : 'занятий')
-                            : (dayItems.length === 1 ? 'activity' : 'activities')}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {dayItems.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        {dayItems.slice(0, 4).map(item => {
-                          const child = children.find(c => c.id === item.child_id);
-                          const colorIndex = childColorMap.get(item.child_id) ?? 0;
-                          return (
-                            <span 
-                              key={item.id}
-                              className={cn(
-                                "text-xs px-2 py-1 rounded-full border font-medium inline-flex items-center gap-1",
-                                CHILD_COLORS_LIGHT[colorIndex]
-                              )}
-                            >
-                              <span>{child?.avatar_url || '👤'}</span>
-                              <span className="truncate max-w-[80px]">
-                                {language === 'ru' ? item.title_ru : item.title_en}
-                              </span>
-                            </span>
-                          );
-                        })}
-                        {dayItems.length > 4 && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium">
-                            +{dayItems.length - 4}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* DESKTOP: Week Grid View */}
-            <div className="hidden md:block min-w-[700px] border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
-              {/* Header row with days */}
-              <div className="grid grid-cols-8 border-b-2 border-border sticky top-0 bg-muted z-10">
-                <div className="p-3 text-center text-sm text-muted-foreground font-semibold border-r-2 border-border">
-                  {/* Empty corner cell */}
-                </div>
-                {days.map((day, index) => (
-                  <div 
-                    key={day.toISOString()} 
-                    className={cn(
-                      "p-3 text-center",
-                      index < days.length - 1 && "border-r-2 border-border",
-                      isToday(day) ? "bg-primary/20" : index >= 5 ? "bg-muted/80" : ""
-                    )}
-                  >
-                    <div className={cn(
-                      "text-sm font-bold uppercase tracking-wide",
-                      isToday(day) ? "text-primary" : "text-foreground"
-                    )}>
-                      {format(day, 'EEE', { locale })}
-                    </div>
-                    <div className={cn(
-                      "text-xl font-bold w-9 h-9 mx-auto flex items-center justify-center rounded-full",
-                      isToday(day) && "text-primary-foreground bg-primary"
-                    )}>
-                      {format(day, 'd')}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Time grid */}
-              <div className="relative">
-                {hours.map((hour, hourIndex) => (
-                  <div key={hour} className={cn(
-                    "grid grid-cols-8 min-h-[60px]",
-                    hourIndex < hours.length - 1 && "border-b-2 border-border/70"
-                  )}>
-                    {/* Hour label */}
-                    <div className="p-2 text-sm text-muted-foreground font-mono font-bold text-right pr-3 border-r-2 border-border bg-muted/50 flex items-start justify-end pt-1">
-                      {hour.toString().padStart(2, '0')}:00
-                    </div>
-                    {/* Day columns */}
-                    {days.map((day, dayIndex) => {
-                      const hourItems = getItemsForHour(day, hour);
-                      return (
-                        <div 
-                          key={day.toISOString()} 
-                          className={cn(
-                            "p-1 min-h-[60px]",
-                            dayIndex < days.length - 1 && "border-r-2 border-border/50",
-                            isToday(day) && "bg-primary/5",
-                            dayIndex >= 5 && !isToday(day) && "bg-muted/10"
-                          )}
-                        >
-                          {hourItems.map(item => {
+                        <div className="space-y-0.5">
+                          {dayItems.slice(0, 3).map(item => {
                             const child = children.find(c => c.id === item.child_id);
                             const colorIndex = childColorMap.get(item.child_id) ?? 0;
                             return (
                               <div 
                                 key={item.id}
-                                onClick={() => item.type === 'activity' && item.originalActivity && setEditingActivity(item.originalActivity)}
                                 className={cn(
-                                  "text-[10px] p-1 rounded mb-1 border-2 cursor-pointer hover:opacity-80 transition-opacity font-medium",
+                                  "text-[9px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border-2 font-medium",
                                   CHILD_COLORS_LIGHT[colorIndex]
                                 )}
                               >
-                                <div className="flex items-center gap-1">
-                                  <span>{child?.avatar_url || '👤'}</span>
-                                  <span className="font-semibold truncate">
-                                    {language === 'ru' ? item.title_ru : item.title_en}
-                                  </span>
-                                </div>
-                                <div className="text-muted-foreground font-mono">
-                                  {item.time.slice(0, 5)}
-                                </div>
+                                <span className="text-[10px]">{child?.avatar_url || '👤'}</span>
+                                <span className="truncate">{item.time.slice(0, 5)}</span>
                               </div>
                             );
                           })}
+                          {dayItems.length > 3 && (
+                            <div className="text-[9px] text-muted-foreground text-center font-semibold">
+                              +{dayItems.length - 3}
+                            </div>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
+          </>
+        ) : viewMode === 'week' ? (
+          <>
+            {/* MOBILE: Week List View */}
+            {isMobile && <MobileWeekListView />}
+
+            {/* DESKTOP: Week Grid View */}
+            {!isMobile && (
+              <div className="min-w-[700px] border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
+                {/* Header row with days */}
+                <div className="grid grid-cols-8 border-b-2 border-border sticky top-0 bg-muted z-10">
+                  <div className="p-3 text-center text-sm text-muted-foreground font-semibold border-r-2 border-border">
+                    {/* Empty corner cell */}
+                  </div>
+                  {days.map((day, index) => (
+                    <div 
+                      key={day.toISOString()} 
+                      className={cn(
+                        "p-3 text-center",
+                        index < days.length - 1 && "border-r-2 border-border",
+                        isToday(day) ? "bg-primary/20" : index >= 5 ? "bg-muted/80" : ""
+                      )}
+                    >
+                      <div className={cn(
+                        "text-sm font-bold uppercase tracking-wide",
+                        isToday(day) ? "text-primary" : "text-foreground"
+                      )}>
+                        {format(day, 'EEE', { locale })}
+                      </div>
+                      <div className={cn(
+                        "text-xl font-bold w-9 h-9 mx-auto flex items-center justify-center rounded-full",
+                        isToday(day) && "text-primary-foreground bg-primary"
+                      )}>
+                        {format(day, 'd')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Time grid */}
+                <div className="relative">
+                  {hours.map((hour, hourIndex) => (
+                    <div key={hour} className={cn(
+                      "grid grid-cols-8 min-h-[60px]",
+                      hourIndex < hours.length - 1 && "border-b-2 border-border/70"
+                    )}>
+                      {/* Hour label */}
+                      <div className="p-2 text-sm text-muted-foreground font-mono font-bold text-right pr-3 border-r-2 border-border bg-muted/50 flex items-start justify-end pt-1">
+                        {hour.toString().padStart(2, '0')}:00
+                      </div>
+                      {/* Day columns */}
+                      {days.map((day, dayIndex) => {
+                        const hourItems = getItemsForHour(day, hour);
+                        return (
+                          <div 
+                            key={day.toISOString()} 
+                            className={cn(
+                              "p-1 min-h-[60px]",
+                              dayIndex < days.length - 1 && "border-r-2 border-border/50",
+                              isToday(day) && "bg-primary/5",
+                              dayIndex >= 5 && !isToday(day) && "bg-muted/10"
+                            )}
+                          >
+                            {hourItems.map(item => {
+                              const child = children.find(c => c.id === item.child_id);
+                              const colorIndex = childColorMap.get(item.child_id) ?? 0;
+                              return (
+                                <div 
+                                  key={item.id}
+                                  onClick={() => item.type === 'activity' && item.originalActivity && setEditingActivity(item.originalActivity)}
+                                  className={cn(
+                                    "text-[10px] p-1 rounded mb-1 border-2 cursor-pointer hover:opacity-80 transition-opacity font-medium",
+                                    CHILD_COLORS_LIGHT[colorIndex]
+                                  )}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    <span>{child?.avatar_url || '👤'}</span>
+                                    <span className="font-semibold truncate">
+                                      {language === 'ru' ? item.title_ru : item.title_en}
+                                    </span>
+                                  </div>
+                                  <div className="text-muted-foreground font-mono">
+                                    {item.time.slice(0, 5)}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           /* Day View - Vertical list */
@@ -617,9 +656,9 @@ export const FamilySchedulePage = () => {
                     isToday(day) ? 'bg-primary/10 border-primary/40' : 'bg-card border-border'
                   )}
                 >
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className={cn(
-                      'font-bold',
+                      'font-bold break-words',
                       isToday(day) && 'text-primary'
                     )}>
                       {format(day, 'EEEE', { locale })}
@@ -646,7 +685,7 @@ export const FamilySchedulePage = () => {
                               CHILD_COLORS_LIGHT[colorIndex]
                             )}
                           >
-                            <div className="text-sm font-mono font-bold w-14">
+                            <div className="text-sm font-mono font-bold w-14 shrink-0">
                               {item.time.slice(0, 5)}
                             </div>
                             {child && (
@@ -655,22 +694,22 @@ export const FamilySchedulePage = () => {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1">
                                 {item.type === 'task' ? (
-                                  <Sparkles className="w-3 h-3 text-accent" />
+                                  <Sparkles className="w-3 h-3 text-accent shrink-0" />
                                 ) : (
-                                  <BookOpen className="w-3 h-3 text-secondary" />
+                                  <BookOpen className="w-3 h-3 text-secondary shrink-0" />
                                 )}
-                                <p className="font-semibold text-sm truncate">
+                                <p className="font-semibold text-sm break-words line-clamp-2 leading-snug">
                                   {language === 'ru' ? item.title_ru : item.title_en}
                                 </p>
                               </div>
                               {item.location && (
-                                <p className="text-xs text-muted-foreground truncate">
+                                <p className="text-xs text-muted-foreground break-words">
                                   📍 {item.location}
                                 </p>
                               )}
                             </div>
                             {item.duration && (
-                              <span className="text-xs text-muted-foreground font-medium">
+                              <span className="text-xs text-muted-foreground font-medium shrink-0">
                                 {item.duration}{language === 'ru' ? ' мин' : ' min'}
                               </span>
                             )}
@@ -678,7 +717,7 @@ export const FamilySchedulePage = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 shrink-0"
                                 onClick={() => setEditingActivity(item.originalActivity!)}
                               >
                                 <Pencil className="w-4 h-4" />

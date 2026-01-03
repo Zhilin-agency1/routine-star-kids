@@ -5,11 +5,13 @@ import { Calendar, Users, Replace, Plus, Loader2, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChildren } from '@/hooks/useChildren';
 import { useDayTemplates, PRESET_TEMPLATES, DayTemplateWithTasks } from '@/hooks/useDayTemplates';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -18,6 +20,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from '@/components/ui/drawer';
 
 interface ApplyTemplateDialogProps {
   open: boolean;
@@ -35,6 +44,7 @@ export const ApplyTemplateDialog = ({
   const { language } = useLanguage();
   const { children } = useChildren();
   const { applyTemplate } = useDayTemplates();
+  const isMobile = useIsMobile();
   
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<'today' | 'tomorrow' | 'custom'>('tomorrow');
@@ -111,163 +121,195 @@ export const ApplyTemplateDialog = ({
     }
   };
 
+  const mainContent = (
+    <div className="space-y-5 py-4 px-1">
+      {/* Template name */}
+      <div className="bg-primary/5 rounded-xl p-3 text-center">
+        <p className="font-semibold text-base sm:text-lg">{getTemplateName()}</p>
+      </div>
+
+      {/* Select children */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-2 text-sm sm:text-base">
+            <Users className="w-4 h-4" />
+            {language === 'ru' ? 'Для кого' : 'For whom'}
+          </Label>
+          <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-xs sm:text-sm">
+            {selectedChildren.length === children.length
+              ? (language === 'ru' ? 'Снять всё' : 'Deselect all')
+              : (language === 'ru' ? 'Выбрать всех' : 'Select all')}
+          </Button>
+        </div>
+        <div className="space-y-2">
+          {children.map(child => (
+            <label
+              key={child.id}
+              className={`flex items-center gap-3 p-3 min-h-[48px] rounded-xl border cursor-pointer transition-colors ${
+                selectedChildren.includes(child.id)
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <Checkbox
+                checked={selectedChildren.includes(child.id)}
+                onCheckedChange={() => handleChildToggle(child.id)}
+              />
+              <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
+              <span className="font-medium">{child.name}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Select date */}
+      <div className="space-y-3">
+        <Label className="flex items-center gap-2 text-sm sm:text-base">
+          <Calendar className="w-4 h-4" />
+          {language === 'ru' ? 'На какой день' : 'For which day'}
+        </Label>
+        <RadioGroup
+          value={selectedDate}
+          onValueChange={(v) => setSelectedDate(v as 'today' | 'tomorrow')}
+          className="grid grid-cols-2 gap-2"
+        >
+          <label
+            className={`flex items-center justify-center gap-2 p-3 min-h-[48px] rounded-xl border cursor-pointer transition-colors ${
+              selectedDate === 'today'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <RadioGroupItem value="today" />
+            <span className="text-sm sm:text-base">{language === 'ru' ? 'Сегодня' : 'Today'}</span>
+          </label>
+          <label
+            className={`flex items-center justify-center gap-2 p-3 min-h-[48px] rounded-xl border cursor-pointer transition-colors ${
+              selectedDate === 'tomorrow'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <RadioGroupItem value="tomorrow" />
+            <span className="text-sm sm:text-base">{language === 'ru' ? 'Завтра' : 'Tomorrow'}</span>
+          </label>
+        </RadioGroup>
+        <p className="text-xs sm:text-sm text-muted-foreground text-center">
+          {formatDate(getTargetDate())}
+        </p>
+      </div>
+
+      {/* Apply mode */}
+      <div className="space-y-3">
+        <Label className="text-sm sm:text-base">{language === 'ru' ? 'Режим применения' : 'Apply mode'}</Label>
+        <RadioGroup
+          value={applyMode}
+          onValueChange={(v) => setApplyMode(v as 'replace' | 'add')}
+          className="space-y-2"
+        >
+          <label
+            className={`flex items-start gap-3 p-3 min-h-[64px] rounded-xl border cursor-pointer transition-colors ${
+              applyMode === 'replace'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <RadioGroupItem value="replace" className="mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Replace className="w-4 h-4 text-warning flex-shrink-0" />
+                <span className="font-medium text-sm sm:text-base">
+                  {language === 'ru' ? 'Заменить план' : 'Replace plan'}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                {language === 'ru'
+                  ? 'Удалит незавершённые задачи на этот день'
+                  : 'Start fresh with this template'}
+              </p>
+            </div>
+          </label>
+          <label
+            className={`flex items-start gap-3 p-3 min-h-[64px] rounded-xl border cursor-pointer transition-colors ${
+              applyMode === 'add'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <RadioGroupItem value="add" className="mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Plus className="w-4 h-4 text-success flex-shrink-0" />
+                <span className="font-medium text-sm sm:text-base">
+                  {language === 'ru' ? 'Добавить к плану' : 'Add to plan'}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                {language === 'ru'
+                  ? 'Сохранит существующие и добавит новые'
+                  : 'Keep current tasks and add these'}
+              </p>
+            </div>
+          </label>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  const footer = (
+    <div className="flex flex-col sm:flex-row gap-2 w-full pb-safe">
+      <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto sm:flex-1">
+        {language === 'ru' ? 'Отмена' : 'Cancel'}
+      </Button>
+      <Button
+        onClick={handleApply}
+        disabled={isApplying || selectedChildren.length === 0}
+        className="w-full sm:w-auto sm:flex-1"
+      >
+        {isApplying ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : (
+          <Check className="w-4 h-4 mr-2" />
+        )}
+        {language === 'ru' ? 'Применить' : 'Apply'}
+      </Button>
+    </div>
+  );
+
+  // Use Drawer on mobile, Dialog on desktop
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="max-h-[90vh]">
+          <DrawerHeader className="px-4">
+            <DrawerTitle>
+              {language === 'ru' ? 'Применить шаблон' : 'Apply Template'}
+            </DrawerTitle>
+          </DrawerHeader>
+          <ScrollArea className="flex-1 px-4 overflow-y-auto">
+            {mainContent}
+          </ScrollArea>
+          <DrawerFooter className="px-4">
+            {footer}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {language === 'ru' ? 'Применить шаблон' : 'Apply Template'}
           </DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Template name */}
-          <div className="bg-primary/5 rounded-xl p-3 text-center">
-            <p className="font-semibold text-lg">{getTemplateName()}</p>
-          </div>
-
-          {/* Select children */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                {language === 'ru' ? 'Для кого' : 'For whom'}
-              </Label>
-              <Button variant="ghost" size="sm" onClick={handleSelectAll}>
-                {selectedChildren.length === children.length
-                  ? (language === 'ru' ? 'Снять всё' : 'Deselect all')
-                  : (language === 'ru' ? 'Выбрать всех' : 'Select all')}
-              </Button>
-            </div>
-            <div className="grid gap-2">
-              {children.map(child => (
-                <label
-                  key={child.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                    selectedChildren.includes(child.id)
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <Checkbox
-                    checked={selectedChildren.includes(child.id)}
-                    onCheckedChange={() => handleChildToggle(child.id)}
-                  />
-                  <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
-                  <span className="font-medium">{child.name}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Select date */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {language === 'ru' ? 'На какой день' : 'For which day'}
-            </Label>
-            <RadioGroup
-              value={selectedDate}
-              onValueChange={(v) => setSelectedDate(v as 'today' | 'tomorrow')}
-              className="grid grid-cols-2 gap-2"
-            >
-              <label
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-colors ${
-                  selectedDate === 'today'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <RadioGroupItem value="today" />
-                <span>{language === 'ru' ? 'Сегодня' : 'Today'}</span>
-              </label>
-              <label
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-colors ${
-                  selectedDate === 'tomorrow'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <RadioGroupItem value="tomorrow" />
-                <span>{language === 'ru' ? 'Завтра' : 'Tomorrow'}</span>
-              </label>
-            </RadioGroup>
-            <p className="text-sm text-muted-foreground text-center">
-              {formatDate(getTargetDate())}
-            </p>
-          </div>
-
-          {/* Apply mode */}
-          <div className="space-y-3">
-            <Label>{language === 'ru' ? 'Режим применения' : 'Apply mode'}</Label>
-            <RadioGroup
-              value={applyMode}
-              onValueChange={(v) => setApplyMode(v as 'replace' | 'add')}
-              className="space-y-2"
-            >
-              <label
-                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                  applyMode === 'replace'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <RadioGroupItem value="replace" className="mt-0.5" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <Replace className="w-4 h-4 text-warning" />
-                    <span className="font-medium">
-                      {language === 'ru' ? 'Заменить план' : 'Replace plan'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {language === 'ru'
-                      ? 'Удалит незавершённые задачи на этот день и добавит новые из шаблона'
-                      : 'Removes incomplete tasks for that day and adds new ones from template'}
-                  </p>
-                </div>
-              </label>
-              <label
-                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                  applyMode === 'add'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <RadioGroupItem value="add" className="mt-0.5" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-success" />
-                    <span className="font-medium">
-                      {language === 'ru' ? 'Добавить к плану' : 'Add to plan'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {language === 'ru'
-                      ? 'Сохранит существующие задачи и добавит новые из шаблона'
-                      : 'Keeps existing tasks and adds new ones from template'}
-                  </p>
-                </div>
-              </label>
-            </RadioGroup>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {language === 'ru' ? 'Отмена' : 'Cancel'}
-          </Button>
-          <Button
-            onClick={handleApply}
-            disabled={isApplying || selectedChildren.length === 0}
-          >
-            {isApplying ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <Check className="w-4 h-4 mr-2" />
-            )}
-            {language === 'ru' ? 'Применить' : 'Apply'}
-          </Button>
+        <ScrollArea className="flex-1 overflow-y-auto pr-2">
+          {mainContent}
+        </ScrollArea>
+        <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
+          {footer}
         </DialogFooter>
       </DialogContent>
     </Dialog>

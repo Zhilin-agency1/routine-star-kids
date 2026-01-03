@@ -83,7 +83,7 @@ export const TodayBoard = () => {
           <div className="flex items-center gap-2 mb-2">
             <Star className="w-4 h-4 text-primary fill-primary" />
             <span className="text-sm font-semibold text-primary">
-              {language === 'ru' ? 'Следующее задание' : 'Next task'}
+              {t('next_task')}
             </span>
           </div>
           <SimpleTaskCard
@@ -136,12 +136,10 @@ export const TodayBoard = () => {
         <div className="text-center py-8 bg-gradient-to-br from-success/10 to-primary/10 rounded-2xl">
           <div className="text-6xl mb-4">🎉</div>
           <p className="text-xl font-bold text-foreground">
-            {language === 'ru' ? 'Всё сделано!' : 'All done!'}
+            {t('all_done')}
           </p>
           <p className="text-muted-foreground mt-2">
-            {language === 'ru' 
-              ? 'Отличная работа! Можешь отдохнуть.' 
-              : 'Great job! You can rest now.'}
+            {t('all_done_desc')}
           </p>
         </div>
       )}
@@ -151,18 +149,14 @@ export const TodayBoard = () => {
         <div className="text-center py-12 bg-card rounded-2xl">
           <div className="text-6xl mb-4">📋</div>
           <p className="text-xl font-bold text-foreground">
-            {language === 'ru' ? 'План ещё не готов' : 'No plan for today yet'}
+            {t('no_plan_yet')}
           </p>
           <p className="text-muted-foreground mt-2 mb-6">
-            {language === 'ru' 
-              ? 'Твой план на сегодня ещё не составлен' 
-              : 'Your plan for today is not ready yet'}
+            {t('plan_not_ready')}
           </p>
           {/* Option to switch to parent mode - only visible, no action here */}
           <p className="text-xs text-muted-foreground">
-            {language === 'ru' 
-              ? 'Попроси родителя составить план' 
-              : 'Ask a parent to set up your plan'}
+            {t('ask_parent_plan')}
           </p>
         </div>
       )}

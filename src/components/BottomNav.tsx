@@ -36,22 +36,8 @@ const parentNavItems: NavItem[] = [
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/parent/store' },
 ];
 
-const translations: Record<string, { en: string; ru: string }> = {
-  nav_today: { en: 'Today', ru: 'Сегодня' },
-  nav_schedule: { en: 'Plan', ru: 'План' },
-  nav_templates: { en: 'Templates', ru: 'Шаблоны' },
-  nav_exchange: { en: 'Tasks', ru: 'Задания' },
-  nav_rewards: { en: 'Rewards', ru: 'Награды' },
-  nav_store: { en: 'Store', ru: 'Магазин' },
-  nav_job_board: { en: 'Tasks', ru: 'Задания' },
-  nav_tasks: { en: 'Tasks', ru: 'Задания' },
-  nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
-  nav_reports: { en: 'Reports', ru: 'Отчёты' },
-  nav_overview: { en: 'Overview', ru: 'Обзор' },
-};
-
 export const BottomNav = () => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { role, viewMode } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,11 +50,6 @@ export const BottomNav = () => {
   };
 
   const navItems = getNavItems();
-
-  const getLabel = (key: string) => {
-    const trans = translations[key];
-    return trans ? trans[language] : key;
-  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-bottom z-40">
@@ -98,7 +79,7 @@ export const BottomNav = () => {
                 )} />
               </div>
               <span className="text-xs font-semibold truncate max-w-full">
-                {getLabel(item.labelKey)}
+                {t(item.labelKey as any)}
               </span>
             </button>
           );

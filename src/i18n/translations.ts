@@ -15,6 +15,10 @@ export const translations = {
     back: "Back",
     done: "Done!",
     loading: "Loading...",
+    error: "Error",
+    success: "Success",
+    confirm: "Confirm",
+    close: "Close",
     
     // Navigation
     nav_dashboard: "Dashboard",
@@ -27,6 +31,9 @@ export const translations = {
     nav_today: "Today",
     nav_goals: "Goals",
     nav_overview: "Overview",
+    nav_templates: "Templates",
+    nav_exchange: "Tasks",
+    nav_rewards: "Rewards",
     
     // Roles
     role_parent: "Parent",
@@ -37,6 +44,8 @@ export const translations = {
     state_todo: "To Do",
     state_doing: "In Progress",
     state_done: "Completed",
+    state_skipped: "Skipped",
+    state_cancelled: "Cancelled",
     
     // Dashboard
     dashboard_title: "Family Dashboard",
@@ -49,6 +58,16 @@ export const translations = {
     great_job: "Great job!",
     keep_going: "Keep going!",
     no_tasks: "No tasks for today!",
+    no_tasks_scheduled: "No tasks for today",
+    create_task_or_wait: "Create a task or wait for schedule",
+    no_custom_plans: "No custom plans",
+    create_your_plan: "Create your own plan",
+    next_task: "Next task",
+    all_done: "All done!",
+    all_done_desc: "Great job! You can rest now.",
+    no_plan_yet: "No plan for today yet",
+    plan_not_ready: "Your plan for today is not ready yet",
+    ask_parent_plan: "Ask a parent to set up your plan",
     
     // Store
     store_title: "Store",
@@ -56,16 +75,64 @@ export const translations = {
     not_enough: "Not enough coins",
     coins_to_go: "coins to go",
     purchased: "Purchased!",
+    save_coins: "Save",
+    added: "Added!",
+    removed: "Removed",
+    added_to_wishlist: "added to wishlist",
+    removed_from_wishlist: "removed from wishlist",
+    select_child: "Select a child",
     
     // Tasks (Extra)
     job_board_title: "Tasks",
     take_job: "Take Task",
     job_taken: "Task taken!",
     extra_tasks: "Extra tasks for rewards",
+    no_jobs_available: "No jobs available",
+    finish_plan_first: "Finish today's plan first",
+    tasks_remaining: "tasks remaining",
+    task_remaining: "task remaining",
+    open_today: "Open Today",
+    
+    // Steps
+    steps: "steps",
+    step: "step",
+    steps_left: "steps left",
+    step_left: "step left",
+    steps_remaining_of: "of",
+    steps_label: "Steps:",
+    add_step: "Add step",
+    steps_help: "Steps help break down tasks. Bonuses can be hidden until completion!",
+    steps_bonus_help: "Bonuses can be hidden — child will see them only after completion!",
+    
+    // Days remaining
+    last_day: "Last day",
+    one_day_left: "1 day left",
+    days_left: "days left",
     
     // Schedule
     schedule_title: "My Schedule",
     no_activities: "No activities scheduled",
+    activity_updated: "Activity updated",
+    activity_deleted: "Activity deleted",
+    edit_activity: "Edit Activity",
+    title_label: "Title",
+    title_en_label: "Title (EN)",
+    time_label: "Time",
+    duration_label: "Duration (min)",
+    location_label: "Location",
+    days_of_week: "Days of week",
+    activity_title_placeholder: "Activity title",
+    activity_location_placeholder: "Where the activity takes place",
+    apply_template: "Apply template",
+    
+    // Weekdays
+    weekday_mon: "Mon",
+    weekday_tue: "Tue",
+    weekday_wed: "Wed",
+    weekday_thu: "Thu",
+    weekday_fri: "Fri",
+    weekday_sat: "Sat",
+    weekday_sun: "Sun",
     
     // Parent
     manage_family: "Manage Family",
@@ -73,6 +140,140 @@ export const translations = {
     add_task: "Add Task",
     add_store_item: "Add Store Item",
     add_job: "Add Job",
+    all_children: "All children",
+    recurring: "Recurring",
+    one_time: "One-time",
+    delete_plan: "Delete plan?",
+    delete_plan_desc: "All related task instances will also be deleted. This action cannot be undone.",
+    plan_deleted: "Plan deleted",
+    failed_to_delete: "Failed to delete",
+    
+    // Child Dialog
+    add_child_title: "Add Child",
+    edit_profile: "Edit Profile",
+    child_info_desc: "Fill in child information",
+    change_name_avatar: "Change name or avatar",
+    select_avatar: "Select avatar",
+    name_label: "Name",
+    name_placeholder: "Child's name",
+    initial_balance: "Initial coin balance",
+    balance_tip: "You can start at zero or give a bonus to start",
+    interface_language: "Interface language",
+    child_added: "added to family!",
+    add_child_error: "Error adding child",
+    profile_updated: "Profile updated!",
+    update_failed: "Update failed",
+    
+    // Family Setup
+    welcome: "Welcome!",
+    create_family_desc: "Let's create your family to get started",
+    family_name_label: "Family name",
+    family_name_placeholder: "The Smith Family",
+    family_name_tip: "You can change this later in settings",
+    create_family: "Create Family",
+    enter_family_name: "Enter family name",
+    family_created: "Family created!",
+    family_create_error: "Error creating family",
+    whats_next: "What's next?",
+    next_add_children: "Add children to your family",
+    next_create_tasks: "Create tasks and schedule",
+    next_setup_store: "Set up rewards in the store",
+    loading_data: "Loading data...",
+    
+    // Templates
+    template_name_ru: "Name (RU)",
+    template_name_en: "Name (EN)",
+    template_tasks: "Tasks",
+    add_first_task: "Add first task",
+    no_tasks_in_template: "No tasks",
+    create_template: "Create Template",
+    edit_template: "Edit Template",
+    enter_template_name: "Enter template name",
+    add_at_least_one_task: "Add at least one task",
+    template_created: "Template created!",
+    template_updated: "Template updated!",
+    save_error: "Save error",
+    
+    // Auth
+    login: "Login",
+    signup: "Sign up",
+    email: "Email",
+    password: "Password",
+    confirm_password: "Confirm password",
+    your_name: "Your name",
+    login_btn: "Login",
+    signup_btn: "Sign up",
+    min_6_chars: "At least 6 characters",
+    repeat_password: "Repeat password",
+    terms_agreement: "By creating an account, you agree to the terms of service",
+    confirm_email_title: "Confirm your email",
+    confirm_email_desc: "We sent an email to {email}. Click the link in the email to confirm your account.",
+    resend_email: "Resend email",
+    back_to_login: "Back to login",
+    check_spam: "Check your spam folder if you don't see the email",
+    email_sent: "Email sent! Check your inbox",
+    email_resent: "Email resent successfully!",
+    
+    // Auth errors
+    invalid_credentials: "Invalid email or password",
+    email_not_confirmed: "Email not confirmed. Check your inbox",
+    login_error: "Login error",
+    login_success: "Login successful!",
+    login_occurred_error: "An error occurred during login",
+    user_exists: "User with this email already exists",
+    password_too_weak: "Password is too weak",
+    registration_error: "Registration error",
+    registration_success: "Registration successful! You can now login",
+    registration_occurred_error: "An error occurred during registration",
+    send_error: "Send error",
+    send_email_error: "Error sending email",
+    
+    // Validation
+    email_required: "Email is required",
+    invalid_email: "Invalid email address",
+    email_too_long: "Email must be less than 255 characters",
+    password_required: "Password is required",
+    password_min_length: "Password must be at least 6 characters",
+    password_too_long: "Password must be less than 72 characters",
+    name_required: "Name is required",
+    name_too_long: "Name must be less than 50 characters",
+    confirm_password_required: "Password confirmation is required",
+    passwords_dont_match: "Passwords don't match",
+    title_required: "Title is required",
+    title_too_long: "Title must be less than 100 characters",
+    description_too_long: "Description must be less than 500 characters",
+    reward_min: "Reward must be at least 1",
+    reward_max: "Reward must be less than 1000",
+    time_required: "Time is required",
+    duration_min: "Minimum 5 minutes",
+    duration_max: "Maximum 8 hours",
+    location_too_long: "Location must be less than 200 characters",
+    balance_negative: "Balance cannot be negative",
+    balance_max: "Balance must be less than 10000",
+    ru_name_required: "Russian name is required",
+    en_name_required: "English name is required",
+    price_min: "Price must be at least 1",
+    icon_required: "Icon is required",
+    ru_title_required: "Russian title is required",
+    en_title_required: "English title is required",
+    
+    // Rewards page
+    my_rewards: "My Rewards",
+    wishlist: "Wishlist",
+    add_from_store: "Add items to your wishlist from the store",
+    can_buy: "Can buy!",
+    remaining: "Remaining:",
+    
+    // Achievements
+    no_tasks_label: "No tasks",
+    no_children_yet: "No children in family yet",
+    
+    // Task Dialog
+    task_updated: "Task updated!",
+    task_update_failed: "Failed to update",
+    reward_label: "Reward:",
+    no_additional_info: "No additional information",
+    steps_execution: "Steps",
   },
   ru: {
     // Common
@@ -88,6 +289,10 @@ export const translations = {
     back: "Назад",
     done: "Готово!",
     loading: "Загрузка...",
+    error: "Ошибка",
+    success: "Успешно",
+    confirm: "Подтвердить",
+    close: "Закрыть",
     
     // Navigation
     nav_dashboard: "Главная",
@@ -100,6 +305,9 @@ export const translations = {
     nav_today: "Сегодня",
     nav_goals: "Цели",
     nav_overview: "Обзор",
+    nav_templates: "Шаблоны",
+    nav_exchange: "Задания",
+    nav_rewards: "Награды",
     
     // Roles
     role_parent: "Родитель",
@@ -110,6 +318,8 @@ export const translations = {
     state_todo: "Сделать",
     state_doing: "В процессе",
     state_done: "Выполнено",
+    state_skipped: "Пропущено",
+    state_cancelled: "Отменено",
     
     // Dashboard
     dashboard_title: "Семейная панель",
@@ -122,6 +332,16 @@ export const translations = {
     great_job: "Отличная работа!",
     keep_going: "Продолжай!",
     no_tasks: "На сегодня задач нет!",
+    no_tasks_scheduled: "Нет задач на сегодня",
+    create_task_or_wait: "Создайте задачу или дождитесь расписания",
+    no_custom_plans: "Нет своих планов",
+    create_your_plan: "Создайте свой план",
+    next_task: "Следующее задание",
+    all_done: "Всё сделано!",
+    all_done_desc: "Отличная работа! Можешь отдохнуть.",
+    no_plan_yet: "План ещё не готов",
+    plan_not_ready: "Твой план на сегодня ещё не составлен",
+    ask_parent_plan: "Попроси родителя составить план",
     
     // Store
     store_title: "Магазин",
@@ -129,16 +349,64 @@ export const translations = {
     not_enough: "Не хватает монет",
     coins_to_go: "монет до покупки",
     purchased: "Куплено!",
+    save_coins: "Копить",
+    added: "Добавлено!",
+    removed: "Удалено",
+    added_to_wishlist: "добавлен в список желаний",
+    removed_from_wishlist: "удалён из списка желаний",
+    select_child: "Выберите ребёнка",
     
     // Tasks (Extra)
     job_board_title: "Задания",
     take_job: "Взять задание",
     job_taken: "Задание взято!",
     extra_tasks: "Дополнительные задания за награды",
+    no_jobs_available: "Нет доступных заданий",
+    finish_plan_first: "Сначала закончи план на сегодня",
+    tasks_remaining: "заданий",
+    task_remaining: "задание",
+    open_today: "Открыть задания",
+    
+    // Steps
+    steps: "шагов",
+    step: "шаг",
+    steps_left: "шагов",
+    step_left: "шаг",
+    steps_remaining_of: "из",
+    steps_label: "Шаги:",
+    add_step: "Добавить шаг",
+    steps_help: "Шаги помогают разбить задачу на части. Бонусы могут быть скрыты до завершения!",
+    steps_bonus_help: "Бонусы могут быть скрыты — ребенок увидит их только после завершения!",
+    
+    // Days remaining
+    last_day: "Сегодня последний день",
+    one_day_left: "Остался 1 день",
+    days_left: "дней",
     
     // Schedule
     schedule_title: "Моё расписание",
     no_activities: "Нет запланированных занятий",
+    activity_updated: "Занятие обновлено",
+    activity_deleted: "Занятие удалено",
+    edit_activity: "Редактировать занятие",
+    title_label: "Название",
+    title_en_label: "Название (EN)",
+    time_label: "Время",
+    duration_label: "Длительность (мин)",
+    location_label: "Место",
+    days_of_week: "Дни недели",
+    activity_title_placeholder: "Название занятия",
+    activity_location_placeholder: "Где проходит занятие",
+    apply_template: "Применить шаблон",
+    
+    // Weekdays
+    weekday_mon: "Пн",
+    weekday_tue: "Вт",
+    weekday_wed: "Ср",
+    weekday_thu: "Чт",
+    weekday_fri: "Пт",
+    weekday_sat: "Сб",
+    weekday_sun: "Вс",
     
     // Parent
     manage_family: "Управление семьёй",
@@ -146,8 +414,170 @@ export const translations = {
     add_task: "Добавить задачу",
     add_store_item: "Добавить товар",
     add_job: "Добавить задание",
+    all_children: "Все дети",
+    recurring: "Повтор",
+    one_time: "Разовая",
+    delete_plan: "Удалить план?",
+    delete_plan_desc: "Все связанные задачи будут также удалены. Это действие нельзя отменить.",
+    plan_deleted: "План удалён",
+    failed_to_delete: "Ошибка при удалении",
+    
+    // Child Dialog
+    add_child_title: "Добавить ребёнка",
+    edit_profile: "Редактировать профиль",
+    child_info_desc: "Заполните информацию о ребёнке",
+    change_name_avatar: "Измените имя или аватар",
+    select_avatar: "Выберите аватар",
+    name_label: "Имя",
+    name_placeholder: "Как зовут ребёнка?",
+    initial_balance: "Начальный баланс монет",
+    balance_tip: "Можно начать с нуля или дать бонус для старта",
+    interface_language: "Язык интерфейса",
+    child_added: "добавлен в семью!",
+    add_child_error: "Ошибка при добавлении ребёнка",
+    profile_updated: "Профиль обновлён!",
+    update_failed: "Ошибка при обновлении",
+    
+    // Family Setup
+    welcome: "Добро пожаловать!",
+    create_family_desc: "Давайте создадим вашу семью для начала работы",
+    family_name_label: "Название семьи",
+    family_name_placeholder: "Семья Ивановых",
+    family_name_tip: "Вы сможете изменить это позже в настройках",
+    create_family: "Создать семью",
+    enter_family_name: "Введите название семьи",
+    family_created: "Семья создана!",
+    family_create_error: "Ошибка создания семьи",
+    whats_next: "Что дальше?",
+    next_add_children: "Добавьте детей в вашу семью",
+    next_create_tasks: "Создайте задания и расписание",
+    next_setup_store: "Настройте награды в магазине",
+    loading_data: "Загрузка данных...",
+    
+    // Templates
+    template_name_ru: "Название (RU)",
+    template_name_en: "Название (EN)",
+    template_tasks: "Задачи",
+    add_first_task: "Добавить первую задачу",
+    no_tasks_in_template: "Нет задач",
+    create_template: "Создать шаблон",
+    edit_template: "Редактировать шаблон",
+    enter_template_name: "Введите название шаблона",
+    add_at_least_one_task: "Добавьте хотя бы одну задачу",
+    template_created: "Шаблон создан!",
+    template_updated: "Шаблон обновлён!",
+    save_error: "Ошибка сохранения",
+    
+    // Auth
+    login: "Вход",
+    signup: "Регистрация",
+    email: "Email",
+    password: "Пароль",
+    confirm_password: "Подтвердите пароль",
+    your_name: "Ваше имя",
+    login_btn: "Войти",
+    signup_btn: "Зарегистрироваться",
+    min_6_chars: "Минимум 6 символов",
+    repeat_password: "Повторите пароль",
+    terms_agreement: "Создавая аккаунт, вы соглашаетесь с условиями использования",
+    confirm_email_title: "Подтвердите email",
+    confirm_email_desc: "Мы отправили письмо на {email}. Перейдите по ссылке в письме, чтобы подтвердить аккаунт.",
+    resend_email: "Отправить повторно",
+    back_to_login: "Вернуться ко входу",
+    check_spam: "Проверьте папку \"Спам\", если не видите письмо",
+    email_sent: "Письмо отправлено! Проверьте почту",
+    email_resent: "Письмо отправлено повторно!",
+    
+    // Auth errors
+    invalid_credentials: "Неверный email или пароль",
+    email_not_confirmed: "Email не подтверждён. Проверьте почту",
+    login_error: "Ошибка входа",
+    login_success: "Вход выполнен успешно!",
+    login_occurred_error: "Произошла ошибка при входе",
+    user_exists: "Пользователь с таким email уже существует",
+    password_too_weak: "Пароль слишком простой",
+    registration_error: "Ошибка регистрации",
+    registration_success: "Регистрация успешна! Можете войти",
+    registration_occurred_error: "Произошла ошибка при регистрации",
+    send_error: "Ошибка отправки",
+    send_email_error: "Ошибка отправки письма",
+    
+    // Validation
+    email_required: "Email обязателен",
+    invalid_email: "Некорректный email адрес",
+    email_too_long: "Email не должен превышать 255 символов",
+    password_required: "Пароль обязателен",
+    password_min_length: "Пароль должен быть минимум 6 символов",
+    password_too_long: "Пароль не должен превышать 72 символа",
+    name_required: "Имя обязательно",
+    name_too_long: "Имя не должно превышать 50 символов",
+    confirm_password_required: "Подтверждение пароля обязательно",
+    passwords_dont_match: "Пароли не совпадают",
+    title_required: "Название обязательно",
+    title_too_long: "Название не должно превышать 100 символов",
+    description_too_long: "Описание не должно превышать 500 символов",
+    reward_min: "Награда должна быть минимум 1",
+    reward_max: "Награда не должна превышать 1000",
+    time_required: "Время обязательно",
+    duration_min: "Минимум 5 минут",
+    duration_max: "Максимум 8 часов",
+    location_too_long: "Место не должно превышать 200 символов",
+    balance_negative: "Баланс не может быть отрицательным",
+    balance_max: "Баланс не должен превышать 10000",
+    ru_name_required: "Название на русском обязательно",
+    en_name_required: "English name is required",
+    price_min: "Цена должна быть минимум 1",
+    icon_required: "Иконка обязательна",
+    ru_title_required: "Название на русском обязательно",
+    en_title_required: "English title is required",
+    
+    // Rewards page
+    my_rewards: "Мои награды",
+    wishlist: "Список желаний",
+    add_from_store: "Добавь товары в список желаний в магазине",
+    can_buy: "Можно купить!",
+    remaining: "Осталось:",
+    
+    // Achievements
+    no_tasks_label: "Нет задач",
+    no_children_yet: "Пока нет детей в семье",
+    
+    // Task Dialog
+    task_updated: "Задача обновлена!",
+    task_update_failed: "Ошибка при обновлении",
+    reward_label: "Награда:",
+    no_additional_info: "Нет дополнительной информации",
+    steps_execution: "Шаги выполнения",
   }
 };
 
 export type Language = 'en' | 'ru';
 export type TranslationKey = keyof typeof translations.en;
+
+// Helper for getting weekdays array
+export const getWeekDays = (language: Language): string[] => {
+  const t = translations[language];
+  return [
+    t.weekday_mon,
+    t.weekday_tue,
+    t.weekday_wed,
+    t.weekday_thu,
+    t.weekday_fri,
+    t.weekday_sat,
+    t.weekday_sun,
+  ];
+};
+
+// Helper for weekdays starting with Sunday (for calendar)
+export const getWeekDaysSundayFirst = (language: Language): string[] => {
+  const t = translations[language];
+  return [
+    t.weekday_sun,
+    t.weekday_mon,
+    t.weekday_tue,
+    t.weekday_wed,
+    t.weekday_thu,
+    t.weekday_fri,
+    t.weekday_sat,
+  ];
+};

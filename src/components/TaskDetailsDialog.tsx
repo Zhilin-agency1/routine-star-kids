@@ -32,7 +32,7 @@ export const TaskDetailsDialog = ({
   task,
   canToggleSteps = false 
 }: TaskDetailsDialogProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { steps, isLoading: stepsLoading } = useTaskSteps(task.templateId);
   const { completions, toggleStepCompletion } = useStepCompletions(task.id);
   
@@ -62,6 +62,12 @@ export const TaskDetailsDialog = ({
     return completions.some(c => c.step_id === stepId);
   };
 
+  const getDaysRemainingText = () => {
+    if (daysRemaining === 0) return t('last_day');
+    if (daysRemaining === 1) return t('one_day_left');
+    return `${daysRemaining} ${t('days_left')}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[85vh] flex flex-col overflow-hidden">
@@ -77,7 +83,7 @@ export const TaskDetailsDialog = ({
           {/* Task reward */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {language === 'ru' ? 'Награда:' : 'Reward:'}
+              {t('reward_label')}
             </span>
             <CoinBadge amount={task.rewardAmount} size="sm" showPlus />
           </div>
@@ -97,9 +103,7 @@ export const TaskDetailsDialog = ({
               <div className="flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
                 <ListChecks className="w-3.5 h-3.5" />
                 <span>
-                  {language === 'ru' 
-                    ? `Осталось ${remainingSteps} из ${steps.length} шагов`
-                    : `${remainingSteps} of ${steps.length} steps remaining`}
+                  {remainingSteps} {t('steps_remaining_of')} {steps.length} {t('steps')}
                 </span>
               </div>
             )}
@@ -114,13 +118,7 @@ export const TaskDetailsDialog = ({
                     : "bg-muted text-muted-foreground"
               )}>
                 <Calendar className="w-3.5 h-3.5" />
-                <span>
-                  {daysRemaining === 0
-                    ? (language === 'ru' ? 'Сегодня последний день' : 'Last day')
-                    : daysRemaining === 1
-                      ? (language === 'ru' ? 'Остался 1 день' : '1 day left')
-                      : (language === 'ru' ? `Осталось ${daysRemaining} дней` : `${daysRemaining} days left`)}
-                </span>
+                <span>{getDaysRemainingText()}</span>
               </div>
             )}
           </div>
@@ -130,7 +128,7 @@ export const TaskDetailsDialog = ({
             <div className="space-y-2">
               <h4 className="text-sm font-semibold flex items-center gap-2">
                 <ListChecks className="w-4 h-4" />
-                {language === 'ru' ? 'Шаги выполнения' : 'Steps'}
+                {t('steps_execution')}
               </h4>
               
               <div className="space-y-2">
@@ -178,14 +176,14 @@ export const TaskDetailsDialog = ({
           {/* Loading state */}
           {stepsLoading && (
             <div className="text-center py-4 text-muted-foreground text-sm">
-              {language === 'ru' ? 'Загрузка...' : 'Loading...'}
+              {t('loading')}
             </div>
           )}
 
           {/* Empty state */}
           {!hasSteps && !description && !stepsLoading && (
             <div className="text-center py-4 text-muted-foreground text-sm">
-              {language === 'ru' ? 'Нет дополнительной информации' : 'No additional information'}
+              {t('no_additional_info')}
             </div>
           )}
         </div>

@@ -103,7 +103,7 @@ export const FamilyAchievements = () => {
                   {childTasks.length === 0 ? (
                     <div className="text-center py-6 text-muted-foreground bg-card/50 rounded-xl">
                       <span className="text-2xl block mb-1">✨</span>
-                      <p className="text-sm">{language === 'ru' ? 'Нет задач' : 'No tasks'}</p>
+                      <p className="text-sm">{t('no_tasks_label')}</p>
                     </div>
                   ) : (
                     childTasks.map(task => (
@@ -125,7 +125,7 @@ export const FamilyAchievements = () => {
         <div className="text-center py-8 bg-card rounded-2xl">
           <span className="text-4xl block mb-2">👨‍👩‍👧</span>
           <p className="text-muted-foreground">
-            {language === 'ru' ? 'Пока нет детей в семье' : 'No children in family yet'}
+            {t('no_children_yet')}
           </p>
         </div>
       )}

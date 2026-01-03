@@ -36,8 +36,8 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
     e.stopPropagation();
     if (!currentChild) {
       toast({
-        title: language === 'ru' ? 'Ошибка' : 'Error',
-        description: language === 'ru' ? 'Выберите ребёнка' : 'Select a child',
+        title: t('error'),
+        description: t('select_child'),
         variant: 'destructive',
       });
       return;
@@ -49,8 +49,8 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
         {
           onSuccess: () => {
             toast({
-              title: language === 'ru' ? 'Удалено' : 'Removed',
-              description: language === 'ru' ? `${name} удалён из списка желаний` : `${name} removed from wishlist`,
+              title: t('removed'),
+              description: `${name} ${t('removed_from_wishlist')}`,
             });
           },
         }
@@ -61,8 +61,8 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
         {
           onSuccess: () => {
             toast({
-              title: language === 'ru' ? 'Добавлено!' : 'Added!',
-              description: language === 'ru' ? `${name} добавлен в список желаний` : `${name} added to wishlist`,
+              title: t('added'),
+              description: `${name} ${t('added_to_wishlist')}`,
             });
           },
         }
@@ -134,7 +134,7 @@ export const StoreCard = ({ item, onPurchase }: StoreCardProps) => {
         ) : (
           <>
             <Lock className="w-5 h-5 mr-2" />
-            {language === 'ru' ? 'Копить' : 'Save'}
+            {t('save_coins')}
           </>
         )}
       </Button>

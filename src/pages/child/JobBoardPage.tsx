@@ -17,6 +17,14 @@ export const JobBoardPage = () => {
   const pendingTasks = childTasks.filter(t => t.state !== 'done');
   const hasPendingTasks = pendingTasks.length > 0;
 
+  const getTasksRemainingText = () => {
+    const count = pendingTasks.length;
+    if (count === 1) {
+      return `1 ${t('task_remaining')}`;
+    }
+    return `${count} ${t('tasks_remaining')}`;
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -26,11 +34,11 @@ export const JobBoardPage = () => {
         </div>
         <div>
           <h1 className="text-2xl font-bold">
-            {language === 'ru' ? 'Задания' : 'Tasks'}
+            {t('job_board_title')}
           </h1>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
-            {language === 'ru' ? 'Дополнительные задания за награды' : 'Extra tasks for rewards'}
+            {t('extra_tasks')}
           </p>
         </div>
       </div>
@@ -42,12 +50,10 @@ export const JobBoardPage = () => {
             <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="font-medium text-foreground">
-                {language === 'ru' ? 'Сначала закончи план на сегодня' : 'Finish today\'s plan first'}
+                {t('finish_plan_first')}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                {language === 'ru' 
-                  ? `Осталось ${pendingTasks.length} ${pendingTasks.length === 1 ? 'задание' : 'заданий'}` 
-                  : `${pendingTasks.length} task${pendingTasks.length === 1 ? '' : 's'} remaining`}
+                {getTasksRemainingText()}
               </p>
               <Button
                 variant="outline"
@@ -56,7 +62,7 @@ export const JobBoardPage = () => {
                 className="mt-3 min-h-[44px]"
               >
                 <Target className="w-4 h-4 mr-2" />
-                {language === 'ru' ? 'Открыть задания' : 'Open Today'}
+                {t('open_today')}
               </Button>
             </div>
           </div>
@@ -81,7 +87,7 @@ export const JobBoardPage = () => {
         <div className="text-center py-12">
           <div className="text-6xl mb-4">💼</div>
           <p className="text-muted-foreground">
-            {language === 'ru' ? 'Нет доступных заданий' : 'No jobs available'}
+            {t('no_jobs_available')}
           </p>
         </div>
       )}

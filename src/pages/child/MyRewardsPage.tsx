@@ -40,7 +40,7 @@ export const MyRewardsPage = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold">
-              {language === 'ru' ? 'Мои награды' : 'My Rewards'}
+              {t('my_rewards')}
             </h1>
             <p className="text-sm text-muted-foreground">{t('balance')}</p>
           </div>
@@ -58,7 +58,7 @@ export const MyRewardsPage = () => {
         <div className="flex items-center gap-2">
           <Heart className="w-5 h-5 text-destructive" />
           <h2 className="text-lg font-bold">
-            {language === 'ru' ? 'Список желаний' : 'Wishlist'}
+            {t('wishlist')}
           </h2>
         </div>
 
@@ -66,9 +66,7 @@ export const MyRewardsPage = () => {
           <div className="text-center py-8 bg-card rounded-2xl">
             <span className="text-4xl block mb-2">💫</span>
             <p className="text-muted-foreground">
-              {language === 'ru' 
-                ? 'Добавь товары в список желаний в магазине' 
-                : 'Add items to your wishlist from the store'}
+              {t('add_from_store')}
             </p>
           </div>
         ) : (
@@ -97,7 +95,7 @@ export const MyRewardsPage = () => {
                     </div>
                     {canAfford && (
                       <div className="text-success text-xs font-medium px-2 py-1 bg-success/10 rounded-full">
-                        {language === 'ru' ? 'Можно купить!' : 'Can buy!'}
+                        {t('can_buy')}
                       </div>
                     )}
                   </div>
@@ -108,7 +106,7 @@ export const MyRewardsPage = () => {
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Target className="w-3 h-3" />
-                          {language === 'ru' ? 'Осталось:' : 'Remaining:'}
+                          {t('remaining')}
                         </span>
                         <CoinBadge amount={remaining} size="xs" />
                       </div>

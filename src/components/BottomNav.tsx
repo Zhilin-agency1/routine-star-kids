@@ -39,7 +39,7 @@ const parentNavItems: NavItem[] = [
 const translations: Record<string, { en: string; ru: string }> = {
   nav_today: { en: 'Today', ru: 'Сегодня' },
   nav_schedule: { en: 'Plan', ru: 'План' },
-  nav_templates: { en: 'Templates', ru: 'Шаблоны' },
+  nav_templates: { en: 'Plans', ru: 'Планы' },
   nav_exchange: { en: 'Tasks', ru: 'Задания' },
   nav_rewards: { en: 'Rewards', ru: 'Награды' },
   nav_store: { en: 'Store', ru: 'Магазин' },

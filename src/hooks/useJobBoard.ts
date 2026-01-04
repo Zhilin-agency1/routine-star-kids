@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from './useFamily';
+import { toLocalDateString } from '@/lib/dateUtils';
 import type { Database } from '@/integrations/supabase/types';
 
 type JobBoardItem = Database['public']['Tables']['job_board_items']['Row'];
@@ -135,7 +136,7 @@ export const useJobBoard = () => {
             icon: job.icon,
             reward_amount: job.reward_amount,
             task_type: 'one_time',
-            one_time_date: new Date().toISOString().split('T')[0],
+            one_time_date: toLocalDateString(new Date()),
           })
           .select()
           .single();

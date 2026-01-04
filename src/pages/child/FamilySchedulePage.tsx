@@ -466,6 +466,7 @@ export const FamilySchedulePage = () => {
         onOpenChange={setDatePickerOpen}
         selectedDate={currentDate}
         onSelectDate={setCurrentDate}
+        childId={selectedChildId || undefined}
       />
 
       {/* Calendar Views */}

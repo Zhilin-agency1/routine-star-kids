@@ -1,18 +1,22 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, isSameDay, isSameMonth, getDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, isSameDay, getDay } from 'date-fns';
 import { ru, enUS } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getWeekDays } from '@/i18n/translations';
+import { toLocalDateString } from '@/lib/dateUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { useFamily } from '@/hooks/useFamily';
 
 interface DateJumpPickerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedDate: Date;
   onSelectDate: (date: Date) => void;
+  childId?: string; // Optional: filter by specific child
 }
 
 export const DateJumpPicker = ({
@@ -20,12 +24,15 @@ export const DateJumpPicker = ({
   onOpenChange,
   selectedDate,
   onSelectDate,
+  childId,
 }: DateJumpPickerProps) => {
   const { language, t } = useLanguage();
+  const { family } = useFamily();
   const locale = language === 'ru' ? ru : enUS;
   
   // Start with the month of the selected date
   const [baseMonth, setBaseMonth] = useState(() => startOfMonth(selectedDate));
+  const [hasItemsByDate, setHasItemsByDate] = useState<Record<string, boolean>>({});
   
   // Reset base month when dialog opens
   const handleOpenChange = (newOpen: boolean) => {
@@ -57,6 +64,49 @@ export const DateJumpPicker = ({
       };
     });
   }, [baseMonth]);
+  
+  // Fetch task presence data for visible range
+  useEffect(() => {
+    if (!open || !family) return;
+    
+    const fetchTaskPresence = async () => {
+      const rangeStart = toLocalDateString(startOfMonth(baseMonth));
+      const rangeEnd = toLocalDateString(endOfMonth(addMonths(baseMonth, 1)));
+      
+      // Build query for task instances in date range
+      let query = supabase
+        .from('task_instances')
+        .select('due_datetime, child_id, template:task_templates!inner(family_id)')
+        .eq('template.family_id', family.id)
+        .gte('due_datetime', `${rangeStart}T00:00:00`)
+        .lte('due_datetime', `${rangeEnd}T23:59:59.999`)
+        .neq('state', 'cancelled');
+      
+      // Filter by child if specified
+      if (childId) {
+        query = query.eq('child_id', childId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching task presence:', error);
+        return;
+      }
+      
+      // Build presence map
+      const presenceMap: Record<string, boolean> = {};
+      data?.forEach(instance => {
+        // Extract local date from due_datetime
+        const dateStr = instance.due_datetime.split('T')[0];
+        presenceMap[dateStr] = true;
+      });
+      
+      setHasItemsByDate(presenceMap);
+    };
+    
+    fetchTaskPresence();
+  }, [open, family, baseMonth, childId]);
   
   const handleDateClick = (date: Date) => {
     onSelectDate(date);
@@ -137,17 +187,19 @@ export const DateJumpPicker = ({
                 
                 {/* Day cells */}
                 {days.map(day => {
+                  const dateKey = toLocalDateString(day);
                   const isSelected = isSameDay(day, selectedDate);
                   const isToday = isSameDay(day, new Date());
                   const dayOfWeek = (getDay(day) + 6) % 7; // Monday = 0
                   const isWeekend = dayOfWeek >= 5;
+                  const hasItems = hasItemsByDate[dateKey];
                   
                   return (
                     <button
                       key={day.toISOString()}
                       onClick={() => handleDateClick(day)}
                       className={cn(
-                        "aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all min-h-[40px]",
+                        "aspect-square flex flex-col items-center justify-center rounded-lg text-sm font-medium transition-all min-h-[40px] relative",
                         "hover:bg-primary/20 active:scale-95",
                         isSelected && "bg-primary text-primary-foreground hover:bg-primary",
                         isToday && !isSelected && "border-2 border-primary text-primary",
@@ -155,7 +207,15 @@ export const DateJumpPicker = ({
                         !isSelected && !isToday && !isWeekend && "text-foreground"
                       )}
                     >
-                      {format(day, 'd')}
+                      <span>{format(day, 'd')}</span>
+                      {hasItems && (
+                        <span 
+                          className={cn(
+                            "absolute bottom-1 w-1 h-1 rounded-full",
+                            isSelected ? "bg-primary-foreground" : "bg-primary"
+                          )} 
+                        />
+                      )}
                     </button>
                   );
                 })}

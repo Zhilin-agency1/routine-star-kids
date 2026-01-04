@@ -4,6 +4,7 @@ export const translations = {
   en: {
     // Common
     app_name: "Kids Routine",
+    app_tagline: "Grow every day",
     today: "Today",
     balance: "Balance",
     coins: "coins",
@@ -290,6 +291,7 @@ export const translations = {
   ru: {
     // Common
     app_name: "Детская Рутина",
+    app_tagline: "Расти каждый день",
     today: "Сегодня",
     balance: "Баланс",
     coins: "монет",

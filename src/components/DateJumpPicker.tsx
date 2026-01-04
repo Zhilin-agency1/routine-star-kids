@@ -73,7 +73,7 @@ export const DateJumpPicker = ({
   
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[360px] sm:max-w-[400px] p-0 gap-0 max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-[360px] sm:max-w-[400px] p-0 gap-0 max-h-[90vh] overflow-hidden" hideCloseButton>
         <DialogHeader className="px-4 py-3 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

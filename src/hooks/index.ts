@@ -1,6 +1,10 @@
 // Auth
 export { AuthProvider, useAuth } from './useAuth';
 
+// Utilities
+export { useIsMobile } from './use-mobile';
+export { useIsCompact, useIsTablet } from './use-breakpoints';
+
 // Data hooks
 export { useFamily } from './useFamily';
 export { useChildren, type Child } from './useChildren';

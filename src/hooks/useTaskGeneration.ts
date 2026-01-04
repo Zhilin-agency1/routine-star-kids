@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from './useFamily';
 import { useChildren } from './useChildren';
+import { toLocalDayBoundsISO, combineLocalDateTimeToISO, localDateKey } from '@/lib/datetime';
 
 export const useTaskGeneration = () => {
   const { family } = useFamily();
@@ -16,11 +17,11 @@ export const useTaskGeneration = () => {
 
       const today = new Date();
       // Format date as YYYY-MM-DD in local timezone
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      const todayStr = `${year}-${month}-${day}`;
+      const todayStr = localDateKey(today);
       const dayOfWeek = (today.getDay() + 6) % 7; // Monday = 0, Sunday = 6
+      
+      // Get proper ISO bounds for today
+      const { startISO, endISO } = toLocalDayBoundsISO(today);
 
       // Get all active templates
       const { data: templates, error: templatesError } = await supabase
@@ -32,12 +33,12 @@ export const useTaskGeneration = () => {
       if (templatesError) throw templatesError;
       if (!templates || templates.length === 0) return { created: 0 };
 
-      // Get existing instances for today (using local date string)
+      // Get existing instances for today using proper ISO bounds
       const { data: existingInstances, error: instancesError } = await supabase
         .from('task_instances')
         .select('template_id, child_id')
-        .gte('due_datetime', `${todayStr}T00:00:00`)
-        .lte('due_datetime', `${todayStr}T23:59:59.999`);
+        .gte('due_datetime', startISO)
+        .lte('due_datetime', endISO);
 
       if (instancesError) throw instancesError;
 
@@ -87,7 +88,7 @@ export const useTaskGeneration = () => {
         for (const child of targetChildren) {
           const key = `${template.id}_${child.id}`;
           if (!existingSet.has(key)) {
-            // Calculate due_datetime using local date string to avoid UTC conversion
+            // Calculate due_datetime using timezone-safe ISO conversion
             let timeStr = '09:00:00'; // Default to 9:00 AM
             if (template.recurring_time) {
               const [hours, minutes] = template.recurring_time.split(':').map(Number);
@@ -97,7 +98,7 @@ export const useTaskGeneration = () => {
             instancesToCreate.push({
               template_id: template.id,
               child_id: child.id,
-              due_datetime: `${todayStr}T${timeStr}`,
+              due_datetime: combineLocalDateTimeToISO(todayStr, timeStr),
               state: 'todo',
             });
           }

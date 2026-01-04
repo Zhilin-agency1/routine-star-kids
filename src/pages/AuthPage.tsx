@@ -36,25 +36,23 @@ const LanguageToggle = () => {
     <div className="absolute top-4 right-4 flex gap-1 bg-muted/50 rounded-lg p-1">
       <button
         onClick={() => setLanguage('en')}
-        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
           language === 'en' 
             ? 'bg-primary text-primary-foreground' 
             : 'text-muted-foreground hover:text-foreground'
         }`}
       >
-        <span>🇺🇸</span>
-        <span>EN</span>
+        EN
       </button>
       <button
         onClick={() => setLanguage('ru')}
-        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
           language === 'ru' 
             ? 'bg-primary text-primary-foreground' 
             : 'text-muted-foreground hover:text-foreground'
         }`}
       >
-        <span>🇷🇺</span>
-        <span>RU</span>
+        RU
       </button>
     </div>
   );

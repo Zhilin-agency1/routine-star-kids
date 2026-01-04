@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { translations, Language, TranslationKey } from '@/i18n/translations';
+import { supabase } from '@/integrations/supabase/client';
 
 const LANGUAGE_STORAGE_KEY = 'app_lang';
 
@@ -7,6 +8,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: TranslationKey) => string;
+  syncLanguageFromProfile: () => Promise<void>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -24,12 +26,79 @@ const getInitialLanguage = (): Language => {
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(getInitialLanguage);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Persist language to localStorage
-  const setLanguage = useCallback((lang: Language) => {
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        const newUserId = session?.user?.id ?? null;
+        setUserId(newUserId);
+        
+        // On login, sync language from profile
+        if (event === 'SIGNED_IN' && newUserId) {
+          syncLanguageFromProfileInternal(newUserId);
+        }
+      }
+    );
+
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const newUserId = session?.user?.id ?? null;
+      setUserId(newUserId);
+      if (newUserId) {
+        syncLanguageFromProfileInternal(newUserId);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Internal function to sync language from profile
+  const syncLanguageFromProfileInternal = async (uid: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('language_preference')
+        .eq('user_id', uid)
+        .single();
+
+      if (!error && data?.language_preference) {
+        const profileLang = data.language_preference as Language;
+        if (profileLang === 'en' || profileLang === 'ru') {
+          setLanguageState(profileLang);
+          localStorage.setItem(LANGUAGE_STORAGE_KEY, profileLang);
+        }
+      }
+    } catch (err) {
+      console.error('Error syncing language from profile:', err);
+    }
+  };
+
+  // Public function to sync language from profile
+  const syncLanguageFromProfile = useCallback(async () => {
+    if (userId) {
+      await syncLanguageFromProfileInternal(userId);
+    }
+  }, [userId]);
+
+  // Set language - updates state, localStorage, and profile if logged in
+  const setLanguage = useCallback(async (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
-  }, []);
+
+    // If user is logged in, update their profile preference
+    if (userId) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ language_preference: lang })
+          .eq('user_id', userId);
+      } catch (err) {
+        console.error('Error updating language preference:', err);
+      }
+    }
+  }, [userId]);
 
   // Initialize localStorage on first render if not set
   useEffect(() => {
@@ -44,7 +113,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, syncLanguageFromProfile }}>
       {children}
     </LanguageContext.Provider>
   );

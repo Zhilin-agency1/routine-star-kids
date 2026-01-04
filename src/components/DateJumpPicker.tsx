@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, isSameDay, getDay, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, isSameDay, getDay } from 'date-fns';
 import { ru, enUS } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getWeekDays } from '@/i18n/translations';
 import { toLocalDateString } from '@/lib/dateUtils';
+import { toDateRangeBoundsISO, localDateKey } from '@/lib/datetime';
 import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from '@/hooks/useFamily';
 
@@ -74,17 +75,20 @@ export const DateJumpPicker = ({
       const rangeEndDate = endOfMonth(addMonths(baseMonth, 1));
       const rangeStart = toLocalDateString(rangeStartDate);
       const rangeEnd = toLocalDateString(rangeEndDate);
+      
+      // Get proper ISO bounds for the full range
+      const { startISO, endISO } = toDateRangeBoundsISO(rangeStartDate, rangeEndDate);
 
       const presenceMap: Record<string, boolean> = {};
       const allDays = eachDayOfInterval({ start: rangeStartDate, end: rangeEndDate });
 
-      // Query 1: Task instances in date range
+      // Query 1: Task instances in date range using ISO bounds
       let taskQuery = supabase
         .from('task_instances')
         .select('due_datetime, child_id, template:task_templates!inner(family_id)')
         .eq('template.family_id', family.id)
-        .gte('due_datetime', `${rangeStart}T00:00:00`)
-        .lte('due_datetime', `${rangeEnd}T23:59:59.999`)
+        .gte('due_datetime', startISO)
+        .lte('due_datetime', endISO)
         .neq('state', 'cancelled');
 
       if (childId) {
@@ -128,10 +132,11 @@ export const DateJumpPicker = ({
         templateQuery,
       ]);
 
-      // Process task instances
+      // Process task instances - use localDateKey for proper timezone grouping
       if (!taskResult.error && taskResult.data) {
         taskResult.data.forEach((instance) => {
-          const dateStr = toLocalDateString(parseISO(instance.due_datetime));
+          // Use localDateKey to convert the UTC timestamp to local date
+          const dateStr = localDateKey(instance.due_datetime);
           presenceMap[dateStr] = true;
         });
       }
@@ -139,8 +144,8 @@ export const DateJumpPicker = ({
       // Process activity schedules - expand recurring days
       if (!activityResult.error && activityResult.data) {
         activityResult.data.forEach((schedule) => {
-          const scheduleStart = parseISO(schedule.start_date);
-          const scheduleEnd = schedule.end_date ? parseISO(schedule.end_date) : null;
+          const scheduleStart = new Date(schedule.start_date + 'T00:00:00');
+          const scheduleEnd = schedule.end_date ? new Date(schedule.end_date + 'T00:00:00') : null;
           const recurringDays = schedule.recurring_days || [];
 
           allDays.forEach((day) => {
@@ -169,8 +174,8 @@ export const DateJumpPicker = ({
           }
 
           // B) Recurring templates (treat recurring_rule as weekly-on-recurring_days)
-          const templateStart = parseISO(template.start_date);
-          const templateEnd = template.end_date ? parseISO(template.end_date) : null;
+          const templateStart = new Date(template.start_date + 'T00:00:00');
+          const templateEnd = template.end_date ? new Date(template.end_date + 'T00:00:00') : null;
           const recurringDays = template.recurring_days || [];
 
           allDays.forEach((day) => {

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from './useFamily';
 import { toLocalDateString } from '@/lib/dateUtils';
+import { toLocalDayBoundsISO } from '@/lib/datetime';
 import type { Database } from '@/integrations/supabase/types';
 
 type TaskTemplate = Database['public']['Tables']['task_templates']['Row'];
@@ -63,12 +64,11 @@ export const useTasks = (childId?: string, date?: Date) => {
         .eq('child_id', childId);
       
       if (date) {
-        const dateStr = toLocalDateString(date);
-        
-        // Use date casting to compare only the date part
+        // Use proper ISO bounds for timezone-safe querying
+        const { startISO, endISO } = toLocalDayBoundsISO(date);
         query = query
-          .gte('due_datetime', `${dateStr}T00:00:00`)
-          .lte('due_datetime', `${dateStr}T23:59:59.999`);
+          .gte('due_datetime', startISO)
+          .lte('due_datetime', endISO);
       }
       
       const { data, error } = await query.order('due_datetime', { ascending: true });

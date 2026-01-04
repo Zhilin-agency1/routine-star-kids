@@ -9,10 +9,10 @@ import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { EditActivityDialog } from '@/components/EditActivityDialog';
 import { DateJumpPicker } from '@/components/DateJumpPicker';
 import { getWeekDays } from '@/i18n/translations';
+import { useIsCompact } from '@/hooks/use-breakpoints';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -68,6 +68,8 @@ export const FamilySchedulePage = () => {
   
   // Mobile detection using md breakpoint (768px)
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  // Compact mode for tablet/small laptop (< 1024px)
+  const isCompact = useIsCompact();
   
   useEffect(() => {
     const checkMobile = () => {
@@ -469,14 +471,18 @@ export const FamilySchedulePage = () => {
         childId={selectedChildId || undefined}
       />
 
-      {/* Calendar Views */}
-      <ScrollArea className="h-[calc(100vh-400px)]">
+      {/* Calendar Views - Native overflow for Android compatibility */}
+      <div 
+        className="flex-1 overflow-auto overscroll-contain pb-4"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {viewMode === 'month' ? (
           <>
+
             {/* MOBILE: Month List View (shows ALL days) */}
             {isMobile && <MobileMonthListView />}
 
-            {/* DESKTOP: Month Grid View */}
+            {/* DESKTOP/TABLET: Month Grid View */}
             {!isMobile && (
               <div className="border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
                 {/* Day headers */}
@@ -485,7 +491,8 @@ export const FamilySchedulePage = () => {
                     <div 
                       key={i} 
                       className={cn(
-                        "text-center text-sm font-bold py-3 uppercase tracking-wide",
+                        "text-center font-bold py-2 uppercase tracking-wide",
+                        isCompact ? "text-xs" : "text-sm py-3",
                         i < 6 && "border-r-2 border-border",
                         i >= 5 ? "text-muted-foreground bg-muted/80" : "text-foreground"
                       )}
@@ -501,7 +508,8 @@ export const FamilySchedulePage = () => {
                     <div 
                       key={`empty-${i}`} 
                       className={cn(
-                        "aspect-square bg-muted/30 border-b-2 border-border",
+                        "bg-muted/30 border-b-2 border-border",
+                        isCompact ? "h-[72px]" : "h-[84px] sm:h-[96px]",
                         i < 6 && "border-r-2 border-border"
                       )} 
                     />
@@ -521,7 +529,8 @@ export const FamilySchedulePage = () => {
                         key={day.toISOString()}
                         onClick={() => openDay(day)}
                         className={cn(
-                          'aspect-square p-1.5 transition-colors text-left hover:bg-muted/50',
+                          'p-1 transition-colors text-left hover:bg-muted/50',
+                          isCompact ? "h-[72px]" : "h-[84px] sm:h-[96px]",
                           !isLastColumn && "border-r-2 border-border",
                           !isLastRow && "border-b-2 border-border",
                           isToday(day) && 'bg-primary/15',
@@ -529,31 +538,36 @@ export const FamilySchedulePage = () => {
                         )}
                       >
                         <div className={cn(
-                          'text-sm font-bold mb-1 w-7 h-7 flex items-center justify-center rounded-full',
+                          'font-bold mb-0.5 flex items-center justify-center rounded-full',
+                          isCompact ? "text-xs w-5 h-5" : "text-sm w-6 h-6",
                           isToday(day) ? 'text-primary-foreground bg-primary' : 'text-foreground'
                         )}>
                           {format(day, 'd')}
                         </div>
-                        <div className="space-y-0.5">
-                          {dayItems.slice(0, 3).map(item => {
+                        <div className="space-y-0.5 overflow-hidden">
+                          {dayItems.slice(0, isCompact ? 2 : 3).map(item => {
                             const child = children.find(c => c.id === item.child_id);
                             const colorIndex = childColorMap.get(item.child_id) ?? 0;
                             return (
                               <div 
                                 key={item.id}
                                 className={cn(
-                                  "text-[9px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border-2 font-medium",
+                                  "px-0.5 py-0.5 rounded truncate flex items-center gap-0.5 border font-medium",
+                                  isCompact ? "text-[8px]" : "text-[9px] border-2",
                                   CHILD_COLORS_LIGHT[colorIndex]
                                 )}
                               >
-                                <span className="text-[10px]">{child?.avatar_url || '👤'}</span>
+                                <span className={isCompact ? "text-[8px]" : "text-[10px]"}>{child?.avatar_url || '👤'}</span>
                                 <span className="truncate">{item.time.slice(0, 5)}</span>
                               </div>
                             );
                           })}
-                          {dayItems.length > 3 && (
-                            <div className="text-[9px] text-muted-foreground text-center font-semibold">
-                              +{dayItems.length - 3}
+                          {dayItems.length > (isCompact ? 2 : 3) && (
+                            <div className={cn(
+                              "text-muted-foreground text-center font-semibold",
+                              isCompact ? "text-[8px]" : "text-[9px]"
+                            )}>
+                              +{dayItems.length - (isCompact ? 2 : 3)}
                             </div>
                           )}
                         </div>
@@ -569,31 +583,37 @@ export const FamilySchedulePage = () => {
             {/* MOBILE: Week List View */}
             {isMobile && <MobileWeekListView />}
 
-            {/* DESKTOP: Week Grid View */}
+            {/* DESKTOP/TABLET: Week Grid View */}
             {!isMobile && (
-              <div className="min-w-[700px] border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
+              <div className="w-full border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
                 {/* Header row with days */}
                 <div className="grid grid-cols-8 border-b-2 border-border sticky top-0 bg-muted z-10">
-                  <div className="p-3 text-center text-sm text-muted-foreground font-semibold border-r-2 border-border">
+                  <div className={cn(
+                    "text-center text-muted-foreground font-semibold border-r-2 border-border",
+                    isCompact ? "p-1.5 text-xs w-10" : "p-2 text-sm w-14"
+                  )}>
                     {/* Empty corner cell */}
                   </div>
                   {days.map((day, index) => (
                     <div 
                       key={day.toISOString()} 
                       className={cn(
-                        "p-3 text-center",
+                        "text-center flex-1 min-w-0",
+                        isCompact ? "p-1.5" : "p-2",
                         index < days.length - 1 && "border-r-2 border-border",
                         isToday(day) ? "bg-primary/20" : index >= 5 ? "bg-muted/80" : ""
                       )}
                     >
                       <div className={cn(
-                        "text-sm font-bold uppercase tracking-wide",
+                        "font-bold uppercase tracking-wide",
+                        isCompact ? "text-xs" : "text-sm",
                         isToday(day) ? "text-primary" : "text-foreground"
                       )}>
                         {format(day, 'EEE', { locale })}
                       </div>
                       <div className={cn(
-                        "text-xl font-bold w-9 h-9 mx-auto flex items-center justify-center rounded-full",
+                        "font-bold mx-auto flex items-center justify-center rounded-full",
+                        isCompact ? "text-sm w-6 h-6" : "text-lg w-8 h-8",
                         isToday(day) && "text-primary-foreground bg-primary"
                       )}>
                         {format(day, 'd')}
@@ -604,57 +624,65 @@ export const FamilySchedulePage = () => {
 
                 {/* Time grid */}
                 <div className="relative">
-                  {hours.map((hour, hourIndex) => (
-                    <div key={hour} className={cn(
-                      "grid grid-cols-8 min-h-[60px]",
-                      hourIndex < hours.length - 1 && "border-b-2 border-border/70"
-                    )}>
-                      {/* Hour label */}
-                      <div className="p-2 text-sm text-muted-foreground font-mono font-bold text-right pr-3 border-r-2 border-border bg-muted/50 flex items-start justify-end pt-1">
-                        {hour.toString().padStart(2, '0')}:00
+                  {hours.map((hour, hourIndex) => {
+                    const hourHeight = isCompact ? 42 : 52;
+                    return (
+                      <div key={hour} className={cn(
+                        "grid grid-cols-8",
+                        hourIndex < hours.length - 1 && "border-b border-border/50"
+                      )} style={{ minHeight: `${hourHeight}px` }}>
+                        {/* Hour label */}
+                        <div className={cn(
+                          "text-muted-foreground font-mono font-bold text-right border-r-2 border-border bg-muted/50 flex items-start justify-end",
+                          isCompact ? "text-xs p-1 pr-1.5 pt-0.5 w-10" : "text-sm p-1.5 pr-2 pt-1 w-14"
+                        )}>
+                          {hour.toString().padStart(2, '0')}:00
+                        </div>
+                        {/* Day columns */}
+                        {days.map((day, dayIndex) => {
+                          const hourItems = getItemsForHour(day, hour);
+                          return (
+                            <div 
+                              key={day.toISOString()} 
+                              className={cn(
+                                "p-0.5 flex-1 min-w-0",
+                                dayIndex < days.length - 1 && "border-r border-border/30",
+                                isToday(day) && "bg-primary/5",
+                                dayIndex >= 5 && !isToday(day) && "bg-muted/10"
+                              )}
+                              style={{ minHeight: `${hourHeight}px` }}
+                            >
+                              {hourItems.map(item => {
+                                const child = children.find(c => c.id === item.child_id);
+                                const colorIndex = childColorMap.get(item.child_id) ?? 0;
+                                return (
+                                  <div 
+                                    key={item.id}
+                                    onClick={() => item.type === 'activity' && item.originalActivity && setEditingActivity(item.originalActivity)}
+                                    className={cn(
+                                      "p-0.5 rounded mb-0.5 border cursor-pointer hover:opacity-80 transition-opacity font-medium",
+                                      isCompact ? "text-[8px]" : "text-[9px]",
+                                      CHILD_COLORS_LIGHT[colorIndex]
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-0.5">
+                                      <span className={isCompact ? "text-[8px]" : "text-[9px]"}>{child?.avatar_url || '👤'}</span>
+                                      <span className="font-semibold truncate">
+                                        {language === 'ru' ? item.title_ru : item.title_en}
+                                      </span>
+                                    </div>
+                                    <div className="text-muted-foreground font-mono">
+                                      {item.time.slice(0, 5)}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
                       </div>
-                      {/* Day columns */}
-                      {days.map((day, dayIndex) => {
-                        const hourItems = getItemsForHour(day, hour);
-                        return (
-                          <div 
-                            key={day.toISOString()} 
-                            className={cn(
-                              "p-1 min-h-[60px]",
-                              dayIndex < days.length - 1 && "border-r-2 border-border/50",
-                              isToday(day) && "bg-primary/5",
-                              dayIndex >= 5 && !isToday(day) && "bg-muted/10"
-                            )}
-                          >
-                            {hourItems.map(item => {
-                              const child = children.find(c => c.id === item.child_id);
-                              const colorIndex = childColorMap.get(item.child_id) ?? 0;
-                              return (
-                                <div 
-                                  key={item.id}
-                                  onClick={() => item.type === 'activity' && item.originalActivity && setEditingActivity(item.originalActivity)}
-                                  className={cn(
-                                    "text-[10px] p-1 rounded mb-1 border-2 cursor-pointer hover:opacity-80 transition-opacity font-medium",
-                                    CHILD_COLORS_LIGHT[colorIndex]
-                                  )}
-                                >
-                                  <div className="flex items-center gap-1">
-                                    <span>{child?.avatar_url || '👤'}</span>
-                                    <span className="font-semibold truncate">
-                                      {language === 'ru' ? item.title_ru : item.title_en}
-                                    </span>
-                                  </div>
-                                  <div className="text-muted-foreground font-mono">
-                                    {item.time.slice(0, 5)}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -749,7 +777,7 @@ export const FamilySchedulePage = () => {
             })}
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       <EditActivityDialog
         activity={editingActivity}

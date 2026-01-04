@@ -65,18 +65,19 @@ export const DateJumpPicker = ({
     });
   }, [baseMonth]);
   
-  // Fetch task and activity presence data for visible range
+  // Fetch task, activity, and template presence data for visible range
   useEffect(() => {
     if (!open || !family) return;
-    
+
     const fetchPresenceData = async () => {
       const rangeStartDate = startOfMonth(baseMonth);
       const rangeEndDate = endOfMonth(addMonths(baseMonth, 1));
       const rangeStart = toLocalDateString(rangeStartDate);
       const rangeEnd = toLocalDateString(rangeEndDate);
-      
+
       const presenceMap: Record<string, boolean> = {};
-      
+      const allDays = eachDayOfInterval({ start: rangeStartDate, end: rangeEndDate });
+
       // Query 1: Task instances in date range
       let taskQuery = supabase
         .from('task_instances')
@@ -85,11 +86,11 @@ export const DateJumpPicker = ({
         .gte('due_datetime', `${rangeStart}T00:00:00`)
         .lte('due_datetime', `${rangeEnd}T23:59:59.999`)
         .neq('state', 'cancelled');
-      
+
       if (childId) {
         taskQuery = taskQuery.eq('child_id', childId);
       }
-      
+
       // Query 2: Activity schedules that overlap the range
       let activityQuery = supabase
         .from('activity_schedules')
@@ -97,36 +98,56 @@ export const DateJumpPicker = ({
         .eq('family_id', family.id)
         .lte('start_date', rangeEnd)
         .or(`end_date.is.null,end_date.gte.${rangeStart}`);
-      
+
       if (childId) {
         activityQuery = activityQuery.eq('child_id', childId);
       }
-      
-      // Execute both queries in parallel
-      const [taskResult, activityResult] = await Promise.all([taskQuery, activityQuery]);
-      
+
+      // Query 3: Task templates that overlap the range (covers future routines without instances)
+      let templateQuery = supabase
+        .from('task_templates')
+        .select('task_type, one_time_date, start_date, end_date, recurring_days, recurring_rule, child_id')
+        .eq('family_id', family.id)
+        .eq('status', 'active');
+
+      if (childId) {
+        // Include child-specific + family-wide templates
+        templateQuery = templateQuery.or(
+          `and(or(child_id.is.null,child_id.eq.${childId}),or(and(task_type.eq.one_time,one_time_date.gte.${rangeStart},one_time_date.lte.${rangeEnd}),and(task_type.eq.recurring,start_date.lte.${rangeEnd},or(end_date.is.null,end_date.gte.${rangeStart}))))`
+        );
+      } else {
+        templateQuery = templateQuery.or(
+          `and(task_type.eq.one_time,one_time_date.gte.${rangeStart},one_time_date.lte.${rangeEnd}),and(task_type.eq.recurring,start_date.lte.${rangeEnd},or(end_date.is.null,end_date.gte.${rangeStart}))`
+        );
+      }
+
+      // Execute all queries in parallel
+      const [taskResult, activityResult, templateResult] = await Promise.all([
+        taskQuery,
+        activityQuery,
+        templateQuery,
+      ]);
+
       // Process task instances
       if (!taskResult.error && taskResult.data) {
-        taskResult.data.forEach(instance => {
-          const dateStr = instance.due_datetime.split('T')[0];
+        taskResult.data.forEach((instance) => {
+          const dateStr = toLocalDateString(parseISO(instance.due_datetime));
           presenceMap[dateStr] = true;
         });
       }
-      
+
       // Process activity schedules - expand recurring days
       if (!activityResult.error && activityResult.data) {
-        const allDays = eachDayOfInterval({ start: rangeStartDate, end: rangeEndDate });
-        
-        activityResult.data.forEach(schedule => {
+        activityResult.data.forEach((schedule) => {
           const scheduleStart = parseISO(schedule.start_date);
           const scheduleEnd = schedule.end_date ? parseISO(schedule.end_date) : null;
           const recurringDays = schedule.recurring_days || [];
-          
-          allDays.forEach(day => {
+
+          allDays.forEach((day) => {
             // Check if day is within schedule range
             if (day < scheduleStart) return;
             if (scheduleEnd && day > scheduleEnd) return;
-            
+
             // Check if day matches recurring pattern (0=Mon, 6=Sun)
             const dayOfWeek = (getDay(day) + 6) % 7;
             if (recurringDays.includes(dayOfWeek)) {
@@ -135,10 +156,38 @@ export const DateJumpPicker = ({
           });
         });
       }
-      
+
+      // Process task templates
+      if (!templateResult.error && templateResult.data) {
+        templateResult.data.forEach((template) => {
+          // A) One-time templates
+          if (template.task_type === 'one_time') {
+            if (template.one_time_date) {
+              presenceMap[template.one_time_date] = true;
+            }
+            return;
+          }
+
+          // B) Recurring templates (treat recurring_rule as weekly-on-recurring_days)
+          const templateStart = parseISO(template.start_date);
+          const templateEnd = template.end_date ? parseISO(template.end_date) : null;
+          const recurringDays = template.recurring_days || [];
+
+          allDays.forEach((day) => {
+            if (day < templateStart) return;
+            if (templateEnd && day > templateEnd) return;
+
+            const dayOfWeek = (getDay(day) + 6) % 7;
+            if (recurringDays.includes(dayOfWeek)) {
+              presenceMap[toLocalDateString(day)] = true;
+            }
+          });
+        });
+      }
+
       setHasItemsByDate(presenceMap);
     };
-    
+
     fetchPresenceData();
   }, [open, family, baseMonth, childId]);
   

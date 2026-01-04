@@ -68,7 +68,7 @@ export const ChildrenPage = () => {
                     <div className="flex items-center gap-2 mt-2">
                       <CoinBadge amount={child.balance} size="md" />
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                        {child.language_preference === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN'}
+                        {child.language_preference === 'ru' ? '🇷🇺 RU' : '🇺🇸 EN'}
                       </span>
                     </div>
                   </div>

@@ -320,7 +320,7 @@ export const ReportsPage = () => {
                       <span className={`font-bold ${
                         tx.transaction_type === 'earn' ? 'text-success' : 'text-destructive'
                       }`}>
-                        {tx.transaction_type === 'earn' ? '+' : ''}{tx.amount} 🪙
+                        {tx.transaction_type === 'earn' ? '+' : ''}{tx.amount}
                       </span>
                     </div>
                   );

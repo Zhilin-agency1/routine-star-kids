@@ -284,7 +284,7 @@ export const AddFromTemplateDialog = ({ trigger, open: controlledOpen, onOpenCha
                   {language === 'ru' ? preset.name_ru : preset.name_en}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  {preset.tasks.length} {language === 'ru' ? 'задач' : 'tasks'} • +{presetReward} 🪙
+                  {preset.tasks.length} {language === 'ru' ? 'задач' : 'tasks'} • +{presetReward} coins
                 </p>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />

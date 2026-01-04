@@ -253,6 +253,7 @@ export type Database = {
           active: boolean
           availability: string | null
           available_count: number | null
+          child_id: string | null
           created_at: string
           description_en: string | null
           description_ru: string | null
@@ -268,6 +269,7 @@ export type Database = {
           active?: boolean
           availability?: string | null
           available_count?: number | null
+          child_id?: string | null
           created_at?: string
           description_en?: string | null
           description_ru?: string | null
@@ -283,6 +285,7 @@ export type Database = {
           active?: boolean
           availability?: string | null
           available_count?: number | null
+          child_id?: string | null
           created_at?: string
           description_en?: string | null
           description_ru?: string | null
@@ -295,6 +298,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "job_board_items_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "job_board_items_family_id_fkey"
             columns: ["family_id"]
@@ -510,6 +520,7 @@ export type Database = {
       store_items: {
         Row: {
           active: boolean
+          child_id: string | null
           created_at: string
           description_en: string | null
           description_ru: string | null
@@ -523,6 +534,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          child_id?: string | null
           created_at?: string
           description_en?: string | null
           description_ru?: string | null
@@ -536,6 +548,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          child_id?: string | null
           created_at?: string
           description_en?: string | null
           description_ru?: string | null
@@ -548,6 +561,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "store_items_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "store_items_family_id_fkey"
             columns: ["family_id"]

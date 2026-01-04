@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,11 +19,20 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useJobBoard } from '@/hooks/useJobBoard';
+import { useChildren } from '@/hooks/useChildren';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
+import { CoinBadge } from './ui/CoinBadge';
 
 const JOB_ICONS = [
   '💼', '🧹', '🍳', '🛒', '🚗', '🐕', '🌱', '📦',
@@ -33,12 +42,11 @@ const JOB_ICONS = [
 ];
 
 const formSchema = z.object({
-  title_en: z.string().trim().min(1, 'English title is required').max(100),
-  title_ru: z.string().trim().min(1, 'Название на русском обязательно').max(100),
-  description_en: z.string().max(500).optional(),
-  description_ru: z.string().max(500).optional(),
+  title: z.string().trim().min(1, 'Title is required').max(100),
+  description: z.string().max(500).optional(),
   reward_amount: z.number().min(1, 'Reward must be at least 1').max(1000),
   icon: z.string().min(1, 'Icon is required'),
+  child_id: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -50,17 +58,17 @@ interface AddJobDialogProps {
 export const AddJobDialog = ({ trigger }: AddJobDialogProps) => {
   const [open, setOpen] = useState(false);
   const { createJob } = useJobBoard();
+  const { children } = useChildren();
   const { language } = useLanguage();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title_en: '',
-      title_ru: '',
-      description_en: '',
-      description_ru: '',
+      title: '',
+      description: '',
       reward_amount: 10,
       icon: '💼',
+      child_id: null,
     },
   });
 
@@ -69,13 +77,14 @@ export const AddJobDialog = ({ trigger }: AddJobDialogProps) => {
   const onSubmit = async (data: FormData) => {
     try {
       await createJob.mutateAsync({
-        title_en: data.title_en,
-        title_ru: data.title_ru,
-        description_en: data.description_en || null,
-        description_ru: data.description_ru || null,
+        title_en: data.title,
+        title_ru: data.title,
+        description_en: data.description || null,
+        description_ru: data.description || null,
         reward_amount: data.reward_amount,
         icon: data.icon,
         active: true,
+        child_id: data.child_id || null,
       });
       
       toast.success(language === 'ru' ? 'Работа добавлена!' : 'Job added!');
@@ -139,49 +148,34 @@ export const AddJobDialog = ({ trigger }: AddJobDialogProps) => {
               )}
             />
 
-            {/* English Title */}
+            {/* Title */}
             <FormField
               control={form.control}
-              name="title_en"
+              name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>🇬🇧 {language === 'ru' ? 'Название (English)' : 'Title (English)'}</FormLabel>
+                  <FormLabel>{language === 'ru' ? 'Название' : 'Title'}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Wash the car" {...field} />
+                    <Input placeholder={language === 'ru' ? 'Помыть машину' : 'Wash the car'} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Russian Title */}
+            {/* Description */}
             <FormField
               control={form.control}
-              name="title_ru"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>🇷🇺 {language === 'ru' ? 'Название (Русский)' : 'Title (Russian)'}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Помыть машину" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* English Description */}
-            <FormField
-              control={form.control}
-              name="description_en"
+              name="description"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    🇬🇧 {language === 'ru' ? 'Описание (English)' : 'Description (English)'} 
+                    {language === 'ru' ? 'Описание' : 'Description'} 
                     <span className="text-muted-foreground ml-1">({language === 'ru' ? 'опционально' : 'optional'})</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Wash and dry the family car"
+                      placeholder={language === 'ru' ? 'Вымыть и высушить семейную машину' : 'Wash and dry the family car'}
                       className="resize-none"
                       rows={2}
                       {...field} 
@@ -192,24 +186,39 @@ export const AddJobDialog = ({ trigger }: AddJobDialogProps) => {
               )}
             />
 
-            {/* Russian Description */}
+            {/* Child Selector */}
             <FormField
               control={form.control}
-              name="description_ru"
+              name="child_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    🇷🇺 {language === 'ru' ? 'Описание (Русский)' : 'Description (Russian)'} 
-                    <span className="text-muted-foreground ml-1">({language === 'ru' ? 'опционально' : 'optional'})</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Вымыть и высушить семейную машину"
-                      className="resize-none"
-                      rows={2}
-                      {...field} 
-                    />
-                  </FormControl>
+                  <FormLabel>{language === 'ru' ? 'Для кого' : 'For who'}</FormLabel>
+                  <Select
+                    value={field.value || 'all'}
+                    onValueChange={(value) => field.onChange(value === 'all' ? null : value)}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === 'ru' ? 'Выберите ребёнка' : 'Select child'} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          {language === 'ru' ? 'Все дети' : 'All children'}
+                        </div>
+                      </SelectItem>
+                      {children.map((child) => (
+                        <SelectItem key={child.id} value={child.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{child.avatar_url || '🦁'}</span>
+                            {child.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -221,15 +230,18 @@ export const AddJobDialog = ({ trigger }: AddJobDialogProps) => {
               name="reward_amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>💰 {language === 'ru' ? 'Награда (монет)' : 'Reward (coins)'}</FormLabel>
+                  <FormLabel>{language === 'ru' ? 'Награда' : 'Reward'}</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={1000}
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={1000}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                      <CoinBadge amount={field.value} size="sm" />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -245,17 +257,20 @@ export const AddJobDialog = ({ trigger }: AddJobDialogProps) => {
                 <span className="text-2xl">{selectedIcon}</span>
                 <div className="flex-1">
                   <p className="font-medium">
-                    {form.watch('title_en') || form.watch('title_ru') || (language === 'ru' ? 'Название' : 'Title')}
+                    {form.watch('title') || (language === 'ru' ? 'Название' : 'Title')}
                   </p>
-                  {(form.watch('description_en') || form.watch('description_ru')) && (
+                  {form.watch('description') && (
                     <p className="text-sm text-muted-foreground line-clamp-2">
-                      {form.watch('description_en') || form.watch('description_ru')}
+                      {form.watch('description')}
+                    </p>
+                  )}
+                  {form.watch('child_id') && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {children.find(c => c.id === form.watch('child_id'))?.name}
                     </p>
                   )}
                 </div>
-                <span className="font-bold text-primary">
-                  {form.watch('reward_amount')} 🪙
-                </span>
+                <CoinBadge amount={form.watch('reward_amount')} size="sm" />
               </div>
             </div>
 

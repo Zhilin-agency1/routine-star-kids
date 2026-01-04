@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Briefcase, Edit, Trash2 } from 'lucide-react';
+import { Briefcase, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
 import { AddJobDialog } from '@/components/AddJobDialog';
 import { useJobBoard, type JobBoardItem } from '@/hooks/useJobBoard';
+import { useChildren } from '@/hooks/useChildren';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,13 @@ import { toast } from 'sonner';
 export const ParentJobBoardPage = () => {
   const { language } = useLanguage();
   const { jobs, deleteJob } = useJobBoard();
+  const { children } = useChildren();
   const [deletingJob, setDeletingJob] = useState<JobBoardItem | null>(null);
+
+  const getChildName = (childId: string | null) => {
+    if (!childId) return null;
+    return children.find(c => c.id === childId)?.name || null;
+  };
 
   const handleDelete = async () => {
     if (!deletingJob) return;
@@ -79,8 +86,16 @@ export const ParentJobBoardPage = () => {
                       {language === 'ru' ? job.description_ru : job.description_en}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <CoinBadge amount={job.reward_amount} size="sm" />
+                    {(() => {
+                      const childName = getChildName((job as any).child_id);
+                      return childName ? (
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                          {childName}
+                        </span>
+                      ) : null;
+                    })()}
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
                       job.active 
                         ? 'bg-success/20 text-success' 

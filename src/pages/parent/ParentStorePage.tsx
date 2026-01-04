@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { AddStoreItemDialog } from '@/components/AddStoreItemDialog';
 import { EditStoreItemDialog } from '@/components/EditStoreItemDialog';
 import { useStore, type StoreItem } from '@/hooks/useStore';
+import { useChildren } from '@/hooks/useChildren';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +22,14 @@ import { toast } from 'sonner';
 export const ParentStorePage = () => {
   const { t, language } = useLanguage();
   const { items, deleteItem } = useStore();
+  const { children } = useChildren();
   const [editingItem, setEditingItem] = useState<StoreItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<StoreItem | null>(null);
+
+  const getChildName = (childId: string | null) => {
+    if (!childId) return null;
+    return children.find(c => c.id === childId)?.name || null;
+  };
 
   const handleDelete = async () => {
     if (!deletingItem) return;
@@ -65,6 +72,15 @@ export const ParentStorePage = () => {
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold">{language === 'ru' ? item.name_ru : item.name_en}</h3>
+                {/* Child assignment label */}
+                {(() => {
+                  const childName = getChildName((item as any).child_id);
+                  return childName ? (
+                    <span className="text-xs text-muted-foreground">
+                      {language === 'ru' ? 'для' : 'for'} {childName}
+                    </span>
+                  ) : null;
+                })()}
                 <CoinBadge amount={item.price} size="sm" />
               </div>
 

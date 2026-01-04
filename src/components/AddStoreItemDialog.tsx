@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,10 +19,19 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/hooks/useStore';
+import { useChildren } from '@/hooks/useChildren';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
+import { CoinBadge } from './ui/CoinBadge';
 
 const STORE_ICONS = [
   '🎁', '🍦', '🍕', '🎮', '📱', '🎬', '🎪', '🎠',
@@ -32,10 +41,10 @@ const STORE_ICONS = [
 ];
 
 const formSchema = z.object({
-  name_en: z.string().trim().min(1, 'English name is required').max(100),
-  name_ru: z.string().trim().min(1, 'Название на русском обязательно').max(100),
+  name: z.string().trim().min(1, 'Name is required').max(100),
   price: z.number().min(1, 'Price must be at least 1').max(10000),
   icon: z.string().min(1, 'Icon is required'),
+  child_id: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -47,15 +56,16 @@ interface AddStoreItemDialogProps {
 export const AddStoreItemDialog = ({ trigger }: AddStoreItemDialogProps) => {
   const [open, setOpen] = useState(false);
   const { createItem } = useStore();
+  const { children } = useChildren();
   const { t, language } = useLanguage();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name_en: '',
-      name_ru: '',
+      name: '',
       price: 10,
       icon: '🎁',
+      child_id: null,
     },
   });
 
@@ -64,11 +74,12 @@ export const AddStoreItemDialog = ({ trigger }: AddStoreItemDialogProps) => {
   const onSubmit = async (data: FormData) => {
     try {
       await createItem.mutateAsync({
-        name_en: data.name_en,
-        name_ru: data.name_ru,
+        name_en: data.name,
+        name_ru: data.name,
         price: data.price,
         image_url: data.icon,
         active: true,
+        child_id: data.child_id || null,
       });
       
       toast.success(language === 'ru' ? 'Товар добавлен!' : 'Item added!');
@@ -132,31 +143,54 @@ export const AddStoreItemDialog = ({ trigger }: AddStoreItemDialogProps) => {
               )}
             />
 
-            {/* English Name */}
+            {/* Name */}
             <FormField
               control={form.control}
-              name="name_en"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>🇬🇧 {language === 'ru' ? 'Название (English)' : 'Name (English)'}</FormLabel>
+                  <FormLabel>{language === 'ru' ? 'Название' : 'Name'}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ice cream" {...field} />
+                    <Input placeholder={language === 'ru' ? 'Мороженое' : 'Ice cream'} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Russian Name */}
+            {/* Child Selector */}
             <FormField
               control={form.control}
-              name="name_ru"
+              name="child_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>🇷🇺 {language === 'ru' ? 'Название (Русский)' : 'Name (Russian)'}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Мороженое" {...field} />
-                  </FormControl>
+                  <FormLabel>{language === 'ru' ? 'Для кого' : 'For who'}</FormLabel>
+                  <Select
+                    value={field.value || 'all'}
+                    onValueChange={(value) => field.onChange(value === 'all' ? null : value)}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === 'ru' ? 'Выберите ребёнка' : 'Select child'} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          {language === 'ru' ? 'Все дети' : 'All children'}
+                        </div>
+                      </SelectItem>
+                      {children.map((child) => (
+                        <SelectItem key={child.id} value={child.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{child.avatar_url || '🦁'}</span>
+                            {child.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -168,15 +202,18 @@ export const AddStoreItemDialog = ({ trigger }: AddStoreItemDialogProps) => {
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>💰 {language === 'ru' ? 'Цена (монет)' : 'Price (coins)'}</FormLabel>
+                  <FormLabel>{language === 'ru' ? 'Цена' : 'Price'}</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={10000}
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10000}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                      <CoinBadge amount={field.value} size="sm" />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -190,17 +227,17 @@ export const AddStoreItemDialog = ({ trigger }: AddStoreItemDialogProps) => {
               </p>
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{selectedIcon}</span>
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">
-                    {form.watch('name_en') || (language === 'ru' ? 'Название' : 'Name')}
+                    {form.watch('name') || (language === 'ru' ? 'Название' : 'Name')}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {form.watch('name_ru') || (language === 'ru' ? 'Name' : 'Название')}
-                  </p>
+                  {form.watch('child_id') && (
+                    <p className="text-xs text-muted-foreground">
+                      {children.find(c => c.id === form.watch('child_id'))?.name}
+                    </p>
+                  )}
                 </div>
-                <span className="ml-auto font-bold text-primary">
-                  {form.watch('price')} 🪙
-                </span>
+                <CoinBadge amount={form.watch('price')} size="sm" />
               </div>
             </div>
 

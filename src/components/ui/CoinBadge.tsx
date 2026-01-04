@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import groweeCoins from "@/assets/growee-coins.png";
 
 interface CoinBadgeProps {
   amount: number;
@@ -24,11 +25,11 @@ export const CoinBadge = ({
   };
 
   const iconSizes = {
-    xs: 'text-base',
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-3xl',
-    xl: 'text-5xl',
+    xs: 'w-4 h-4',
+    sm: 'w-5 h-5',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8',
+    xl: 'w-12 h-12',
   };
 
   return (
@@ -40,7 +41,11 @@ export const CoinBadge = ({
         className
       )}
     >
-      <span className={cn(iconSizes[size], animate && "animate-coin-spin")}>🪙</span>
+      <img 
+        src={groweeCoins} 
+        alt="coins" 
+        className={cn(iconSizes[size], "object-contain", animate && "animate-coin-spin")}
+      />
       <span>{showPlus && amount > 0 ? '+' : ''}{amount}</span>
     </div>
   );

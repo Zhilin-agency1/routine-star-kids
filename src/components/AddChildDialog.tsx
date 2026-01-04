@@ -158,7 +158,7 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
                 className="rounded-xl pr-12"
                 {...form.register('balance', { valueAsNumber: true })}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xl">🪙</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg">💰</span>
             </div>
             {form.formState.errors.balance && (
               <p className="text-sm text-destructive">{t('balance_negative')}</p>
@@ -180,7 +180,7 @@ export const AddChildDialog = ({ trigger }: AddChildDialogProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ru">🇷🇺 Русский</SelectItem>
-                <SelectItem value="en">🇬🇧 English</SelectItem>
+                <SelectItem value="en">🇺🇸 English</SelectItem>
               </SelectContent>
             </Select>
           </div>

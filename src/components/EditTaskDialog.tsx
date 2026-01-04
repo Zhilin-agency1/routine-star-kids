@@ -618,7 +618,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
 
           {/* Reward */}
           <div className="space-y-2">
-            <Label htmlFor="edit-reward">{language === 'ru' ? 'Награда' : 'Reward'} 🪙</Label>
+            <Label htmlFor="edit-reward">{language === 'ru' ? 'Награда' : 'Reward'} 💰</Label>
             <Input
               id="edit-reward"
               type="number"

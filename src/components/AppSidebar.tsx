@@ -249,7 +249,7 @@ export const AppSidebar = () => {
                       <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
                       <div className="flex-1">
                         <p className="font-medium">{child.name}</p>
-                        <p className="text-xs text-muted-foreground">{child.balance} 🪙</p>
+                        <p className="text-xs text-muted-foreground">{child.balance} coins</p>
                       </div>
                       <button
                         onClick={(e) => handleEditChild(child, e)}

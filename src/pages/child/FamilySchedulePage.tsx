@@ -11,6 +11,8 @@ import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { EditActivityDialog } from '@/components/EditActivityDialog';
+import { DateJumpPicker } from '@/components/DateJumpPicker';
+import { getWeekDays } from '@/i18n/translations';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -51,7 +53,7 @@ const CHILD_COLORS_LIGHT = [
 ];
 
 export const FamilySchedulePage = () => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { children } = useChildren();
   const { activities } = useSchedule();
   const { templates } = useTasks();
@@ -60,6 +62,9 @@ export const FamilySchedulePage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState<ActivitySchedule | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  
+  const weekDays = getWeekDays(language);
   
   // Mobile detection using md breakpoint (768px)
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -268,9 +273,7 @@ export const FamilySchedulePage = () => {
                 })}
                 {dayItems.length > 3 && (
                   <span className="inline-block text-sm text-primary font-medium underline underline-offset-2">
-                    {language === 'ru' 
-                      ? `+${dayItems.length - 3} ещё` 
-                      : `+${dayItems.length - 3} more`}
+                    +{dayItems.length - 3} {t('more_items')}
                   </span>
                 )}
               </div>
@@ -321,9 +324,7 @@ export const FamilySchedulePage = () => {
                   {dayItems.length}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {language === 'ru' 
-                    ? (dayItems.length === 1 ? 'занятие' : dayItems.length >= 2 && dayItems.length <= 4 ? 'занятия' : 'занятий')
-                    : (dayItems.length === 1 ? 'activity' : 'activities')}
+                  {dayItems.length === 1 ? t('activities_count_one') : t('activities_count_other')}
                 </p>
               </div>
             </div>
@@ -350,9 +351,7 @@ export const FamilySchedulePage = () => {
                 })}
                 {dayItems.length > 2 && (
                   <span className="inline-block text-sm text-primary font-medium underline underline-offset-2">
-                    {language === 'ru' 
-                      ? `+${dayItems.length - 2} ещё` 
-                      : `+${dayItems.length - 2} more`}
+                    +{dayItems.length - 2} {t('more_items')}
                   </span>
                 )}
               </div>
@@ -372,10 +371,10 @@ export const FamilySchedulePage = () => {
         </div>
         <div className="min-w-0">
           <h1 className="text-2xl font-bold break-words">
-            {language === 'ru' ? 'Расписание' : 'Schedule'}
+            {t('family_schedule')}
           </h1>
           <p className="text-sm text-muted-foreground break-words">
-            {language === 'ru' ? 'Все занятия семьи' : 'All family activities'}
+            {t('family_schedule_desc')}
           </p>
         </div>
       </div>
@@ -393,10 +392,7 @@ export const FamilySchedulePage = () => {
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            {language === 'ru' 
-              ? (mode === 'day' ? 'День' : mode === 'week' ? 'Неделя' : 'Месяц')
-              : (mode === 'day' ? 'Day' : mode === 'week' ? 'Week' : 'Month')
-            }
+            {mode === 'day' ? t('view_day') : mode === 'week' ? t('view_week') : t('view_month')}
           </button>
         ))}
       </div>
@@ -406,11 +402,22 @@ export const FamilySchedulePage = () => {
         <Button variant="ghost" size="icon" onClick={navigatePrev} className="min-h-[44px] min-w-[44px]">
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <span className="font-semibold text-center break-words">
-          {viewMode === 'day' && format(currentDate, 'd MMMM', { locale })}
-          {viewMode === 'week' && `${format(days[0], 'd MMM', { locale })} - ${format(days[days.length - 1], 'd MMM', { locale })}`}
-          {viewMode === 'month' && format(currentDate, 'MMMM yyyy', { locale })}
-        </span>
+        <button
+          onClick={() => viewMode !== 'day' && setDatePickerOpen(true)}
+          className={cn(
+            "flex items-center gap-2 font-semibold text-center break-words px-3 py-2 rounded-lg transition-colors",
+            viewMode !== 'day' && "hover:bg-muted/80 active:bg-muted cursor-pointer"
+          )}
+        >
+          <span>
+            {viewMode === 'day' && format(currentDate, 'd MMMM', { locale })}
+            {viewMode === 'week' && `${format(days[0], 'd MMM', { locale })} – ${format(days[days.length - 1], 'd MMM', { locale })}`}
+            {viewMode === 'month' && format(currentDate, 'LLLL yyyy', { locale })}
+          </span>
+          {viewMode !== 'day' && (
+            <Calendar className="w-4 h-4 text-primary" />
+          )}
+        </button>
         <Button variant="ghost" size="icon" onClick={navigateNext} className="min-h-[44px] min-w-[44px]">
           <ChevronRight className="w-5 h-5" />
         </Button>
@@ -430,7 +437,7 @@ export const FamilySchedulePage = () => {
               : 'bg-muted hover:bg-muted/80'
           )}
         >
-          {language === 'ru' ? 'Все' : 'All'}
+          {t('filter_all')}
         </button>
         {children.map((child, index) => (
           <button
@@ -453,6 +460,14 @@ export const FamilySchedulePage = () => {
         ))}
       </div>
 
+      {/* Date Jump Picker */}
+      <DateJumpPicker
+        open={datePickerOpen}
+        onOpenChange={setDatePickerOpen}
+        selectedDate={currentDate}
+        onSelectDate={setCurrentDate}
+      />
+
       {/* Calendar Views */}
       <ScrollArea className="h-[calc(100vh-400px)]">
         {viewMode === 'month' ? (
@@ -465,7 +480,7 @@ export const FamilySchedulePage = () => {
               <div className="border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
                 {/* Day headers */}
                 <div className="grid grid-cols-7 border-b-2 border-border bg-muted">
-                  {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, i) => (
+                  {weekDays.map((day, i) => (
                     <div 
                       key={i} 
                       className={cn(
@@ -474,7 +489,7 @@ export const FamilySchedulePage = () => {
                         i >= 5 ? "text-muted-foreground bg-muted/80" : "text-foreground"
                       )}
                     >
-                      {language === 'ru' ? day : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
+                      {day}
                     </div>
                   ))}
                 </div>
@@ -670,7 +685,7 @@ export const FamilySchedulePage = () => {
                   
                   {dayItems.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      {language === 'ru' ? 'Нет занятий' : 'No activities'}
+                      {t('no_activities_day')}
                     </p>
                   ) : (
                     <div className="space-y-2">
@@ -710,7 +725,7 @@ export const FamilySchedulePage = () => {
                             </div>
                             {item.duration && (
                               <span className="text-xs text-muted-foreground font-medium shrink-0">
-                                {item.duration}{language === 'ru' ? ' мин' : ' min'}
+                                {item.duration} {t('minutes_short')}
                               </span>
                             )}
                             {item.type === 'activity' && item.originalActivity && (

@@ -6,6 +6,8 @@ import { useJobBoard, JobBoardItem } from '@/hooks/useJobBoard';
 import { useSchedule, ActivitySchedule } from '@/hooks/useSchedule';
 import { useFamily } from '@/hooks/useFamily';
 import { useTaskGeneration } from '@/hooks/useTaskGeneration';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export type Role = 'parent' | 'child';
 
@@ -35,6 +37,7 @@ export type ViewMode = 'personal' | 'family';
 interface AppContextType {
   role: Role;
   setRole: (role: Role) => void;
+  userRoles: Role[]; // Available roles from database
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
   currentChild: Child | null;
@@ -54,7 +57,10 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children: childrenProp }) => {
-  const [role, setRole] = useState<Role>('child');
+  const { user } = useAuth();
+  const [role, setRoleState] = useState<Role>('child');
+  const [userRoles, setUserRoles] = useState<Role[]>([]);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('personal');
   const [currentChild, setCurrentChild] = useState<Child | null>(null);
   
@@ -68,6 +74,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children:
   
   // Auto-generate task instances for today
   useTaskGeneration();
+
+  // Fetch user roles from database when user changes
+  useEffect(() => {
+    const fetchUserRoles = async () => {
+      if (!user) {
+        setUserRoles([]);
+        setRolesLoaded(true);
+        setRoleState('child'); // Default to child when logged out
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error fetching user roles:', error);
+          setUserRoles(['child']); // Default fallback
+        } else {
+          const roles = data?.map(r => r.role as Role) || [];
+          setUserRoles(roles);
+          
+          // Set initial role based on what user has
+          if (roles.includes('parent')) {
+            setRoleState('parent');
+          } else if (roles.includes('child')) {
+            setRoleState('child');
+          } else {
+            setRoleState('child'); // Default fallback
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching user roles:', err);
+        setUserRoles(['child']);
+      }
+      
+      setRolesLoaded(true);
+    };
+
+    fetchUserRoles();
+  }, [user]);
+
+  // Role setter that validates against available roles
+  const setRole = (newRole: Role) => {
+    // Only allow switching if user has this role in database
+    if (userRoles.includes(newRole)) {
+      setRoleState(newRole);
+    } else {
+      console.warn(`User does not have role: ${newRole}`);
+    }
+  };
 
   // Set current child when children are loaded
   useEffect(() => {
@@ -132,12 +191,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children:
     claimJob.mutate({ jobId, childId: currentChild.id, addToRoutine: true });
   };
 
-  const isLoading = familyLoading || childrenLoading || storeLoading || jobsLoading || activitiesLoading;
+  const isLoading = familyLoading || childrenLoading || storeLoading || jobsLoading || activitiesLoading || !rolesLoaded;
 
   return (
     <AppContext.Provider value={{
       role,
       setRole,
+      userRoles,
       viewMode,
       setViewMode,
       currentChild,

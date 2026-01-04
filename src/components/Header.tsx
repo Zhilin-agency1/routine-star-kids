@@ -20,10 +20,15 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
-  const { role, setRole, viewMode, setViewMode, currentChild, setCurrentChild, children } = useApp();
+  const { role, setRole, userRoles, viewMode, setViewMode, currentChild, setCurrentChild, children } = useApp();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // Check if user can switch roles (only if they have both roles in database)
+  const canSwitchRoles = userRoles.includes('parent') && userRoles.includes('child');
+  const hasParentRole = userRoles.includes('parent');
+  const hasChildRole = userRoles.includes('child');
 
   const handleSelectChild = (child: typeof currentChild) => {
     setCurrentChild(child);
@@ -37,11 +42,14 @@ export const Header = () => {
   };
 
   const handleRoleChange = (newRole: 'child' | 'parent') => {
-    setRole(newRole);
-    if (newRole === 'parent') {
-      navigate('/parent');
-    } else {
-      navigate('/');
+    // Only allow role change if user has this role
+    if ((newRole === 'parent' && hasParentRole) || (newRole === 'child' && hasChildRole)) {
+      setRole(newRole);
+      if (newRole === 'parent') {
+        navigate('/parent');
+      } else {
+        navigate('/');
+      }
     }
   };
 
@@ -178,7 +186,7 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Role Toggle */}
+            {/* Role Toggle - only show if user can switch roles OR for auth actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
@@ -186,13 +194,27 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleRoleChange('child')}>
-                  👶 {t('role_child')} {role === 'child' && '✓'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
-                  👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {/* Only show role options if user has multiple roles */}
+                {canSwitchRoles && (
+                  <>
+                    <DropdownMenuItem onClick={() => handleRoleChange('child')} disabled={!hasChildRole}>
+                      👶 {t('role_child')} {role === 'child' && '✓'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleRoleChange('parent')} disabled={!hasParentRole}>
+                      👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {/* Show current role if only one role */}
+                {!canSwitchRoles && userRoles.length > 0 && (
+                  <>
+                    <DropdownMenuItem disabled>
+                      {role === 'parent' ? '👨‍👩‍👧' : '👶'} {role === 'parent' ? t('role_parent') : t('role_child')}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 {user ? (
                   <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
@@ -239,7 +261,7 @@ export const Header = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Role Toggle */}
+      {/* Role Toggle - only show if user can switch roles OR for auth actions */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
@@ -247,13 +269,27 @@ export const Header = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => handleRoleChange('child')}>
-            👶 {t('role_child')} {role === 'child' && '✓'}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
-            👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          {/* Only show role options if user has multiple roles */}
+          {canSwitchRoles && (
+            <>
+              <DropdownMenuItem onClick={() => handleRoleChange('child')} disabled={!hasChildRole}>
+                👶 {t('role_child')} {role === 'child' && '✓'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleRoleChange('parent')} disabled={!hasParentRole}>
+                👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {/* Show current role if only one role */}
+          {!canSwitchRoles && userRoles.length > 0 && (
+            <>
+              <DropdownMenuItem disabled>
+                {role === 'parent' ? '👨‍👩‍👧' : '👶'} {role === 'parent' ? t('role_parent') : t('role_child')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           {user ? (
             <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
               <LogOut className="w-4 h-4 mr-2" />

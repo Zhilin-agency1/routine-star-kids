@@ -43,6 +43,10 @@ interface AppContextType {
   currentChild: Child | null;
   setCurrentChild: (child: Child | null) => void;
   children: Child[];
+  childrenLoading: boolean;
+  childrenError: Error | null;
+  refetchChildren: () => void;
+  familyLoaded: boolean;
   tasks: TaskInstance[];
   storeItems: StoreItem[];
   jobBoardItems: JobBoardItem[];
@@ -66,7 +70,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children:
   
   // Use real hooks
   const { family, isLoading: familyLoading } = useFamily();
-  const { children: childrenData, isLoading: childrenLoading } = useChildren();
+  const { children: childrenData, isLoading: childrenLoading, error: childrenError, refetch: refetchChildren } = useChildren();
   const { instances, completeTask: completeTaskMutation, updateInstanceState } = useTasks(currentChild?.id, new Date());
   const { items: storeItemsData, purchaseItem: purchaseItemMutation, isLoading: storeLoading } = useStore();
   const { jobs: jobBoardItemsData, claimJob, isLoading: jobsLoading } = useJobBoard();
@@ -203,6 +207,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children:
       currentChild,
       setCurrentChild,
       children: childrenData,
+      childrenLoading,
+      childrenError: childrenError as Error | null,
+      refetchChildren,
+      familyLoaded: !!family,
       tasks,
       storeItems: storeItemsData,
       jobBoardItems: jobBoardItemsData,

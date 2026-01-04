@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, isSameDay, getDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, isSameDay, getDay, parseISO } from 'date-fns';
 import { ru, enUS } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -65,16 +65,20 @@ export const DateJumpPicker = ({
     });
   }, [baseMonth]);
   
-  // Fetch task presence data for visible range
+  // Fetch task and activity presence data for visible range
   useEffect(() => {
     if (!open || !family) return;
     
-    const fetchTaskPresence = async () => {
-      const rangeStart = toLocalDateString(startOfMonth(baseMonth));
-      const rangeEnd = toLocalDateString(endOfMonth(addMonths(baseMonth, 1)));
+    const fetchPresenceData = async () => {
+      const rangeStartDate = startOfMonth(baseMonth);
+      const rangeEndDate = endOfMonth(addMonths(baseMonth, 1));
+      const rangeStart = toLocalDateString(rangeStartDate);
+      const rangeEnd = toLocalDateString(rangeEndDate);
       
-      // Build query for task instances in date range
-      let query = supabase
+      const presenceMap: Record<string, boolean> = {};
+      
+      // Query 1: Task instances in date range
+      let taskQuery = supabase
         .from('task_instances')
         .select('due_datetime, child_id, template:task_templates!inner(family_id)')
         .eq('template.family_id', family.id)
@@ -82,30 +86,60 @@ export const DateJumpPicker = ({
         .lte('due_datetime', `${rangeEnd}T23:59:59.999`)
         .neq('state', 'cancelled');
       
-      // Filter by child if specified
       if (childId) {
-        query = query.eq('child_id', childId);
+        taskQuery = taskQuery.eq('child_id', childId);
       }
       
-      const { data, error } = await query;
+      // Query 2: Activity schedules that overlap the range
+      let activityQuery = supabase
+        .from('activity_schedules')
+        .select('start_date, end_date, recurring_days, child_id')
+        .eq('family_id', family.id)
+        .lte('start_date', rangeEnd)
+        .or(`end_date.is.null,end_date.gte.${rangeStart}`);
       
-      if (error) {
-        console.error('Error fetching task presence:', error);
-        return;
+      if (childId) {
+        activityQuery = activityQuery.eq('child_id', childId);
       }
       
-      // Build presence map
-      const presenceMap: Record<string, boolean> = {};
-      data?.forEach(instance => {
-        // Extract local date from due_datetime
-        const dateStr = instance.due_datetime.split('T')[0];
-        presenceMap[dateStr] = true;
-      });
+      // Execute both queries in parallel
+      const [taskResult, activityResult] = await Promise.all([taskQuery, activityQuery]);
+      
+      // Process task instances
+      if (!taskResult.error && taskResult.data) {
+        taskResult.data.forEach(instance => {
+          const dateStr = instance.due_datetime.split('T')[0];
+          presenceMap[dateStr] = true;
+        });
+      }
+      
+      // Process activity schedules - expand recurring days
+      if (!activityResult.error && activityResult.data) {
+        const allDays = eachDayOfInterval({ start: rangeStartDate, end: rangeEndDate });
+        
+        activityResult.data.forEach(schedule => {
+          const scheduleStart = parseISO(schedule.start_date);
+          const scheduleEnd = schedule.end_date ? parseISO(schedule.end_date) : null;
+          const recurringDays = schedule.recurring_days || [];
+          
+          allDays.forEach(day => {
+            // Check if day is within schedule range
+            if (day < scheduleStart) return;
+            if (scheduleEnd && day > scheduleEnd) return;
+            
+            // Check if day matches recurring pattern (0=Mon, 6=Sun)
+            const dayOfWeek = (getDay(day) + 6) % 7;
+            if (recurringDays.includes(dayOfWeek)) {
+              presenceMap[toLocalDateString(day)] = true;
+            }
+          });
+        });
+      }
       
       setHasItemsByDate(presenceMap);
     };
     
-    fetchTaskPresence();
+    fetchPresenceData();
   }, [open, family, baseMonth, childId]);
   
   const handleDateClick = (date: Date) => {

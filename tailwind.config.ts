@@ -116,6 +116,20 @@ export default {
           from: { transform: "scale(0.95)", opacity: "0" },
           to: { transform: "scale(1)", opacity: "1" },
         },
+        "bounce-in": {
+          "0%": { transform: "scale(0.3)", opacity: "0" },
+          "50%": { transform: "scale(1.1)" },
+          "70%": { transform: "scale(0.9)" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "coin-spin": {
+          "0%": { transform: "rotateY(0deg)" },
+          "100%": { transform: "rotateY(360deg)" },
+        },
+        "coin-glow": {
+          "0%, 100%": { filter: "drop-shadow(0 0 4px hsl(var(--accent)))" },
+          "50%": { filter: "drop-shadow(0 0 12px hsl(var(--accent))) drop-shadow(0 0 20px hsl(var(--warning)))" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -123,6 +137,9 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "fade-in-up": "fade-in-up 0.4s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
+        "bounce-in": "bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "coin-spin": "coin-spin 0.6s ease-in-out",
+        "coin-glow": "coin-glow 1.5s ease-in-out infinite",
       },
     },
   },

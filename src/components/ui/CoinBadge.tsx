@@ -44,7 +44,11 @@ export const CoinBadge = ({
       <img 
         src={groweeCoins} 
         alt="coins" 
-        className={cn(iconSizes[size], "object-contain", animate && "animate-coin-spin")}
+        className={cn(
+          iconSizes[size], 
+          "object-contain",
+          animate && "animate-coin-spin animate-coin-glow"
+        )}
       />
       <span>{showPlus && amount > 0 ? '+' : ''}{amount}</span>
     </div>

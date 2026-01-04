@@ -1,4 +1,4 @@
-import { Globe, User, Users, LogIn, LogOut, ChevronDown, Check, Trophy } from 'lucide-react';
+import { Globe, User, Users, LogIn, LogOut, ChevronDown, Check, Trophy, Eye, RefreshCw, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
@@ -20,7 +20,11 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
-  const { role, setRole, userRoles, viewMode, setViewMode, currentChild, setCurrentChild, children } = useApp();
+  const { 
+    role, setRole, userRoles, viewMode, setViewMode, 
+    currentChild, setCurrentChild, children,
+    childrenLoading, childrenError, refetchChildren, familyLoaded
+  } = useApp();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -29,6 +33,11 @@ export const Header = () => {
   const canSwitchRoles = userRoles.includes('parent') && userRoles.includes('child');
   const hasParentRole = userRoles.includes('parent');
   const hasChildRole = userRoles.includes('child');
+
+  // Log errors for debugging
+  if (childrenError) {
+    console.error('Failed to load children:', childrenError);
+  }
 
   const handleSelectChild = (child: typeof currentChild) => {
     setCurrentChild(child);
@@ -51,6 +60,25 @@ export const Header = () => {
         navigate('/');
       }
     }
+  };
+
+  // Parent preview: switch to child view mode without changing actual role
+  const handleSwitchToChildView = (child?: typeof currentChild) => {
+    if (child) {
+      setCurrentChild(child);
+      setViewMode('personal');
+    } else if (children.length > 0) {
+      setCurrentChild(children[0]);
+      setViewMode('personal');
+    } else {
+      setViewMode('family');
+    }
+    setRole('child');
+    navigate('/');
+  };
+
+  const handleRetryLoadChildren = () => {
+    refetchChildren();
   };
 
   // Mobile: full header with logo
@@ -193,9 +221,71 @@ export const Header = () => {
                   <User className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {/* Only show role options if user has multiple roles */}
-                {canSwitchRoles && (
+              <DropdownMenuContent align="end" className="w-64">
+                {/* Parent-only: Switch to child view */}
+                {hasParentRole && role === 'parent' && (
+                  <>
+                    <DropdownMenuLabel className="flex items-center gap-2">
+                      <Eye className="w-4 h-4" />
+                      {language === 'ru' ? 'Просмотр как ребенок' : 'Preview as child'}
+                    </DropdownMenuLabel>
+                    
+                    {!familyLoaded ? (
+                      <DropdownMenuItem disabled className="text-muted-foreground">
+                        {language === 'ru' ? 'Семья не настроена' : 'Family not set up'}
+                      </DropdownMenuItem>
+                    ) : childrenLoading ? (
+                      <DropdownMenuItem disabled className="text-muted-foreground">
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        {language === 'ru' ? 'Загрузка...' : 'Loading...'}
+                      </DropdownMenuItem>
+                    ) : childrenError ? (
+                      <DropdownMenuItem 
+                        onClick={handleRetryLoadChildren}
+                        className="text-destructive"
+                      >
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        {language === 'ru' ? 'Ошибка загрузки. Повторить?' : 'Load failed. Retry?'}
+                      </DropdownMenuItem>
+                    ) : children.length === 0 ? (
+                      <DropdownMenuItem disabled className="text-muted-foreground">
+                        {language === 'ru' ? 'Дети не добавлены' : 'No children added'}
+                      </DropdownMenuItem>
+                    ) : (
+                      <>
+                        {/* Family Overview option */}
+                        <DropdownMenuItem onClick={() => handleSwitchToChildView()}>
+                          <Trophy className="w-4 h-4 mr-2 text-primary" />
+                          {language === 'ru' ? 'Обзор семьи' : 'Family overview'}
+                        </DropdownMenuItem>
+                        {/* Individual children */}
+                        {children.map((child) => (
+                          <DropdownMenuItem 
+                            key={child.id}
+                            onClick={() => handleSwitchToChildView(child)}
+                          >
+                            <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
+                            <span className="ml-2">{child.name}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+
+                {/* Show "Back to parent mode" when in child view as a parent */}
+                {hasParentRole && role === 'child' && (
+                  <>
+                    <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
+                      👨‍👩‍👧 {language === 'ru' ? 'Назад к родителю' : 'Back to parent mode'}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                
+                {/* Only show role options if user has multiple roles from DB */}
+                {canSwitchRoles && !hasParentRole && (
                   <>
                     <DropdownMenuItem onClick={() => handleRoleChange('child')} disabled={!hasChildRole}>
                       👶 {t('role_child')} {role === 'child' && '✓'}
@@ -207,7 +297,7 @@ export const Header = () => {
                   </>
                 )}
                 {/* Show current role if only one role */}
-                {!canSwitchRoles && userRoles.length > 0 && (
+                {!canSwitchRoles && userRoles.length > 0 && !hasParentRole && (
                   <>
                     <DropdownMenuItem disabled>
                       {role === 'parent' ? '👨‍👩‍👧' : '👶'} {role === 'parent' ? t('role_parent') : t('role_child')}
@@ -218,12 +308,12 @@ export const Header = () => {
                 {user ? (
                   <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
-                    Выйти
+                    {language === 'ru' ? 'Выйти' : 'Sign out'}
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem onClick={() => navigate('/auth')}>
                     <LogIn className="w-4 h-4 mr-2" />
-                    Войти
+                    {language === 'ru' ? 'Войти' : 'Sign in'}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -268,9 +358,71 @@ export const Header = () => {
             <User className="w-5 h-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {/* Only show role options if user has multiple roles */}
-          {canSwitchRoles && (
+        <DropdownMenuContent align="end" className="w-64">
+          {/* Parent-only: Switch to child view */}
+          {hasParentRole && role === 'parent' && (
+            <>
+              <DropdownMenuLabel className="flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                {language === 'ru' ? 'Просмотр как ребенок' : 'Preview as child'}
+              </DropdownMenuLabel>
+              
+              {!familyLoaded ? (
+                <DropdownMenuItem disabled className="text-muted-foreground">
+                  {language === 'ru' ? 'Семья не настроена' : 'Family not set up'}
+                </DropdownMenuItem>
+              ) : childrenLoading ? (
+                <DropdownMenuItem disabled className="text-muted-foreground">
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  {language === 'ru' ? 'Загрузка...' : 'Loading...'}
+                </DropdownMenuItem>
+              ) : childrenError ? (
+                <DropdownMenuItem 
+                  onClick={handleRetryLoadChildren}
+                  className="text-destructive"
+                >
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  {language === 'ru' ? 'Ошибка загрузки. Повторить?' : 'Load failed. Retry?'}
+                </DropdownMenuItem>
+              ) : children.length === 0 ? (
+                <DropdownMenuItem disabled className="text-muted-foreground">
+                  {language === 'ru' ? 'Дети не добавлены' : 'No children added'}
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  {/* Family Overview option */}
+                  <DropdownMenuItem onClick={() => handleSwitchToChildView()}>
+                    <Trophy className="w-4 h-4 mr-2 text-primary" />
+                    {language === 'ru' ? 'Обзор семьи' : 'Family overview'}
+                  </DropdownMenuItem>
+                  {/* Individual children */}
+                  {children.map((child) => (
+                    <DropdownMenuItem 
+                      key={child.id}
+                      onClick={() => handleSwitchToChildView(child)}
+                    >
+                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
+                      <span className="ml-2">{child.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </>
+              )}
+              <DropdownMenuSeparator />
+            </>
+          )}
+
+          {/* Show "Back to parent mode" when in child view as a parent */}
+          {hasParentRole && role === 'child' && (
+            <>
+              <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
+                👨‍👩‍👧 {language === 'ru' ? 'Назад к родителю' : 'Back to parent mode'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          
+          {/* Only show role options if user has multiple roles from DB */}
+          {canSwitchRoles && !hasParentRole && (
             <>
               <DropdownMenuItem onClick={() => handleRoleChange('child')} disabled={!hasChildRole}>
                 👶 {t('role_child')} {role === 'child' && '✓'}
@@ -282,7 +434,7 @@ export const Header = () => {
             </>
           )}
           {/* Show current role if only one role */}
-          {!canSwitchRoles && userRoles.length > 0 && (
+          {!canSwitchRoles && userRoles.length > 0 && !hasParentRole && (
             <>
               <DropdownMenuItem disabled>
                 {role === 'parent' ? '👨‍👩‍👧' : '👶'} {role === 'parent' ? t('role_parent') : t('role_child')}
@@ -293,12 +445,12 @@ export const Header = () => {
           {user ? (
             <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
-              Выйти
+              {language === 'ru' ? 'Выйти' : 'Sign out'}
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem onClick={() => navigate('/auth')}>
               <LogIn className="w-4 h-4 mr-2" />
-              Войти
+              {language === 'ru' ? 'Войти' : 'Sign in'}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>

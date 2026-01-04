@@ -111,6 +111,8 @@ export const translations = {
     
     // Schedule
     schedule_title: "My Schedule",
+    family_schedule: "Schedule",
+    family_schedule_desc: "All family activities",
     no_activities: "No activities scheduled",
     activity_updated: "Activity updated",
     activity_deleted: "Activity deleted",
@@ -124,6 +126,16 @@ export const translations = {
     activity_title_placeholder: "Activity title",
     activity_location_placeholder: "Where the activity takes place",
     apply_template: "Apply template",
+    jump_to_date: "Jump to date",
+    view_day: "Day",
+    view_week: "Week",
+    view_month: "Month",
+    filter_all: "All",
+    activities_count_one: "activity",
+    activities_count_other: "activities",
+    more_items: "more",
+    no_activities_day: "No activities",
+    minutes_short: "min",
     
     // Weekdays
     weekday_mon: "Mon",
@@ -385,6 +397,8 @@ export const translations = {
     
     // Schedule
     schedule_title: "Моё расписание",
+    family_schedule: "Расписание",
+    family_schedule_desc: "Все занятия семьи",
     no_activities: "Нет запланированных занятий",
     activity_updated: "Занятие обновлено",
     activity_deleted: "Занятие удалено",
@@ -398,6 +412,16 @@ export const translations = {
     activity_title_placeholder: "Название занятия",
     activity_location_placeholder: "Где проходит занятие",
     apply_template: "Применить шаблон",
+    jump_to_date: "Перейти к дате",
+    view_day: "День",
+    view_week: "Неделя",
+    view_month: "Месяц",
+    filter_all: "Все",
+    activities_count_one: "занятие",
+    activities_count_other: "занятий",
+    more_items: "ещё",
+    no_activities_day: "Нет занятий",
+    minutes_short: "мин",
     
     // Weekdays
     weekday_mon: "Пн",

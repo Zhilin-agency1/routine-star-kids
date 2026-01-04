@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from './useFamily';
-import { toLocalDayBoundsISO, combineLocalDateTimeToISO, localDateKey } from '@/lib/datetime';
 import type { Database } from '@/integrations/supabase/types';
 
 type DayTemplate = Database['public']['Tables']['day_templates']['Row'];
@@ -355,10 +354,10 @@ export const useDayTemplates = () => {
       }
 
       // Format date
-      const dateStr = localDateKey(date);
-      
-      // Get proper ISO bounds for the day
-      const { startISO, endISO } = toLocalDayBoundsISO(date);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
 
       // For each child
       let totalTasksCreated = 0;
@@ -367,13 +366,13 @@ export const useDayTemplates = () => {
       for (const childId of childIds) {
         // If replace mode, delete existing tasks for that date
         if (mode === 'replace') {
-          // Get existing instances for this child and date using ISO bounds
+          // Get existing instances for this child and date
           const { data: existingInstances } = await supabase
             .from('task_instances')
             .select('id, template_id')
             .eq('child_id', childId)
-            .gte('due_datetime', startISO)
-            .lte('due_datetime', endISO)
+            .gte('due_datetime', `${dateStr}T00:00:00`)
+            .lte('due_datetime', `${dateStr}T23:59:59.999`)
             .neq('state', 'done'); // Don't delete completed tasks
 
           if (existingInstances && existingInstances.length > 0) {
@@ -392,8 +391,8 @@ export const useDayTemplates = () => {
             .from('task_instances')
             .select('template_id, task_templates!inner(title_ru, title_en)')
             .eq('child_id', childId)
-            .gte('due_datetime', startISO)
-            .lte('due_datetime', endISO);
+            .gte('due_datetime', `${dateStr}T00:00:00`)
+            .lte('due_datetime', `${dateStr}T23:59:59.999`);
 
           if (existingInstances) {
             existingInstances.forEach((i: any) => {
@@ -445,13 +444,13 @@ export const useDayTemplates = () => {
 
           if (templateError) throw templateError;
 
-          // Create task instance with timezone-safe ISO
+          // Create task instance
           const { error: instanceError } = await supabase
             .from('task_instances')
             .insert({
               template_id: template.id,
               child_id: childId,
-              due_datetime: combineLocalDateTimeToISO(dateStr, timeStr),
+              due_datetime: `${dateStr}T${timeStr}`,
               state: 'todo',
             });
 
@@ -555,8 +554,11 @@ export const useDayTemplates = () => {
         throw new Error('Either templateId or presetKey required');
       }
 
-      // Format start date using the helper
-      const startDateStr = localDateKey(startDate);
+      // Format start date
+      const year = startDate.getFullYear();
+      const month = String(startDate.getMonth() + 1).padStart(2, '0');
+      const day = String(startDate.getDate()).padStart(2, '0');
+      const startDateStr = `${year}-${month}-${day}`;
 
       let totalTasksCreated = 0;
       let totalTasksSkipped = 0;

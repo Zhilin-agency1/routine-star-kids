@@ -186,67 +186,17 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Profile/View Switcher Menu */}
+            {/* Role Toggle - only show if user can switch roles OR for auth actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <User className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {/* Switch View section for parents */}
-                {role === 'parent' && children.length > 0 && (
-                  <>
-                    <DropdownMenuLabel>
-                      {language === 'ru' ? 'Переключить вид' : 'Switch view'}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    
-                    {/* Family Dashboard Option */}
-                    <DropdownMenuItem
-                      onClick={handleSelectFamily}
-                      className="flex items-center gap-3"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Users className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">
-                          {language === 'ru' ? 'Семейный обзор' : 'Family Dashboard'}
-                        </p>
-                      </div>
-                      {viewMode === 'family' && (
-                        <Check className="w-4 h-4 text-primary" />
-                      )}
-                    </DropdownMenuItem>
-                    
-                    {/* Children List */}
-                    {children.map((child) => (
-                      <DropdownMenuItem
-                        key={child.id}
-                        onClick={() => handleSelectChild(child)}
-                        className="flex items-center gap-3"
-                      >
-                        <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
-                        <div className="flex-1">
-                          <p className="font-medium">{child.name}</p>
-                          <p className="text-xs text-muted-foreground">{child.balance} coins</p>
-                        </div>
-                        {viewMode === 'personal' && currentChild?.id === child.id && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-
-                {/* Role switch options if user has multiple roles */}
+              <DropdownMenuContent align="end">
+                {/* Only show role options if user has multiple roles */}
                 {canSwitchRoles && (
                   <>
-                    <DropdownMenuLabel>
-                      {language === 'ru' ? 'Роль' : 'Role'}
-                    </DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => handleRoleChange('child')} disabled={!hasChildRole}>
                       👶 {t('role_child')} {role === 'child' && '✓'}
                     </DropdownMenuItem>
@@ -256,7 +206,6 @@ export const Header = () => {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                
                 {/* Show current role if only one role */}
                 {!canSwitchRoles && userRoles.length > 0 && (
                   <>
@@ -266,16 +215,15 @@ export const Header = () => {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                
                 {user ? (
                   <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
-                    {language === 'ru' ? 'Выйти' : 'Sign out'}
+                    Выйти
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem onClick={() => navigate('/auth')}>
                     <LogIn className="w-4 h-4 mr-2" />
-                    {language === 'ru' ? 'Войти' : 'Sign in'}
+                    Войти
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -313,67 +261,17 @@ export const Header = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Profile/View Switcher Menu */}
+      {/* Role Toggle - only show if user can switch roles OR for auth actions */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
             <User className="w-5 h-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          {/* Switch View section for parents */}
-          {role === 'parent' && children.length > 0 && (
-            <>
-              <DropdownMenuLabel>
-                {language === 'ru' ? 'Переключить вид' : 'Switch view'}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              
-              {/* Family Dashboard Option */}
-              <DropdownMenuItem
-                onClick={handleSelectFamily}
-                className="flex items-center gap-3"
-              >
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Users className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">
-                    {language === 'ru' ? 'Семейный обзор' : 'Family Dashboard'}
-                  </p>
-                </div>
-                {viewMode === 'family' && (
-                  <Check className="w-4 h-4 text-primary" />
-                )}
-              </DropdownMenuItem>
-              
-              {/* Children List */}
-              {children.map((child) => (
-                <DropdownMenuItem
-                  key={child.id}
-                  onClick={() => handleSelectChild(child)}
-                  className="flex items-center gap-3"
-                >
-                  <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
-                  <div className="flex-1">
-                    <p className="font-medium">{child.name}</p>
-                    <p className="text-xs text-muted-foreground">{child.balance} coins</p>
-                  </div>
-                  {viewMode === 'personal' && currentChild?.id === child.id && (
-                    <Check className="w-4 h-4 text-primary" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-            </>
-          )}
-
-          {/* Role switch options if user has multiple roles */}
+        <DropdownMenuContent align="end">
+          {/* Only show role options if user has multiple roles */}
           {canSwitchRoles && (
             <>
-              <DropdownMenuLabel>
-                {language === 'ru' ? 'Роль' : 'Role'}
-              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => handleRoleChange('child')} disabled={!hasChildRole}>
                 👶 {t('role_child')} {role === 'child' && '✓'}
               </DropdownMenuItem>
@@ -383,7 +281,6 @@ export const Header = () => {
               <DropdownMenuSeparator />
             </>
           )}
-          
           {/* Show current role if only one role */}
           {!canSwitchRoles && userRoles.length > 0 && (
             <>
@@ -393,16 +290,15 @@ export const Header = () => {
               <DropdownMenuSeparator />
             </>
           )}
-          
           {user ? (
             <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
-              {language === 'ru' ? 'Выйти' : 'Sign out'}
+              Выйти
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem onClick={() => navigate('/auth')}>
               <LogIn className="w-4 h-4 mr-2" />
-              {language === 'ru' ? 'Войти' : 'Sign in'}
+              Войти
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>

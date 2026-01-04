@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from './useFamily';
 import { toLocalDateString } from '@/lib/dateUtils';
-import { combineLocalDateTimeToISO, localDateKey } from '@/lib/datetime';
 import type { Database } from '@/integrations/supabase/types';
 
 type JobBoardItem = Database['public']['Tables']['job_board_items']['Row'];
@@ -124,8 +123,6 @@ export const useJobBoard = () => {
         if (jobError) throw jobError;
         if (!job) throw new Error('Job not found');
         
-        const todayStr = localDateKey(new Date());
-        
         // Create a one-time task template
         const { data: template, error: templateError } = await supabase
           .from('task_templates')
@@ -139,20 +136,20 @@ export const useJobBoard = () => {
             icon: job.icon,
             reward_amount: job.reward_amount,
             task_type: 'one_time',
-            one_time_date: todayStr,
+            one_time_date: toLocalDateString(new Date()),
           })
           .select()
           .single();
         
         if (templateError) throw templateError;
         
-        // Create task instance with proper timezone-safe ISO
+        // Create task instance
         const { data: instance, error: instanceError } = await supabase
           .from('task_instances')
           .insert({
             template_id: template.id,
             child_id: childId,
-            due_datetime: combineLocalDateTimeToISO(todayStr, '12:00:00'),
+            due_datetime: new Date().toISOString(),
             state: 'todo',
           })
           .select()

@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from './useFamily';
 import { toLocalDateString } from '@/lib/dateUtils';
-import { toLocalDayBoundsISO, localDateKey } from '@/lib/datetime';
 import type { TaskWithTemplate } from './useTasks';
 
 export const useAllTodayTasks = () => {
@@ -10,7 +9,6 @@ export const useAllTodayTasks = () => {
 
   const today = new Date();
   const dateStr = toLocalDateString(today);
-  const { startISO, endISO } = toLocalDayBoundsISO(today);
 
   const { data: instances = [], isLoading, refetch } = useQuery({
     queryKey: ['all_today_tasks', family?.id, dateStr],
@@ -24,8 +22,8 @@ export const useAllTodayTasks = () => {
           template:task_templates!inner(*)
         `)
         .eq('template.family_id', family.id)
-        .gte('due_datetime', startISO)
-        .lte('due_datetime', endISO)
+        .gte('due_datetime', `${dateStr}T00:00:00`)
+        .lte('due_datetime', `${dateStr}T23:59:59.999`)
         .order('due_datetime', { ascending: true });
 
       if (error) throw error;

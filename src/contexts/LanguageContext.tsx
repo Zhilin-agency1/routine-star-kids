@@ -11,7 +11,15 @@ interface LanguageContextType {
   syncLanguageFromProfile: () => Promise<void>;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+// Default context value for safe fallback
+const defaultContextValue: LanguageContextType = {
+  language: 'en',
+  setLanguage: () => {},
+  t: (key: TranslationKey) => translations.en[key] || key,
+  syncLanguageFromProfile: async () => {},
+};
+
+const LanguageContext = createContext<LanguageContextType>(defaultContextValue);
 
 const getInitialLanguage = (): Language => {
   if (typeof window !== 'undefined') {
@@ -119,10 +127,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
-export const useLanguage = () => {
+export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
+  // Return the context directly - it always has a default value now
   return context;
 };

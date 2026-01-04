@@ -135,7 +135,7 @@ export const Header = () => {
                       <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
                       <div className="flex-1">
                         <p className="font-medium">{child.name}</p>
-                        <p className="text-xs text-muted-foreground">{child.balance} 🪙</p>
+                        <p className="text-xs text-muted-foreground">{child.balance} coins</p>
                       </div>
                       {viewMode === 'personal' && currentChild?.id === child.id && (
                         <Check className="w-4 h-4 text-primary" />
@@ -173,7 +173,7 @@ export const Header = () => {
                   🇷🇺 Русский {language === 'ru' && '✓'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLanguage('en')}>
-                  🇬🇧 English {language === 'en' && '✓'}
+                  🇺🇸 English {language === 'en' && '✓'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -234,7 +234,7 @@ export const Header = () => {
             🇷🇺 Русский {language === 'ru' && '✓'}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setLanguage('en')}>
-            🇬🇧 English {language === 'en' && '✓'}
+            🇺🇸 English {language === 'en' && '✓'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

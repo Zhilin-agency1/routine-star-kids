@@ -568,7 +568,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
 
           {/* Reward */}
           <div className="space-y-2">
-            <Label htmlFor="task-reward">Награда 🪙</Label>
+            <Label htmlFor="task-reward">Награда 💰</Label>
             <Input
               id="task-reward"
               type="number"

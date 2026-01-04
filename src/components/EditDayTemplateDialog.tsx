@@ -263,7 +263,7 @@ export const EditDayTemplateDialog = ({
                         className="h-10 text-sm rounded-lg"
                       />
                     </div>
-                    <span className="flex items-center text-lg">🪙</span>
+                    <span className="flex items-center text-lg">💰</span>
                   </div>
                 </div>
               ))}

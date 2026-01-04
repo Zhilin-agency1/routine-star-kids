@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -14,38 +14,55 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GroweeCharacter } from '@/components/ui/GroweeCharacter';
 
-const loginSchema = z.object({
-  email: z.string()
-    .trim()
-    .min(1, { message: 'Email обязателен' })
-    .email({ message: 'Некорректный email адрес' })
-    .max(255, { message: 'Email не должен превышать 255 символов' }),
-  password: z.string()
-    .min(1, { message: 'Пароль обязателен' })
-    .min(6, { message: 'Пароль должен быть минимум 6 символов' })
-    .max(72, { message: 'Пароль не должен превышать 72 символа' }),
-});
+type LoginFormData = {
+  email: string;
+  password: string;
+};
 
-const signupSchema = loginSchema.extend({
-  fullName: z.string()
-    .trim()
-    .min(1, { message: 'Имя обязательно' })
-    .max(100, { message: 'Имя не должно превышать 100 символов' }),
-  confirmPassword: z.string()
-    .min(1, { message: 'Подтверждение пароля обязательно' }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Пароли не совпадают',
-  path: ['confirmPassword'],
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-type SignupFormData = z.infer<typeof signupSchema>;
+type SignupFormData = {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  fullName: string;
+};
 
 type AuthView = 'login' | 'signup' | 'confirm-email';
 
+// Language toggle component
+const LanguageToggle = () => {
+  const { language, setLanguage } = useLanguage();
+  
+  return (
+    <div className="absolute top-4 right-4 flex gap-1 bg-muted/50 rounded-lg p-1">
+      <button
+        onClick={() => setLanguage('en')}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+          language === 'en' 
+            ? 'bg-primary text-primary-foreground' 
+            : 'text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        <span>🇺🇸</span>
+        <span>EN</span>
+      </button>
+      <button
+        onClick={() => setLanguage('ru')}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+          language === 'ru' 
+            ? 'bg-primary text-primary-foreground' 
+            : 'text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        <span>🇷🇺</span>
+        <span>RU</span>
+      </button>
+    </div>
+  );
+};
+
 export const AuthPage = () => {
   const { t, language } = useLanguage();
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, loading } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -53,6 +70,40 @@ export const AuthPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string>('');
   const [isResending, setIsResending] = useState(false);
+
+  // Create schemas with translated messages
+  const loginSchema = useMemo(() => z.object({
+    email: z.string()
+      .trim()
+      .min(1, { message: t('email_required') })
+      .email({ message: t('invalid_email') })
+      .max(255, { message: t('email_too_long') }),
+    password: z.string()
+      .min(1, { message: t('password_required') })
+      .min(6, { message: t('password_min_length') })
+      .max(72, { message: t('password_too_long') }),
+  }), [t]);
+
+  const signupSchema = useMemo(() => z.object({
+    email: z.string()
+      .trim()
+      .min(1, { message: t('email_required') })
+      .email({ message: t('invalid_email') })
+      .max(255, { message: t('email_too_long') }),
+    password: z.string()
+      .min(1, { message: t('password_required') })
+      .min(6, { message: t('password_min_length') })
+      .max(72, { message: t('password_too_long') }),
+    fullName: z.string()
+      .trim()
+      .min(1, { message: t('name_required') })
+      .max(100, { message: t('name_too_long') }),
+    confirmPassword: z.string()
+      .min(1, { message: t('confirm_password_required') }),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t('passwords_dont_match'),
+    path: ['confirmPassword'],
+  }), [t]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -79,6 +130,12 @@ export const AuthPage = () => {
     },
   });
 
+  // Reset form validation when language changes
+  useEffect(() => {
+    loginForm.clearErrors();
+    signupForm.clearErrors();
+  }, [language, loginForm, signupForm]);
+
   const handleLogin = async (data: LoginFormData) => {
     setIsSubmitting(true);
     try {
@@ -87,29 +144,20 @@ export const AuthPage = () => {
         const errorMessage = error.message.toLowerCase();
         
         if (errorMessage.includes('invalid login credentials')) {
-          toast.error(language === 'ru' ? 'Неверный email или пароль' : 'Invalid email or password');
-        } else if (errorMessage.includes('email not confirmed')) {
-          // Show confirmation screen
+          toast.error(t('invalid_credentials'));
+        } else if (errorMessage.includes('email not confirmed') || errorMessage.includes('email_not_confirmed') || errorMessage.includes('email not verified')) {
           setPendingEmail(data.email);
           setAuthView('confirm-email');
-          toast.info(language === 'ru' 
-            ? 'Email не подтверждён. Проверьте почту' 
-            : 'Email not confirmed. Check your inbox');
-        } else if (errorMessage.includes('email_not_confirmed') || errorMessage.includes('email not verified')) {
-          setPendingEmail(data.email);
-          setAuthView('confirm-email');
-          toast.info(language === 'ru' 
-            ? 'Email не подтверждён. Проверьте почту' 
-            : 'Email not confirmed. Check your inbox');
+          toast.info(t('email_not_confirmed'));
         } else {
-          toast.error(error.message || (language === 'ru' ? 'Ошибка входа' : 'Login error'));
+          toast.error(error.message || t('login_error'));
         }
       } else {
-        toast.success(language === 'ru' ? 'Вход выполнен успешно!' : 'Login successful!');
+        toast.success(t('login_success'));
         navigate('/', { replace: true });
       }
     } catch (err) {
-      toast.error(language === 'ru' ? 'Произошла ошибка при входе' : 'An error occurred during login');
+      toast.error(t('login_occurred_error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -131,38 +179,30 @@ export const AuthPage = () => {
 
       if (error) {
         if (error.message.includes('User already registered')) {
-          toast.error(language === 'ru' 
-            ? 'Пользователь с таким email уже существует' 
-            : 'User with this email already exists');
+          toast.error(t('user_exists'));
         } else if (error.message.includes('Password should be')) {
-          toast.error(language === 'ru' ? 'Пароль слишком простой' : 'Password is too weak');
+          toast.error(t('password_too_weak'));
         } else {
-          toast.error(error.message || (language === 'ru' ? 'Ошибка регистрации' : 'Registration error'));
+          toast.error(error.message || t('registration_error'));
         }
       } else {
-        // Check if email confirmation is required
-        // If identities is empty or session is null, email confirmation is required
         const needsConfirmation = !signUpData.session || 
           (signUpData.user && signUpData.user.identities && signUpData.user.identities.length === 0) ||
           (signUpData.user && !signUpData.user.email_confirmed_at);
         
         if (needsConfirmation && signUpData.user && !signUpData.session) {
-          // Email confirmation required - show confirmation screen
           setPendingEmail(data.email);
           setAuthView('confirm-email');
-          toast.success(language === 'ru' 
-            ? 'Письмо отправлено! Проверьте почту' 
-            : 'Email sent! Check your inbox');
+          toast.success(t('email_sent'));
         } else {
-          // Auto-confirm enabled - can login immediately
-          toast.success(language === 'ru' ? 'Регистрация успешна! Можете войти' : 'Registration successful! You can now login');
+          toast.success(t('registration_success'));
           setActiveTab('login');
           setAuthView('login');
           loginForm.setValue('email', data.email);
         }
       }
     } catch (err) {
-      toast.error(language === 'ru' ? 'Произошла ошибка при регистрации' : 'An error occurred during registration');
+      toast.error(t('registration_occurred_error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -182,14 +222,12 @@ export const AuthPage = () => {
       });
 
       if (error) {
-        toast.error(error.message || (language === 'ru' ? 'Ошибка отправки' : 'Send error'));
+        toast.error(error.message || t('send_error'));
       } else {
-        toast.success(language === 'ru' 
-          ? 'Письмо отправлено повторно!' 
-          : 'Email resent successfully!');
+        toast.success(t('email_resent'));
       }
     } catch (err) {
-      toast.error(language === 'ru' ? 'Ошибка отправки письма' : 'Error sending email');
+      toast.error(t('send_email_error'));
     } finally {
       setIsResending(false);
     }
@@ -213,8 +251,12 @@ export const AuthPage = () => {
 
   // Email confirmation screen
   if (authView === 'confirm-email') {
+    const confirmEmailDesc = t('confirm_email_desc').replace('{email}', pendingEmail);
+    
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+        <LanguageToggle />
+        
         <div className="w-full max-w-md">
           {/* Logo/Header */}
           <div className="text-center mb-8">
@@ -229,13 +271,11 @@ export const AuthPage = () => {
             </div>
             
             <h2 className="text-xl font-bold mb-2">
-              {language === 'ru' ? 'Подтвердите email' : 'Confirm your email'}
+              {t('confirm_email_title')}
             </h2>
             
             <p className="text-muted-foreground mb-6">
-              {language === 'ru' 
-                ? `Мы отправили письмо на ${pendingEmail}. Перейдите по ссылке в письме, чтобы подтвердить аккаунт.`
-                : `We sent an email to ${pendingEmail}. Click the link in the email to confirm your account.`}
+              {confirmEmailDesc}
             </p>
 
             <div className="space-y-3">
@@ -250,7 +290,7 @@ export const AuthPage = () => {
                 ) : (
                   <RefreshCw className="w-5 h-5 mr-2" />
                 )}
-                {language === 'ru' ? 'Отправить повторно' : 'Resend email'}
+                {t('resend_email')}
               </Button>
 
               <Button
@@ -258,14 +298,12 @@ export const AuthPage = () => {
                 className="w-full rounded-xl h-12"
               >
                 <LogIn className="w-5 h-5 mr-2" />
-                {language === 'ru' ? 'Вернуться ко входу' : 'Back to login'}
+                {t('back_to_login')}
               </Button>
             </div>
 
             <p className="text-sm text-muted-foreground mt-6">
-              {language === 'ru' 
-                ? 'Проверьте папку "Спам", если не видите письмо'
-                : 'Check your spam folder if you don\'t see the email'}
+              {t('check_spam')}
             </p>
           </div>
         </div>
@@ -274,16 +312,16 @@ export const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <LanguageToggle />
+      
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
           <GroweeCharacter size="lg" animate className="mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-foreground">Growee</h1>
           <p className="text-muted-foreground mt-2">
-            {language === 'ru' 
-              ? 'Расти каждый день'
-              : 'Grow every day'}
+            {t('app_tagline')}
           </p>
         </div>
 
@@ -293,11 +331,11 @@ export const AuthPage = () => {
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login" className="rounded-xl">
                 <LogIn className="w-4 h-4 mr-2" />
-                {language === 'ru' ? 'Вход' : 'Login'}
+                {t('login')}
               </TabsTrigger>
               <TabsTrigger value="signup" className="rounded-xl">
                 <UserPlus className="w-4 h-4 mr-2" />
-                {language === 'ru' ? 'Регистрация' : 'Sign up'}
+                {t('signup')}
               </TabsTrigger>
             </TabsList>
 
@@ -305,7 +343,7 @@ export const AuthPage = () => {
             <TabsContent value="login">
               <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-email">{t('email')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -322,7 +360,7 @@ export const AuthPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">{language === 'ru' ? 'Пароль' : 'Password'}</Label>
+                  <Label htmlFor="login-password">{t('password')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -355,7 +393,7 @@ export const AuthPage = () => {
                   ) : (
                     <LogIn className="w-5 h-5 mr-2" />
                   )}
-                  {language === 'ru' ? 'Войти' : 'Login'}
+                  {t('login_btn')}
                 </Button>
               </form>
             </TabsContent>
@@ -364,7 +402,7 @@ export const AuthPage = () => {
             <TabsContent value="signup">
               <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">{language === 'ru' ? 'Ваше имя' : 'Your name'}</Label>
+                  <Label htmlFor="signup-name">{t('your_name')}</Label>
                   <Input
                     id="signup-name"
                     type="text"
@@ -378,7 +416,7 @@ export const AuthPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">{t('email')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -395,13 +433,13 @@ export const AuthPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">{language === 'ru' ? 'Пароль' : 'Password'}</Label>
+                  <Label htmlFor="signup-password">{t('password')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       id="signup-password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder={language === 'ru' ? 'Минимум 6 символов' : 'At least 6 characters'}
+                      placeholder={t('min_6_chars')}
                       className="pl-10 pr-10 rounded-xl"
                       {...signupForm.register('password')}
                     />
@@ -419,13 +457,13 @@ export const AuthPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm">{language === 'ru' ? 'Подтвердите пароль' : 'Confirm password'}</Label>
+                  <Label htmlFor="signup-confirm">{t('confirm_password')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       id="signup-confirm"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder={language === 'ru' ? 'Повторите пароль' : 'Repeat password'}
+                      placeholder={t('repeat_password')}
                       className="pl-10 rounded-xl"
                       {...signupForm.register('confirmPassword')}
                     />
@@ -445,20 +483,19 @@ export const AuthPage = () => {
                   ) : (
                     <UserPlus className="w-5 h-5 mr-2" />
                   )}
-                  {language === 'ru' ? 'Зарегистрироваться' : 'Sign up'}
+                  {t('signup_btn')}
                 </Button>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  {t('terms_agreement')}
+                </p>
               </form>
             </TabsContent>
           </Tabs>
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          {language === 'ru' 
-            ? 'Создавая аккаунт, вы соглашаетесь с условиями использования'
-            : 'By creating an account, you agree to the terms of service'}
-        </p>
       </div>
     </div>
   );
 };
+
+export default AuthPage;

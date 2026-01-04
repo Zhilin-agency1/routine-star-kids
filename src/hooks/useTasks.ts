@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from './useFamily';
+import { toLocalDateString } from '@/lib/dateUtils';
 import type { Database } from '@/integrations/supabase/types';
 
 type TaskTemplate = Database['public']['Tables']['task_templates']['Row'];
@@ -12,6 +13,9 @@ type TaskInstanceInsert = Database['public']['Tables']['task_instances']['Insert
 export interface TaskWithTemplate extends TaskInstance {
   template: TaskTemplate;
 }
+
+// Helper to get today's date string for cache keys
+const getTodayLocal = () => toLocalDateString(new Date());
 
 export const useTasks = (childId?: string, date?: Date) => {
   const { family } = useFamily();
@@ -46,7 +50,7 @@ export const useTasks = (childId?: string, date?: Date) => {
     isLoading: instancesLoading,
     refetch: refetchInstances 
   } = useQuery({
-    queryKey: ['task_instances', childId, date?.toISOString().split('T')[0]],
+    queryKey: ['task_instances', childId, date ? toLocalDateString(date) : null],
     queryFn: async () => {
       if (!childId) return [];
       
@@ -59,11 +63,7 @@ export const useTasks = (childId?: string, date?: Date) => {
         .eq('child_id', childId);
       
       if (date) {
-        // Format date as YYYY-MM-DD in local timezone
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const dateStr = `${year}-${month}-${day}`;
+        const dateStr = toLocalDateString(date);
         
         // Use date casting to compare only the date part
         query = query
@@ -198,11 +198,12 @@ export const useTasks = (childId?: string, date?: Date) => {
       await queryClient.cancelQueries({ queryKey: ['all_today_tasks'] });
 
       // Snapshot previous values
-      const previousAllTodayTasks = queryClient.getQueryData(['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]]);
+      const todayStr = getTodayLocal();
+      const previousAllTodayTasks = queryClient.getQueryData(['all_today_tasks', family?.id, todayStr]);
 
       // Optimistically update all_today_tasks
       queryClient.setQueryData(
-        ['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]],
+        ['all_today_tasks', family?.id, todayStr],
         (old: TaskWithTemplate[] | undefined) => {
           if (!old) return old;
           return old.map(task => 
@@ -213,13 +214,13 @@ export const useTasks = (childId?: string, date?: Date) => {
         }
       );
 
-      return { previousAllTodayTasks };
+      return { previousAllTodayTasks, todayStr };
     },
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousAllTodayTasks) {
         queryClient.setQueryData(
-          ['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]],
+          ['all_today_tasks', family?.id, context.todayStr],
           context.previousAllTodayTasks
         );
       }
@@ -256,11 +257,12 @@ export const useTasks = (childId?: string, date?: Date) => {
       await queryClient.cancelQueries({ queryKey: ['all_today_tasks'] });
 
       // Snapshot previous values
-      const previousAllTodayTasks = queryClient.getQueryData(['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]]);
+      const todayStr = getTodayLocal();
+      const previousAllTodayTasks = queryClient.getQueryData(['all_today_tasks', family?.id, todayStr]);
 
       // Optimistically update all_today_tasks
       queryClient.setQueryData(
-        ['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]],
+        ['all_today_tasks', family?.id, todayStr],
         (old: TaskWithTemplate[] | undefined) => {
           if (!old) return old;
           return old.map(task => 
@@ -271,13 +273,13 @@ export const useTasks = (childId?: string, date?: Date) => {
         }
       );
 
-      return { previousAllTodayTasks };
+      return { previousAllTodayTasks, todayStr };
     },
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousAllTodayTasks) {
         queryClient.setQueryData(
-          ['all_today_tasks', family?.id, new Date().toISOString().split('T')[0]],
+          ['all_today_tasks', family?.id, context.todayStr],
           context.previousAllTodayTasks
         );
       }
@@ -333,7 +335,7 @@ export const useTasks = (childId?: string, date?: Date) => {
         const { error: templateError } = await supabase
           .from('task_templates')
           .update({
-            end_date: new Date().toISOString().split('T')[0],
+            end_date: getTodayLocal(),
           })
           .eq('id', instance.template_id);
         

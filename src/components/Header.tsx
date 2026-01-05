@@ -62,7 +62,8 @@ export const Header = () => {
     }
   };
 
-  // Parent preview: switch to child view mode without changing actual role
+  // Parent preview: switch to child view mode WITHOUT changing actual role
+  // This is a VIEW MODE switch, not a role switch - security is enforced by RLS
   const handleSwitchToChildView = (child?: typeof currentChild) => {
     if (child) {
       setCurrentChild(child);
@@ -73,9 +74,19 @@ export const Header = () => {
     } else {
       setViewMode('family');
     }
-    setRole('child');
+    // DO NOT change role - parent stays as parent, just viewing child mode
     navigate('/');
   };
+
+  // Switch back to parent mode (family view)
+  const handleSwitchToParentMode = () => {
+    setViewMode('family');
+    navigate('/parent');
+  };
+  
+  // Check if parent is currently in child preview mode
+  const isParentInChildMode = role === 'parent' && viewMode === 'personal';
+  const hasChildren = children.length > 0;
 
   const handleRetryLoadChildren = () => {
     refetchChildren();
@@ -274,11 +285,11 @@ export const Header = () => {
                   </>
                 )}
 
-                {/* Show "Back to parent mode" when in child view as a parent */}
-                {hasParentRole && role === 'child' && (
+                {/* Show "Back to parent mode" when parent is in child preview mode */}
+                {isParentInChildMode && (
                   <>
-                    <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
-                      👨‍👩‍👧 {language === 'ru' ? 'Назад к родителю' : 'Back to parent mode'}
+                    <DropdownMenuItem onClick={handleSwitchToParentMode}>
+                      👨‍👩‍👧 {t('back_to_parent')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
@@ -411,11 +422,11 @@ export const Header = () => {
             </>
           )}
 
-          {/* Show "Back to parent mode" when in child view as a parent */}
-          {hasParentRole && role === 'child' && (
+          {/* Show "Back to parent mode" when parent is in child preview mode */}
+          {isParentInChildMode && (
             <>
-              <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
-                👨‍👩‍👧 {language === 'ru' ? 'Назад к родителю' : 'Back to parent mode'}
+              <DropdownMenuItem onClick={handleSwitchToParentMode}>
+                👨‍👩‍👧 {t('back_to_parent')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>

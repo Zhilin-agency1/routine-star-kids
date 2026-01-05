@@ -60,13 +60,16 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Helper to get localStorage keys scoped by user ID
+const getStorageKey = (userId: string, key: string) => `growee:${key}:${userId}`;
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children: childrenProp }) => {
   const { user } = useAuth();
   const [role, setRoleState] = useState<Role>('child');
   const [userRoles, setUserRoles] = useState<Role[]>([]);
   const [rolesLoaded, setRolesLoaded] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('personal');
-  const [currentChild, setCurrentChild] = useState<Child | null>(null);
+  const [viewMode, setViewModeState] = useState<ViewMode>('personal');
+  const [currentChild, setCurrentChildState] = useState<Child | null>(null);
   
   // Use real hooks
   const { family, isLoading: familyLoading } = useFamily();
@@ -132,19 +135,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children:
     }
   };
 
-  // Set current child when children are loaded
-  useEffect(() => {
-    if (childrenData.length > 0 && !currentChild) {
-      setCurrentChild(childrenData[0]);
+  // Wrapper for setViewMode with localStorage persistence
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    if (user) {
+      localStorage.setItem(getStorageKey(user.id, 'viewMode'), mode);
     }
-  }, [childrenData, currentChild]);
+  };
+
+  // Wrapper for setCurrentChild with localStorage persistence
+  const setCurrentChild = (child: Child | null) => {
+    setCurrentChildState(child);
+    if (user) {
+      if (child) {
+        localStorage.setItem(getStorageKey(user.id, 'currentChildId'), child.id);
+      } else {
+        localStorage.removeItem(getStorageKey(user.id, 'currentChildId'));
+      }
+    }
+  };
+
+  // Restore viewMode and currentChild from localStorage on user change
+  useEffect(() => {
+    if (user && childrenData.length > 0) {
+      // Restore viewMode
+      const savedViewMode = localStorage.getItem(getStorageKey(user.id, 'viewMode'));
+      if (savedViewMode === 'personal' || savedViewMode === 'family') {
+        setViewModeState(savedViewMode);
+      }
+      
+      // Restore currentChild - validate it belongs to this family's children
+      const savedChildId = localStorage.getItem(getStorageKey(user.id, 'currentChildId'));
+      if (savedChildId) {
+        const foundChild = childrenData.find(c => c.id === savedChildId);
+        if (foundChild) {
+          setCurrentChildState(foundChild);
+        } else {
+          // Saved child not found, default to first child
+          setCurrentChildState(childrenData[0]);
+        }
+      } else if (!currentChild) {
+        // No saved child, default to first
+        setCurrentChildState(childrenData[0]);
+      }
+    }
+  }, [user, childrenData]);
 
   // Update currentChild when childrenData changes (e.g., balance updates)
   useEffect(() => {
     if (currentChild && childrenData.length > 0) {
       const updatedChild = childrenData.find(c => c.id === currentChild.id);
       if (updatedChild && updatedChild.balance !== currentChild.balance) {
-        setCurrentChild(updatedChild);
+        setCurrentChildState(updatedChild);
       }
     }
   }, [childrenData, currentChild]);

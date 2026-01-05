@@ -41,6 +41,13 @@ export const translations = {
     role_child: "Child",
     switch_role: "Switch Role",
     
+    // Mode switching
+    mode: "Mode",
+    parent_mode: "Parent",
+    child_mode: "Child",
+    back_to_parent: "Back to parent mode",
+    switch_to_child_mode: "Switch to child mode",
+    
     // Task States
     state_todo: "To Do",
     state_doing: "In Progress",
@@ -349,6 +356,13 @@ export const translations = {
     role_parent: "Родитель",
     role_child: "Ребёнок",
     switch_role: "Сменить роль",
+    
+    // Mode switching
+    mode: "Режим",
+    parent_mode: "Родитель",
+    child_mode: "Ребёнок",
+    back_to_parent: "Назад к родителю",
+    switch_to_child_mode: "Детский режим",
     
     // Task States
     state_todo: "Сделать",

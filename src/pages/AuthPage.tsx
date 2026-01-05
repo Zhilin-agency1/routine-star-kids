@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, RefreshCw, KeyRound } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GroweeCharacter } from '@/components/ui/GroweeCharacter';
@@ -25,10 +24,6 @@ type SignupFormData = {
   password: string;
   confirmPassword: string;
   fullName: string;
-};
-
-type ForgotPasswordFormData = {
-  email: string;
 };
 
 type AuthView = 'login' | 'signup' | 'confirm-email';
@@ -73,8 +68,6 @@ export const AuthPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string>('');
   const [isResending, setIsResending] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [isSendingReset, setIsSendingReset] = useState(false);
 
   // Create schemas with translated messages
   const loginSchema = useMemo(() => z.object({
@@ -110,14 +103,6 @@ export const AuthPage = () => {
     path: ['confirmPassword'],
   }), [t]);
 
-  const forgotPasswordSchema = useMemo(() => z.object({
-    email: z.string()
-      .trim()
-      .min(1, { message: t('email_required') })
-      .email({ message: t('invalid_email') })
-      .max(255, { message: t('email_too_long') }),
-  }), [t]);
-
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
@@ -142,20 +127,6 @@ export const AuthPage = () => {
       fullName: '',
     },
   });
-
-  const forgotPasswordForm = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: {
-      email: '',
-    },
-  });
-
-  // Reset form validation when language changes
-  useEffect(() => {
-    loginForm.clearErrors();
-    signupForm.clearErrors();
-    forgotPasswordForm.clearErrors();
-  }, [language, loginForm, signupForm, forgotPasswordForm]);
 
   // Reset form validation when language changes
   useEffect(() => {
@@ -213,18 +184,6 @@ export const AuthPage = () => {
           toast.error(error.message || t('registration_error'));
         }
       } else {
-        // Update profile with current language preference
-        if (signUpData.user) {
-          try {
-            await supabase
-              .from('profiles')
-              .update({ language_preference: language })
-              .eq('user_id', signUpData.user.id);
-          } catch (err) {
-            console.error('Error saving language preference:', err);
-          }
-        }
-
         const needsConfirmation = !signUpData.session || 
           (signUpData.user && signUpData.user.identities && signUpData.user.identities.length === 0) ||
           (signUpData.user && !signUpData.user.email_confirmed_at);
@@ -244,27 +203,6 @@ export const AuthPage = () => {
       toast.error(t('registration_occurred_error'));
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleForgotPassword = async (data: ForgotPasswordFormData) => {
-    setIsSendingReset(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: 'https://login.growee.app/auth/reset',
-      });
-
-      if (error) {
-        toast.error(error.message || t('reset_link_error'));
-      } else {
-        toast.success(t('reset_link_sent'));
-        setShowForgotPassword(false);
-        forgotPasswordForm.reset();
-      }
-    } catch (err) {
-      toast.error(t('reset_link_error'));
-    } finally {
-      setIsSendingReset(false);
     }
   };
 
@@ -455,14 +393,6 @@ export const AuthPage = () => {
                   )}
                   {t('login_btn')}
                 </Button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {t('forgot_password')}
-                </button>
               </form>
             </TabsContent>
 
@@ -562,53 +492,6 @@ export const AuthPage = () => {
           </Tabs>
         </div>
       </div>
-
-      {/* Forgot Password Dialog */}
-      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <KeyRound className="w-5 h-5" />
-              {t('forgot_password_title')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('forgot_password_desc')}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="forgot-email">{t('email')}</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="forgot-email"
-                  type="email"
-                  placeholder="email@example.com"
-                  className="pl-10 rounded-xl"
-                  {...forgotPasswordForm.register('email')}
-                />
-              </div>
-              {forgotPasswordForm.formState.errors.email && (
-                <p className="text-sm text-destructive">{forgotPasswordForm.formState.errors.email.message}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full rounded-xl h-12"
-              disabled={isSendingReset}
-            >
-              {isSendingReset ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              ) : (
-                <Mail className="w-5 h-5 mr-2" />
-              )}
-              {t('send_reset_link')}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

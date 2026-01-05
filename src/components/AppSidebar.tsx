@@ -105,12 +105,7 @@ export const AppSidebar = () => {
 
   // Determine which nav items to show based on role and viewMode
   const getNavItems = () => {
-    // Parent can be in family dashboard OR in child personal view (preview mode)
-    if (role === 'parent') {
-      return viewMode === 'personal' ? personalNavItems : parentNavItems;
-    }
-
-    // Child accounts: allow family overview view if we support it, otherwise personal
+    if (role === 'parent') return parentNavItems;
     if (viewMode === 'family') return familyNavItems;
     return personalNavItems;
   };

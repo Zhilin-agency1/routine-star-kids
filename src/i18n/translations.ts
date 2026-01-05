@@ -41,13 +41,6 @@ export const translations = {
     role_child: "Child",
     switch_role: "Switch Role",
     
-    // Mode switching
-    mode: "Mode",
-    parent_mode: "Parent",
-    child_mode: "Child",
-    back_to_parent: "Back to parent mode",
-    switch_to_child_mode: "Switch to child mode",
-    
     // Task States
     state_todo: "To Do",
     state_doing: "In Progress",
@@ -224,7 +217,6 @@ export const translations = {
     login_btn: "Login",
     signup_btn: "Sign up",
     min_6_chars: "At least 6 characters",
-    min_8_chars: "At least 8 characters",
     repeat_password: "Repeat password",
     terms_agreement: "By creating an account, you agree to the terms of service",
     confirm_email_title: "Confirm your email",
@@ -234,27 +226,6 @@ export const translations = {
     check_spam: "Check your spam folder if you don't see the email",
     email_sent: "Email sent! Check your inbox",
     email_resent: "Email resent successfully!",
-    
-    // Forgot password
-    forgot_password: "Forgot password?",
-    forgot_password_title: "Reset Password",
-    forgot_password_desc: "Enter your email and we'll send you a reset link",
-    send_reset_link: "Send reset link",
-    reset_link_sent: "Reset link sent! Check your email",
-    reset_link_error: "Error sending reset link",
-    
-    // Reset password page
-    reset_password_title: "Reset Password",
-    reset_password_desc: "Enter your new password",
-    new_password: "New password",
-    update_password: "Update password",
-    password_updated: "Password updated successfully!",
-    reset_error: "Error updating password",
-    reset_occurred_error: "An error occurred while updating password",
-    reset_link_expired: "Reset link expired",
-    open_from_email_link: "Please open this page from the reset email link",
-    redirecting_to_login: "Redirecting to login...",
-    password_min_8_chars: "Password must be at least 8 characters",
     
     // Auth errors
     invalid_credentials: "Invalid email or password",
@@ -356,13 +327,6 @@ export const translations = {
     role_parent: "Родитель",
     role_child: "Ребёнок",
     switch_role: "Сменить роль",
-    
-    // Mode switching
-    mode: "Режим",
-    parent_mode: "Родитель",
-    child_mode: "Ребёнок",
-    back_to_parent: "Назад к родителю",
-    switch_to_child_mode: "Детский режим",
     
     // Task States
     state_todo: "Сделать",
@@ -540,7 +504,6 @@ export const translations = {
     login_btn: "Войти",
     signup_btn: "Зарегистрироваться",
     min_6_chars: "Минимум 6 символов",
-    min_8_chars: "Минимум 8 символов",
     repeat_password: "Повторите пароль",
     terms_agreement: "Создавая аккаунт, вы соглашаетесь с условиями использования",
     confirm_email_title: "Подтвердите email",
@@ -550,27 +513,6 @@ export const translations = {
     check_spam: "Проверьте папку \"Спам\", если не видите письмо",
     email_sent: "Письмо отправлено! Проверьте почту",
     email_resent: "Письмо отправлено повторно!",
-    
-    // Forgot password
-    forgot_password: "Забыли пароль?",
-    forgot_password_title: "Сброс пароля",
-    forgot_password_desc: "Введите email и мы отправим ссылку для сброса",
-    send_reset_link: "Отправить ссылку",
-    reset_link_sent: "Ссылка отправлена! Проверьте почту",
-    reset_link_error: "Ошибка отправки ссылки",
-    
-    // Reset password page
-    reset_password_title: "Сброс пароля",
-    reset_password_desc: "Введите новый пароль",
-    new_password: "Новый пароль",
-    update_password: "Обновить пароль",
-    password_updated: "Пароль успешно обновлён!",
-    reset_error: "Ошибка обновления пароля",
-    reset_occurred_error: "Произошла ошибка при обновлении пароля",
-    reset_link_expired: "Ссылка устарела",
-    open_from_email_link: "Откройте эту страницу по ссылке из письма",
-    redirecting_to_login: "Переход ко входу...",
-    password_min_8_chars: "Пароль должен быть минимум 8 символов",
     
     // Auth errors
     invalid_credentials: "Неверный email или пароль",

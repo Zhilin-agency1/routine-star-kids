@@ -1,4 +1,4 @@
-import { Globe, User, Users, LogIn, LogOut, ChevronDown, Check, Trophy, Eye, RefreshCw, AlertCircle } from 'lucide-react';
+import { Globe, User, Users, LogIn, LogOut, ChevronDown, Check, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
@@ -20,24 +20,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
-  const { 
-    role, setRole, userRoles, viewMode, setViewMode, 
-    currentChild, setCurrentChild, children,
-    childrenLoading, childrenError, refetchChildren, familyLoaded
-  } = useApp();
+  const { role, setRole, viewMode, setViewMode, currentChild, setCurrentChild, children } = useApp();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-
-  // Check if user can switch roles (only if they have both roles in database)
-  const canSwitchRoles = userRoles.includes('parent') && userRoles.includes('child');
-  const hasParentRole = userRoles.includes('parent');
-  const hasChildRole = userRoles.includes('child');
-
-  // Log errors for debugging
-  if (childrenError) {
-    console.error('Failed to load children:', childrenError);
-  }
 
   const handleSelectChild = (child: typeof currentChild) => {
     setCurrentChild(child);
@@ -51,45 +37,12 @@ export const Header = () => {
   };
 
   const handleRoleChange = (newRole: 'child' | 'parent') => {
-    // Only allow role change if user has this role
-    if ((newRole === 'parent' && hasParentRole) || (newRole === 'child' && hasChildRole)) {
-      setRole(newRole);
-      if (newRole === 'parent') {
-        navigate('/parent');
-      } else {
-        navigate('/');
-      }
-    }
-  };
-
-  // Parent preview: switch to child view mode WITHOUT changing actual role
-  // This is a VIEW MODE switch, not a role switch - security is enforced by RLS
-  const handleSwitchToChildView = (child?: typeof currentChild) => {
-    if (child) {
-      setCurrentChild(child);
-      setViewMode('personal');
-    } else if (children.length > 0) {
-      setCurrentChild(children[0]);
-      setViewMode('personal');
+    setRole(newRole);
+    if (newRole === 'parent') {
+      navigate('/parent');
     } else {
-      setViewMode('family');
+      navigate('/');
     }
-    // DO NOT change role - parent stays as parent, just viewing child mode
-    navigate('/');
-  };
-
-  // Switch back to parent mode (family view)
-  const handleSwitchToParentMode = () => {
-    setViewMode('family');
-    navigate('/parent');
-  };
-  
-  // Check if parent is currently in child preview mode
-  const isParentInChildMode = role === 'parent' && viewMode === 'personal';
-  const hasChildren = children.length > 0;
-
-  const handleRetryLoadChildren = () => {
-    refetchChildren();
   };
 
   // Mobile: full header with logo
@@ -225,106 +178,30 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Role Toggle - only show if user can switch roles OR for auth actions */}
+            {/* Role Toggle */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <User className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                {/* Parent-only: Switch to child view */}
-                {hasParentRole && role === 'parent' && (
-                  <>
-                    <DropdownMenuLabel className="flex items-center gap-2">
-                      <Eye className="w-4 h-4" />
-                      {language === 'ru' ? 'Просмотр как ребенок' : 'Preview as child'}
-                    </DropdownMenuLabel>
-                    
-                    {!familyLoaded ? (
-                      <DropdownMenuItem disabled className="text-muted-foreground">
-                        {language === 'ru' ? 'Семья не настроена' : 'Family not set up'}
-                      </DropdownMenuItem>
-                    ) : childrenLoading ? (
-                      <DropdownMenuItem disabled className="text-muted-foreground">
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        {language === 'ru' ? 'Загрузка...' : 'Loading...'}
-                      </DropdownMenuItem>
-                    ) : childrenError ? (
-                      <DropdownMenuItem 
-                        onClick={handleRetryLoadChildren}
-                        className="text-destructive"
-                      >
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        {language === 'ru' ? 'Ошибка загрузки. Повторить?' : 'Load failed. Retry?'}
-                      </DropdownMenuItem>
-                    ) : children.length === 0 ? (
-                      <DropdownMenuItem disabled className="text-muted-foreground">
-                        {language === 'ru' ? 'Дети не добавлены' : 'No children added'}
-                      </DropdownMenuItem>
-                    ) : (
-                      <>
-                        {/* Family Overview option */}
-                        <DropdownMenuItem onClick={() => handleSwitchToChildView()}>
-                          <Trophy className="w-4 h-4 mr-2 text-primary" />
-                          {language === 'ru' ? 'Обзор семьи' : 'Family overview'}
-                        </DropdownMenuItem>
-                        {/* Individual children */}
-                        {children.map((child) => (
-                          <DropdownMenuItem 
-                            key={child.id}
-                            onClick={() => handleSwitchToChildView(child)}
-                          >
-                            <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
-                            <span className="ml-2">{child.name}</span>
-                          </DropdownMenuItem>
-                        ))}
-                      </>
-                    )}
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-
-                {/* Show "Back to parent mode" when parent is in child preview mode */}
-                {isParentInChildMode && (
-                  <>
-                    <DropdownMenuItem onClick={handleSwitchToParentMode}>
-                      👨‍👩‍👧 {t('back_to_parent')}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                
-                {/* Only show role options if user has multiple roles from DB */}
-                {canSwitchRoles && !hasParentRole && (
-                  <>
-                    <DropdownMenuItem onClick={() => handleRoleChange('child')} disabled={!hasChildRole}>
-                      👶 {t('role_child')} {role === 'child' && '✓'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleRoleChange('parent')} disabled={!hasParentRole}>
-                      👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                {/* Show current role if only one role */}
-                {!canSwitchRoles && userRoles.length > 0 && !hasParentRole && (
-                  <>
-                    <DropdownMenuItem disabled>
-                      {role === 'parent' ? '👨‍👩‍👧' : '👶'} {role === 'parent' ? t('role_parent') : t('role_child')}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleRoleChange('child')}>
+                  👶 {t('role_child')} {role === 'child' && '✓'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
+                  👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 {user ? (
                   <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
-                    {language === 'ru' ? 'Выйти' : 'Sign out'}
+                    Выйти
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem onClick={() => navigate('/auth')}>
                     <LogIn className="w-4 h-4 mr-2" />
-                    {language === 'ru' ? 'Войти' : 'Sign in'}
+                    Войти
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -362,106 +239,30 @@ export const Header = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Role Toggle - only show if user can switch roles OR for auth actions */}
+      {/* Role Toggle */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
             <User className="w-5 h-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
-          {/* Parent-only: Switch to child view */}
-          {hasParentRole && role === 'parent' && (
-            <>
-              <DropdownMenuLabel className="flex items-center gap-2">
-                <Eye className="w-4 h-4" />
-                {language === 'ru' ? 'Просмотр как ребенок' : 'Preview as child'}
-              </DropdownMenuLabel>
-              
-              {!familyLoaded ? (
-                <DropdownMenuItem disabled className="text-muted-foreground">
-                  {language === 'ru' ? 'Семья не настроена' : 'Family not set up'}
-                </DropdownMenuItem>
-              ) : childrenLoading ? (
-                <DropdownMenuItem disabled className="text-muted-foreground">
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  {language === 'ru' ? 'Загрузка...' : 'Loading...'}
-                </DropdownMenuItem>
-              ) : childrenError ? (
-                <DropdownMenuItem 
-                  onClick={handleRetryLoadChildren}
-                  className="text-destructive"
-                >
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  {language === 'ru' ? 'Ошибка загрузки. Повторить?' : 'Load failed. Retry?'}
-                </DropdownMenuItem>
-              ) : children.length === 0 ? (
-                <DropdownMenuItem disabled className="text-muted-foreground">
-                  {language === 'ru' ? 'Дети не добавлены' : 'No children added'}
-                </DropdownMenuItem>
-              ) : (
-                <>
-                  {/* Family Overview option */}
-                  <DropdownMenuItem onClick={() => handleSwitchToChildView()}>
-                    <Trophy className="w-4 h-4 mr-2 text-primary" />
-                    {language === 'ru' ? 'Обзор семьи' : 'Family overview'}
-                  </DropdownMenuItem>
-                  {/* Individual children */}
-                  {children.map((child) => (
-                    <DropdownMenuItem 
-                      key={child.id}
-                      onClick={() => handleSwitchToChildView(child)}
-                    >
-                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
-                      <span className="ml-2">{child.name}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </>
-              )}
-              <DropdownMenuSeparator />
-            </>
-          )}
-
-          {/* Show "Back to parent mode" when parent is in child preview mode */}
-          {isParentInChildMode && (
-            <>
-              <DropdownMenuItem onClick={handleSwitchToParentMode}>
-                👨‍👩‍👧 {t('back_to_parent')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          
-          {/* Only show role options if user has multiple roles from DB */}
-          {canSwitchRoles && !hasParentRole && (
-            <>
-              <DropdownMenuItem onClick={() => handleRoleChange('child')} disabled={!hasChildRole}>
-                👶 {t('role_child')} {role === 'child' && '✓'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleRoleChange('parent')} disabled={!hasParentRole}>
-                👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          {/* Show current role if only one role */}
-          {!canSwitchRoles && userRoles.length > 0 && !hasParentRole && (
-            <>
-              <DropdownMenuItem disabled>
-                {role === 'parent' ? '👨‍👩‍👧' : '👶'} {role === 'parent' ? t('role_parent') : t('role_child')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleRoleChange('child')}>
+            👶 {t('role_child')} {role === 'child' && '✓'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
+            👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           {user ? (
             <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
-              {language === 'ru' ? 'Выйти' : 'Sign out'}
+              Выйти
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem onClick={() => navigate('/auth')}>
               <LogIn className="w-4 h-4 mr-2" />
-              {language === 'ru' ? 'Войти' : 'Sign in'}
+              Войти
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>

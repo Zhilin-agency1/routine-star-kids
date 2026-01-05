@@ -12,7 +12,6 @@ import { FamilySetup } from "@/components/FamilySetup";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import { AuthPage } from "./pages/AuthPage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { StorePage } from "./pages/child/StorePage";
 import { JobBoardPage } from "./pages/child/JobBoardPage";
 import { FamilySchedulePage } from "./pages/child/FamilySchedulePage";
@@ -31,8 +30,8 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <LanguageProvider>
         <AppProvider>
           <TooltipProvider>
             <Toaster />
@@ -41,7 +40,6 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
-                <Route path="/auth/reset" element={<ResetPasswordPage />} />
                 
                 {/* Protected routes */}
                 <Route
@@ -215,8 +213,8 @@ const App = () => (
             </BrowserRouter>
           </TooltipProvider>
         </AppProvider>
-      </AuthProvider>
-    </LanguageProvider>
+      </LanguageProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

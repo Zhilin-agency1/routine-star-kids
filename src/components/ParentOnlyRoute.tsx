@@ -6,19 +6,10 @@ interface ParentOnlyRouteProps {
 }
 
 export const ParentOnlyRoute = ({ children }: ParentOnlyRouteProps) => {
-  const { role, userRoles, isLoading } = useApp();
+  const { role } = useApp();
 
-  // Wait for roles to load before making redirect decisions
-  if (isLoading) {
-    return null;
-  }
-
-  // Check if user actually has parent role in database (server-validated)
-  // If userRoles is empty, they're not authenticated - redirect to home
-  const hasParentRole = userRoles.includes('parent');
-  
-  // Redirect if user doesn't have parent role OR current role isn't parent
-  if (!hasParentRole || role !== 'parent') {
+  // Redirect children to home page when trying to access parent-only routes
+  if (role === 'child') {
     return <Navigate to="/" replace />;
   }
 

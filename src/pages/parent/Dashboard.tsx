@@ -312,145 +312,6 @@ export const ParentDashboard = () => {
         </div>
       </div>
 
-      {/* Trello-style Board - Today's Tasks */}
-      {children.length > 0 ? (
-        <div className="overflow-x-auto -mx-4 px-4 md:overflow-visible md:mx-0 md:px-0">
-          <div className="flex gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4">
-            {childColumns.map(({ child, tasks: childTasks, completedCount, totalCount, earnedToday, progress }) => (
-              <div 
-                key={child.id} 
-                className="bg-card/50 rounded-2xl p-3 w-72 flex-shrink-0 md:w-full md:flex-shrink"
-              >
-                {/* Column Header */}
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
-                  <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold truncate">{child.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {completedCount}/{totalCount} • {progress}%
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <CoinBadge amount={child.balance} size="sm" />
-                    <p className="text-xs text-success">+{earnedToday}</p>
-                  </div>
-                </div>
-
-                {/* Tasks */}
-                <ScrollArea className="h-[40vh] sm:h-[50vh] lg:h-[calc(100vh-550px)] pr-2">
-                  <div className="space-y-2">
-                    {childTasks.length === 0 ? (
-                      <div className="text-center py-6 text-muted-foreground">
-                        <span className="text-2xl block mb-1">✨</span>
-                        <p className="text-sm">{language === 'ru' ? 'Нет задач' : 'No tasks'}</p>
-                      </div>
-                    ) : (
-                      childTasks.map(task => (
-                        <div 
-                          key={task.id}
-                          className={`bg-background rounded-xl p-3 border-l-4 ${task.isActivity ? activityColor : stateColors[task.state]} shadow-sm transition-all hover:shadow-md ${
-                            task.state === 'done' ? 'opacity-60' : ''
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <span className="text-lg">{task.icon}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className={`font-medium text-sm ${task.state === 'done' ? 'line-through' : ''}`}>
-                                {task.title[language]}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                {!task.isActivity && <CoinBadge amount={task.rewardAmount} size="sm" />}
-                                {task.isActivity && (
-                                  <span className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded-full">
-                                    {language === 'ru' ? 'Занятие' : 'Activity'}
-                                  </span>
-                                )}
-                                {task.dueTime && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {task.dueTime.slice(0, 5)}
-                                  </span>
-                                )}
-                                {task.location && (
-                                  <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                                    <MapPin className="w-3 h-3" />
-                                    {task.location}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {!task.isActivity && task.state !== 'done' ? (
-                            <div className="flex gap-1 mt-2">
-                              {task.state === 'todo' && (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="flex-1 h-7 text-xs"
-                                  onClick={() => handleStartTask(task.id)}
-                                >
-                                  {language === 'ru' ? 'Начать' : 'Start'}
-                                </Button>
-                              )}
-                              <Button 
-                                size="sm" 
-                                className="flex-1 h-7 text-xs"
-                                onClick={() => handleComplete(task.id, task.childId)}
-                              >
-                                {language === 'ru' ? 'Готово ✓' : 'Done ✓'}
-                              </Button>
-                            </div>
-                          ) : !task.isActivity ? (
-                            <div className="flex gap-1 mt-2">
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="flex-1 h-7 text-xs text-muted-foreground hover:text-destructive"
-                                onClick={() => handleUncomplete(task.id, task.childId)}
-                              >
-                                <Undo2 className="w-3 h-3 mr-1" />
-                                {language === 'ru' ? 'Отменить' : 'Undo'}
-                              </Button>
-                            </div>
-                          ) : null}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-8 bg-card rounded-2xl">
-          <div className="text-4xl mb-2">👨‍👩‍👧</div>
-          <p className="text-muted-foreground mb-3">
-            {language === 'ru' ? 'Добавьте первого ребёнка' : 'Add your first child'}
-          </p>
-          <AddChildDialog />
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <section className="grid grid-cols-2 gap-3">
-        <TaskChooserDialog
-          trigger={
-            <button className="bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl p-4 text-center transition-colors w-full">
-              <span className="text-2xl block mb-1">➕</span>
-              <span className="text-sm font-semibold">{t('add_task')}</span>
-            </button>
-          }
-        />
-        <AddChildDialog
-          trigger={
-            <button className="bg-secondary/10 hover:bg-secondary/20 text-secondary rounded-2xl p-4 text-center transition-colors w-full">
-              <span className="text-2xl block mb-1">👶</span>
-              <span className="text-sm font-semibold">{t('add_child')}</span>
-            </button>
-          }
-        />
-      </section>
 
       {/* Weekly Progress Section (from Reports) */}
       <div className="space-y-4">
@@ -637,6 +498,26 @@ export const ParentDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Action Buttons - Bottom */}
+      <section className="flex justify-center gap-4 pt-4">
+        <TaskChooserDialog
+          trigger={
+            <button className="bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl px-6 py-4 text-center transition-colors">
+              <span className="text-2xl block mb-1">➕</span>
+              <span className="text-sm font-semibold">{t('add_task')}</span>
+            </button>
+          }
+        />
+        <AddChildDialog
+          trigger={
+            <button className="bg-secondary/10 hover:bg-secondary/20 text-secondary rounded-2xl px-6 py-4 text-center transition-colors">
+              <span className="text-2xl block mb-1">👶</span>
+              <span className="text-sm font-semibold">{t('add_child')}</span>
+            </button>
+          }
+        />
+      </section>
     </div>
     </>
   );

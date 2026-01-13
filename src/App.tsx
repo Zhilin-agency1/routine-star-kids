@@ -22,7 +22,6 @@ import { ChildrenPage } from "./pages/parent/ChildrenPage";
 import { TasksPage } from "./pages/parent/TasksPage";
 import { ParentStorePage } from "./pages/parent/ParentStorePage";
 import { ParentJobBoardPage } from "./pages/parent/ParentJobBoardPage";
-import { ReportsPage } from "./pages/parent/ReportsPage";
 import { TemplatesPage } from "./pages/parent/TemplatesPage";
 import NotFound from "./pages/NotFound";
 
@@ -175,18 +174,6 @@ const App = () => (
                       <FamilySetup>
                         <Layout>
                           <ParentJobBoardPage />
-                        </Layout>
-                      </FamilySetup>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/parent/reports"
-                  element={
-                    <ProtectedRoute>
-                      <FamilySetup>
-                        <Layout>
-                          <ReportsPage />
                         </Layout>
                       </FamilySetup>
                     </ProtectedRoute>

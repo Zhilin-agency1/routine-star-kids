@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -9,10 +9,14 @@ import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+type ViewMode = 'day' | 'week' | 'month';
+
 interface RoutineBlocksProps {
   selectedDate: Date;
   selectedChildId: string | null;
+  viewMode?: ViewMode;
   className?: string;
+  onEditRoutine?: (templateId: string) => void;
 }
 
 interface RoutineItem {
@@ -29,14 +33,28 @@ interface RoutineItem {
 export const RoutineBlocks = ({
   selectedDate,
   selectedChildId,
+  viewMode = 'day',
   className,
+  onEditRoutine,
 }: RoutineBlocksProps) => {
   const { language, t } = useLanguage();
   const { templates } = useTasks();
   const { children } = useChildren();
   
-  const [morningExpanded, setMorningExpanded] = useState(false);
-  const [eveningExpanded, setEveningExpanded] = useState(false);
+  // In day view: start expanded, in week/month: start collapsed
+  const [morningExpanded, setMorningExpanded] = useState(viewMode === 'day');
+  const [eveningExpanded, setEveningExpanded] = useState(viewMode === 'day');
+  
+  // Reset expansion state when viewMode changes
+  useEffect(() => {
+    if (viewMode === 'day') {
+      setMorningExpanded(true);
+      setEveningExpanded(true);
+    } else {
+      setMorningExpanded(false);
+      setEveningExpanded(false);
+    }
+  }, [viewMode]);
 
   // Get routines for the selected date and child
   const routines = useMemo(() => {
@@ -108,14 +126,17 @@ export const RoutineBlocks = ({
     [routines]
   );
 
-  const PREVIEW_COUNT = 3;
+  const PREVIEW_COUNT = viewMode === 'day' ? 10 : 3;
+  const isCompactView = viewMode !== 'day';
 
   const renderRoutineItem = (item: RoutineItem, compact = false) => (
-    <div 
+    <button 
       key={item.id}
+      onClick={() => onEditRoutine?.(item.id)}
       className={cn(
-        "flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border",
-        compact && "py-1.5"
+        "w-full flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border text-left transition-colors",
+        compact && "py-1.5",
+        onEditRoutine && "hover:bg-muted cursor-pointer"
       )}
     >
       <span className="text-lg shrink-0">{item.icon}</span>
@@ -137,7 +158,7 @@ export const RoutineBlocks = ({
         </div>
       </div>
       <CoinBadge amount={item.reward} size="xs" />
-    </div>
+    </button>
   );
 
   const renderBlock = (
@@ -150,23 +171,34 @@ export const RoutineBlocks = ({
   ) => {
     if (items.length === 0) return null;
     
-    const displayItems = expanded ? items : items.slice(0, PREVIEW_COUNT);
-    const hasMore = items.length > PREVIEW_COUNT;
+    // Day view: show all items, allow "show more" if many
+    // Week/Month view: collapsed by default, expand to show all
+    const isDayView = viewMode === 'day';
+    const shouldShowItems = isDayView || expanded;
+    const displayItems = shouldShowItems 
+      ? (isDayView && !expanded ? items.slice(0, PREVIEW_COUNT) : items) 
+      : [];
+    const hasExpandToggle = isDayView 
+      ? items.length > PREVIEW_COUNT 
+      : items.length > 0;
     
     return (
       <div className={cn(
         "flex-1 min-w-[280px] rounded-xl border-2 p-3",
         colorClass
       )}>
-        <div className="flex items-center justify-between mb-2">
+        <div className={cn(
+          "flex items-center justify-between",
+          shouldShowItems && displayItems.length > 0 && "mb-2"
+        )}>
           <div className="flex items-center gap-2">
             {icon}
             <h3 className="font-bold text-sm">{title}</h3>
             <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-              {items.length}
+              {items.length} {isCompactView && (language === 'ru' ? 'рутин' : 'routines')}
             </span>
           </div>
-          {hasMore && (
+          {hasExpandToggle && (
             <Button
               variant="ghost"
               size="sm"
@@ -175,8 +207,13 @@ export const RoutineBlocks = ({
             >
               {expanded ? (
                 <>
-                  {language === 'ru' ? 'Скрыть' : 'Hide'}
+                  {language === 'ru' ? 'Скрыть' : 'Collapse'}
                   <ChevronUp className="w-3 h-3" />
+                </>
+              ) : isCompactView ? (
+                <>
+                  {language === 'ru' ? 'Развернуть' : 'Expand'}
+                  <ChevronDown className="w-3 h-3" />
                 </>
               ) : (
                 <>
@@ -188,9 +225,11 @@ export const RoutineBlocks = ({
           )}
         </div>
         
-        <div className="space-y-1.5">
-          {displayItems.map(item => renderRoutineItem(item, !expanded))}
-        </div>
+        {shouldShowItems && displayItems.length > 0 && (
+          <div className="space-y-1.5">
+            {displayItems.map(item => renderRoutineItem(item, isCompactView && !expanded))}
+          </div>
+        )}
       </div>
     );
   };

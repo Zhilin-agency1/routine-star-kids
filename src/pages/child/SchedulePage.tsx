@@ -5,11 +5,14 @@ import { useApp } from '@/contexts/AppContext';
 import { JobberCalendar } from '@/components/JobberCalendar';
 import { RoutineBlocks } from '@/components/RoutineBlocks';
 
+type ViewMode = 'day' | 'week' | 'month';
+
 export const SchedulePage = () => {
   const { t } = useLanguage();
   const { currentChild } = useApp();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-80px)] animate-fade-in">
@@ -28,6 +31,7 @@ export const SchedulePage = () => {
       <RoutineBlocks
         selectedDate={selectedDate}
         selectedChildId={currentChild?.id || null}
+        viewMode={viewMode}
         className="mb-4"
       />
 
@@ -38,6 +42,8 @@ export const SchedulePage = () => {
           onDateChange={setSelectedDate}
           selectedChildId={currentChild?.id || null}
           onChildChange={() => {}} // Child can't change filter
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
           isReadOnly // Children can't add/edit
           className="h-full"
         />

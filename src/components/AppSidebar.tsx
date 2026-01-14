@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Calendar, Briefcase, Trophy, ShoppingBag, ListTodo, Users, LogOut, LogIn, ChevronDown, Check, Pencil, LayoutTemplate } from 'lucide-react';
+import { Home, Calendar, Briefcase, Trophy, ShoppingBag, ListTodo, Users, LogOut, LogIn, ChevronDown, Check, Pencil, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -42,7 +42,7 @@ interface NavItem {
 const familyNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Calendar, labelKey: 'nav_schedule', path: '/schedule' },
-  { icon: Briefcase, labelKey: 'nav_exchange', path: '/exchange' },
+  { icon: Briefcase, labelKey: 'nav_jobs', path: '/exchange' },
 ];
 
 // Personal child navigation (when viewMode is 'personal')
@@ -50,29 +50,27 @@ const personalNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Trophy, labelKey: 'nav_rewards', path: '/rewards' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/store' },
-  { icon: Briefcase, labelKey: 'nav_tasks', path: '/jobs' },
+  { icon: Briefcase, labelKey: 'nav_jobs', path: '/jobs' },
 ];
 
-// Parent navigation
+// Parent navigation - Updated: removed Plans, added Profile
 const parentNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_dashboard', path: '/parent' },
   { icon: ListTodo, labelKey: 'nav_tasks', path: '/parent/tasks' },
-  { icon: LayoutTemplate, labelKey: 'nav_templates', path: '/parent/templates' },
-  { icon: Briefcase, labelKey: 'nav_job_board', path: '/parent/jobs' },
+  { icon: Briefcase, labelKey: 'nav_jobs', path: '/parent/jobs' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/parent/store' },
+  { icon: User, labelKey: 'nav_profile', path: '/parent/profile' },
 ];
 
 const translations: Record<string, { en: string; ru: string }> = {
   nav_today: { en: 'Today', ru: 'Сегодня' },
-  nav_schedule: { en: 'Plan', ru: 'План' },
-  nav_templates: { en: 'Plans', ru: 'Планы' },
-  nav_exchange: { en: 'Tasks', ru: 'Задания' },
+  nav_schedule: { en: 'Schedule', ru: 'Расписание' },
   nav_rewards: { en: 'Rewards', ru: 'Награды' },
   nav_store: { en: 'Store', ru: 'Магазин' },
-  nav_job_board: { en: 'Tasks', ru: 'Задания' },
+  nav_jobs: { en: 'Jobs', ru: 'Работы' },
   nav_tasks: { en: 'Tasks', ru: 'Задания' },
   nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
-  nav_overview: { en: 'Overview', ru: 'Обзор' },
+  nav_profile: { en: 'Profile', ru: 'Профиль' },
 };
 
 export const AppSidebar = () => {

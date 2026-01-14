@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Plus, FileText } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { TaskChooserDialog } from '@/components/TaskChooserDialog';
+import { AddTaskDialog } from '@/components/AddTaskDialog';
+import { AddFromTemplateDialog } from '@/components/AddFromTemplateDialog';
 import { JobberCalendar } from '@/components/JobberCalendar';
 import { RoutineBlocks } from '@/components/RoutineBlocks';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
@@ -45,8 +46,17 @@ export const TasksPage = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Add Task */}
-          <TaskChooserDialog 
+          {/* From Template */}
+          <AddFromTemplateDialog
+            trigger={
+              <Button size="sm" variant="outline" className="rounded-xl gap-1">
+                <FileText className="w-4 h-4" />
+                {language === 'ru' ? 'Из шаблона' : 'Template'}
+              </Button>
+            }
+          />
+          {/* Add Task - opens unified modal */}
+          <AddTaskDialog 
             trigger={
               <Button size="sm" className="rounded-xl gap-1">
                 <Plus className="w-4 h-4" />

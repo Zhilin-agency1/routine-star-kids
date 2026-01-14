@@ -256,17 +256,17 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ClipboardList className="w-5 h-5" />
-            Новая задача
+            {language === 'ru' ? 'Новая задача' : 'New Task'}
           </DialogTitle>
           <DialogDescription>
-            Создайте задание для ребёнка
+            {language === 'ru' ? 'Создайте задание для ребёнка' : 'Create a task for your child'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           {/* Task Category */}
           <div className="space-y-2">
-            <Label>Категория</Label>
+            <Label>{language === 'ru' ? 'Категория' : 'Category'}</Label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -279,7 +279,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                 )}
               >
                 <RotateCcw className="w-4 h-4 inline mr-1" />
-                Рутина
+                {language === 'ru' ? 'Рутина' : 'Routine'}
               </button>
               <button
                 type="button"
@@ -292,13 +292,13 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                 )}
               >
                 <Calendar className="w-4 h-4 inline mr-1" />
-                Занятие
+                {language === 'ru' ? 'Занятие' : 'Activity'}
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
               {taskCategory === 'routine' 
-                ? 'Рутины отображаются только в списке задач' 
-                : 'Занятия отображаются в списке задач и в расписании'}
+                ? (language === 'ru' ? 'Рутины отображаются только в списке задач' : 'Routines appear only in task list')
+                : (language === 'ru' ? 'Занятия отображаются в списке задач и в расписании' : 'Activities appear in task list and schedule')}
             </p>
           </div>
 

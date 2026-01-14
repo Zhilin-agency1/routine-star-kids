@@ -7,13 +7,29 @@ import { AddFromTemplateDialog } from '@/components/AddFromTemplateDialog';
 import { JobberCalendar } from '@/components/JobberCalendar';
 import { RoutineBlocks } from '@/components/RoutineBlocks';
 import { MyPlansSheet } from '@/components/MyPlansSheet';
+import { EditTaskDialog } from '@/components/EditTaskDialog';
+import { useTasks } from '@/hooks/useTasks';
+
+type ViewMode = 'day' | 'week' | 'month';
 
 export const TasksPage = () => {
   const { t, language } = useLanguage();
+  const { templates } = useTasks();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [myPlansOpen, setMyPlansOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+
+  // Find the template being edited
+  const editingTemplate = editingTemplateId 
+    ? templates.find(t => t.id === editingTemplateId) 
+    : null;
+
+  const handleEditRoutine = (templateId: string) => {
+    setEditingTemplateId(templateId);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-80px)] animate-fade-in">
@@ -64,6 +80,8 @@ export const TasksPage = () => {
       <RoutineBlocks
         selectedDate={selectedDate}
         selectedChildId={selectedChildId}
+        viewMode={viewMode}
+        onEditRoutine={handleEditRoutine}
         className="mb-4"
       />
 
@@ -74,6 +92,8 @@ export const TasksPage = () => {
           onDateChange={setSelectedDate}
           selectedChildId={selectedChildId}
           onChildChange={setSelectedChildId}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
           className="h-full"
         />
       </div>
@@ -83,6 +103,15 @@ export const TasksPage = () => {
         open={myPlansOpen} 
         onOpenChange={setMyPlansOpen} 
       />
+
+      {/* Edit Routine/Task Dialog */}
+      {editingTemplate && (
+        <EditTaskDialog
+          template={editingTemplate}
+          open={!!editingTemplateId}
+          onOpenChange={(open) => !open && setEditingTemplateId(null)}
+        />
+      )}
     </div>
   );
 };

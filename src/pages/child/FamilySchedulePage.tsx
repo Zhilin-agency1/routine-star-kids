@@ -4,11 +4,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { JobberCalendar } from '@/components/JobberCalendar';
 import { RoutineBlocks } from '@/components/RoutineBlocks';
 
+type ViewMode = 'day' | 'week' | 'month';
+
 export const FamilySchedulePage = () => {
   const { t } = useLanguage();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-80px)] animate-fade-in px-4 md:px-6">
@@ -31,6 +34,7 @@ export const FamilySchedulePage = () => {
       <RoutineBlocks
         selectedDate={selectedDate}
         selectedChildId={selectedChildId}
+        viewMode={viewMode}
         className="mb-4"
       />
 
@@ -41,6 +45,8 @@ export const FamilySchedulePage = () => {
           onDateChange={setSelectedDate}
           selectedChildId={selectedChildId}
           onChildChange={setSelectedChildId}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
           isReadOnly // Family view is read-only (parent uses Tasks page to edit)
           className="h-full"
         />

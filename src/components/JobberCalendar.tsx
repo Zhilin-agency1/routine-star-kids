@@ -88,6 +88,8 @@ interface JobberCalendarProps {
   onDateChange: (date: Date) => void;
   selectedChildId: string | null;
   onChildChange: (childId: string | null) => void;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
   isReadOnly?: boolean;
   className?: string;
 }
@@ -97,6 +99,8 @@ export const JobberCalendar = ({
   onDateChange,
   selectedChildId,
   onChildChange,
+  viewMode: externalViewMode,
+  onViewModeChange,
   isReadOnly = false,
   className,
 }: JobberCalendarProps) => {
@@ -105,7 +109,16 @@ export const JobberCalendar = ({
   const { activities } = useSchedule();
   const { templates } = useTasks();
   
-  const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [internalViewMode, setInternalViewMode] = useState<ViewMode>('week');
+  const viewMode = externalViewMode ?? internalViewMode;
+  const setViewMode = (mode: ViewMode) => {
+    if (onViewModeChange) {
+      onViewModeChange(mode);
+    } else {
+      setInternalViewMode(mode);
+    }
+  };
+  
   const [editingActivity, setEditingActivity] = useState<ActivitySchedule | null>(null);
   const [addActivityOpen, setAddActivityOpen] = useState(false);
   const [addActivityDate, setAddActivityDate] = useState<Date | null>(null);

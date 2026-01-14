@@ -217,6 +217,7 @@ export type Database = {
       }
       families: {
         Row: {
+          allow_parent_activities: boolean
           created_at: string
           currency_name: string | null
           default_language: string | null
@@ -227,6 +228,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allow_parent_activities?: boolean
           created_at?: string
           currency_name?: string | null
           default_language?: string | null
@@ -237,6 +239,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allow_parent_activities?: boolean
           created_at?: string
           currency_name?: string | null
           default_language?: string | null
@@ -247,6 +250,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      family_members: {
+        Row: {
+          created_at: string
+          family_id: string
+          id: string
+          invite_email: string | null
+          invite_status: string
+          invite_token: string | null
+          invited_by: string | null
+          permission_level: string
+          role_label: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          family_id: string
+          id?: string
+          invite_email?: string | null
+          invite_status?: string
+          invite_token?: string | null
+          invited_by?: string | null
+          permission_level?: string
+          role_label?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          family_id?: string
+          id?: string
+          invite_email?: string | null
+          invite_status?: string
+          invite_token?: string | null
+          invited_by?: string | null
+          permission_level?: string
+          role_label?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_board_items: {
         Row: {

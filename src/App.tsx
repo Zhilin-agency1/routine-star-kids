@@ -23,6 +23,7 @@ import { TasksPage } from "./pages/parent/TasksPage";
 import { ParentStorePage } from "./pages/parent/ParentStorePage";
 import { ParentJobBoardPage } from "./pages/parent/ParentJobBoardPage";
 import { TemplatesPage } from "./pages/parent/TemplatesPage";
+import { ProfilePage } from "./pages/parent/ProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -187,6 +188,20 @@ const App = () => (
                         <Layout>
                           <ParentOnlyRoute>
                             <TemplatesPage />
+                          </ParentOnlyRoute>
+                        </Layout>
+                      </FamilySetup>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/parent/profile"
+                  element={
+                    <ProtectedRoute>
+                      <FamilySetup>
+                        <Layout>
+                          <ParentOnlyRoute>
+                            <ProfilePage />
                           </ParentOnlyRoute>
                         </Layout>
                       </FamilySetup>

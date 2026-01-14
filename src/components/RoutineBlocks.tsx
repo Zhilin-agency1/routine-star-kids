@@ -47,6 +47,7 @@ interface RoutineItem {
   childName?: string;
   childAvatar?: string;
   reward: number;
+  routineType?: 'morning' | 'evening' | null;
 }
 
 export const RoutineBlocks = ({
@@ -109,7 +110,7 @@ export const RoutineBlocks = ({
       }
     });
     
-    // Map to routine items with child info
+    // Map to routine items with child info and routine_type
     return activeRoutines.map(template => {
       const child = template.child_id ? children.find(c => c.id === template.child_id) : null;
       return {
@@ -121,14 +122,17 @@ export const RoutineBlocks = ({
         childName: child?.name,
         childAvatar: child?.avatar_url || undefined,
         reward: template.reward_amount,
+        routineType: (template as any).routine_type as 'morning' | 'evening' | null,
       };
     });
   }, [templates, children, selectedDate, selectedChildId, language]);
 
-  // Split into morning (before 12:00) and evening (12:00 and after)
+  // Split into morning and evening using routine_type field (fall back to time-based logic)
   const morningRoutines = useMemo(() => 
     routines
       .filter(r => {
+        // Use routine_type if available, otherwise fall back to time-based logic
+        if (r.routineType) return r.routineType === 'morning';
         const hour = parseInt(r.time.split(':')[0], 10);
         return hour < 12;
       })
@@ -139,6 +143,8 @@ export const RoutineBlocks = ({
   const eveningRoutines = useMemo(() => 
     routines
       .filter(r => {
+        // Use routine_type if available, otherwise fall back to time-based logic
+        if (r.routineType) return r.routineType === 'evening';
         const hour = parseInt(r.time.split(':')[0], 10);
         return hour >= 12;
       })

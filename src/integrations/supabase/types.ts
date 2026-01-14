@@ -780,6 +780,7 @@ export type Database = {
           recurring_rule: string | null
           recurring_time: string | null
           reward_amount: number
+          routine_type: string | null
           start_date: string
           status: string
           task_category: string
@@ -803,6 +804,7 @@ export type Database = {
           recurring_rule?: string | null
           recurring_time?: string | null
           reward_amount?: number
+          routine_type?: string | null
           start_date?: string
           status?: string
           task_category?: string
@@ -826,6 +828,7 @@ export type Database = {
           recurring_rule?: string | null
           recurring_time?: string | null
           reward_amount?: number
+          routine_type?: string | null
           start_date?: string
           status?: string
           task_category?: string

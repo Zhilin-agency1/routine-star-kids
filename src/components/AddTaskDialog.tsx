@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye, GripVertical } from 'lucide-react';
+import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye, GripVertical, Sun, Moon } from 'lucide-react';
 import { SortableStepList, type SortableStep } from './SortableStepList';
 import { useTasks } from '@/hooks/useTasks';
 import { useTaskSteps } from '@/hooks/useTaskSteps';
@@ -98,6 +98,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [taskType, setTaskType] = useState<'recurring' | 'one_time'>('recurring');
   const [taskCategory, setTaskCategory] = useState<'routine' | 'activity'>(initialCategory || 'routine');
+  const [routineType, setRoutineType] = useState<'morning' | 'evening'>('morning');
   const [hasTime, setHasTime] = useState(true);
   const [hasEndTime, setHasEndTime] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date());
@@ -123,6 +124,60 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
   const { children } = useChildren();
 
   const locale = language === 'ru' ? ru : undefined;
+
+  // Translations
+  const t = {
+    newTask: language === 'ru' ? 'Новая задача' : 'New Task',
+    createTaskDesc: language === 'ru' ? 'Создайте задание для ребёнка' : 'Create a task for your child',
+    category: language === 'ru' ? 'Категория' : 'Category',
+    routine: language === 'ru' ? 'Рутина' : 'Routine',
+    activity: language === 'ru' ? 'Занятие' : 'Activity',
+    routineDesc: language === 'ru' ? 'Рутины отображаются только в списке задач' : 'Routines appear only in task list',
+    activityDesc: language === 'ru' ? 'Занятия отображаются в списке задач и в расписании' : 'Activities appear in task list and schedule',
+    routineTypeLabel: language === 'ru' ? 'Тип рутины' : 'Routine Type',
+    morning: language === 'ru' ? 'Утренняя' : 'Morning',
+    evening: language === 'ru' ? 'Вечерняя' : 'Evening',
+    recurrence: language === 'ru' ? 'Повторение' : 'Recurrence',
+    recurring: language === 'ru' ? 'Повторяющаяся' : 'Recurring',
+    oneTime: language === 'ru' ? 'Разовая' : 'One-time',
+    icon: language === 'ru' ? 'Иконка' : 'Icon',
+    taskName: language === 'ru' ? 'Название задачи *' : 'Task name *',
+    taskNamePlaceholder: language === 'ru' ? 'Например: Заправить кровать' : 'e.g., Make the bed',
+    description: language === 'ru' ? 'Описание' : 'Description',
+    descriptionPlaceholder: language === 'ru' ? 'Подробности задания...' : 'Task details...',
+    forWhom: language === 'ru' ? 'Для кого' : 'For whom',
+    allChildren: language === 'ru' ? 'Для всех детей' : 'All children',
+    selectChild: language === 'ru' ? 'Выберите ребёнка' : 'Select child',
+    dateRange: language === 'ru' ? 'Период действия' : 'Date range',
+    startDate: language === 'ru' ? 'Дата начала' : 'Start date',
+    endDateLabel: language === 'ru' ? 'Дата окончания' : 'End date',
+    selectDate: language === 'ru' ? 'Выберите дату' : 'Select date',
+    indefinitely: language === 'ru' ? 'Бессрочно' : 'Indefinitely',
+    executionDate: language === 'ru' ? 'Дата выполнения' : 'Execution date',
+    time: language === 'ru' ? 'Время' : 'Time',
+    specifyTime: language === 'ru' ? 'Указать время' : 'Specify time',
+    startTime: language === 'ru' ? 'Начало' : 'Start',
+    endTimeLabel: language === 'ru' ? 'Окончание' : 'End',
+    noTimeBinding: language === 'ru' ? 'Без привязки ко времени' : 'No time binding',
+    interval: language === 'ru' ? 'Интервал' : 'Interval',
+    reward: language === 'ru' ? 'Награда 💰' : 'Reward 💰',
+    steps: language === 'ru' ? 'Шаги (чек-лист)' : 'Steps (checklist)',
+    stepPlaceholder: language === 'ru' ? 'Название шага...' : 'Step title...',
+    dueDate: language === 'ru' ? 'Срок' : 'Due',
+    min: language === 'ru' ? 'мин' : 'min',
+    hidden: language === 'ru' ? 'Скрыт' : 'Hidden',
+    visible: language === 'ru' ? 'Виден' : 'Visible',
+    addStep: language === 'ru' ? 'Добавить шаг' : 'Add step',
+    stepsHint: language === 'ru' ? 'Шаги помогают разбить задачу на части. Бонусы могут быть скрыты до завершения!' : 'Steps help break down tasks. Bonuses can be hidden until completion!',
+    daysOfWeek: language === 'ru' ? 'Дни недели' : 'Days of week',
+    selectAtLeastOneDay: language === 'ru' ? 'Выберите хотя бы один день' : 'Select at least one day',
+    cancel: language === 'ru' ? 'Отмена' : 'Cancel',
+    create: language === 'ru' ? 'Создать' : 'Create',
+    taskCreated: language === 'ru' ? 'Задача создана!' : 'Task created!',
+    errorCreating: language === 'ru' ? 'Ошибка при создании задачи' : 'Error creating task',
+    endTimeError: language === 'ru' ? 'Время окончания должно быть после времени начала' : 'End time must be after start time',
+    selectDayError: language === 'ru' ? 'Выберите хотя бы один день недели' : 'Select at least one day of the week',
+  };
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -170,14 +225,14 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
 
   const handleSubmit = async (data: TaskFormData) => {
     if (taskType === 'recurring' && selectedDays.length === 0) {
-      toast.error('Выберите хотя бы один день недели');
+      toast.error(t.selectDayError);
       return;
     }
 
-    // Validate time interval
-    if (hasTime && hasEndTime && data.startTime && data.endTime) {
+    // Validate time interval (only for activities with time)
+    if (taskCategory === 'activity' && hasTime && hasEndTime && data.startTime && data.endTime) {
       if (data.endTime <= data.startTime) {
-        toast.error(language === 'ru' ? 'Время окончания должно быть после времени начала' : 'End time must be after start time');
+        toast.error(t.endTimeError);
         return;
       }
     }
@@ -193,9 +248,11 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
         reward_amount: data.rewardAmount,
         task_type: taskType,
         task_category: taskCategory,
+        routine_type: taskCategory === 'routine' ? routineType : null,
         recurring_days: taskType === 'recurring' ? selectedDays : null,
-        recurring_time: hasTime && data.startTime ? data.startTime : null,
-        end_time: hasTime && hasEndTime && data.endTime ? data.endTime : null,
+        // Activities have time, routines don't
+        recurring_time: taskCategory === 'activity' && hasTime && data.startTime ? data.startTime : null,
+        end_time: taskCategory === 'activity' && hasTime && hasEndTime && data.endTime ? data.endTime : null,
         child_id: data.childId || null,
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
@@ -218,12 +275,13 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
         );
       }
       
-      toast.success('Задача создана!');
+      toast.success(t.taskCreated);
       setOpen(false);
       form.reset();
       setSelectedIcon(taskIcons[0]);
       setSelectedDays([1, 2, 3, 4, 5]);
       setTaskCategory('routine');
+      setRoutineType('morning');
       setHasTime(true);
       setHasEndTime(false);
       setStartDate(new Date());
@@ -232,7 +290,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
       setSteps([]);
       setNewStepTitle('');
     } catch (error: any) {
-      toast.error(error.message || 'Ошибка при создании задачи');
+      toast.error(error.message || t.errorCreating);
     } finally {
       setIsSubmitting(false);
     }
@@ -256,17 +314,17 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ClipboardList className="w-5 h-5" />
-            {language === 'ru' ? 'Новая задача' : 'New Task'}
+            {t.newTask}
           </DialogTitle>
           <DialogDescription>
-            {language === 'ru' ? 'Создайте задание для ребёнка' : 'Create a task for your child'}
+            {t.createTaskDesc}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           {/* Task Category */}
           <div className="space-y-2">
-            <Label>{language === 'ru' ? 'Категория' : 'Category'}</Label>
+            <Label>{t.category}</Label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -279,7 +337,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                 )}
               >
                 <RotateCcw className="w-4 h-4 inline mr-1" />
-                {language === 'ru' ? 'Рутина' : 'Routine'}
+                {t.routine}
               </button>
               <button
                 type="button"
@@ -292,19 +350,52 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                 )}
               >
                 <Calendar className="w-4 h-4 inline mr-1" />
-                {language === 'ru' ? 'Занятие' : 'Activity'}
+                {t.activity}
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              {taskCategory === 'routine' 
-                ? (language === 'ru' ? 'Рутины отображаются только в списке задач' : 'Routines appear only in task list')
-                : (language === 'ru' ? 'Занятия отображаются в списке задач и в расписании' : 'Activities appear in task list and schedule')}
+              {taskCategory === 'routine' ? t.routineDesc : t.activityDesc}
             </p>
           </div>
 
+          {/* Routine Type (Morning/Evening) - only for routines */}
+          {taskCategory === 'routine' && (
+            <div className="space-y-2">
+              <Label>{t.routineTypeLabel}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRoutineType('morning')}
+                  className={cn(
+                    "p-3 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2",
+                    routineType === 'morning'
+                      ? "border-amber-400 bg-amber-50 text-amber-700"
+                      : "border-border hover:border-amber-300"
+                  )}
+                >
+                  <Sun className="w-4 h-4" />
+                  {t.morning}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoutineType('evening')}
+                  className={cn(
+                    "p-3 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2",
+                    routineType === 'evening'
+                      ? "border-indigo-400 bg-indigo-50 text-indigo-700"
+                      : "border-border hover:border-indigo-300"
+                  )}
+                >
+                  <Moon className="w-4 h-4" />
+                  {t.evening}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Task Type */}
           <div className="space-y-2">
-            <Label>Повторение</Label>
+            <Label>{t.recurrence}</Label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -316,7 +407,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                     : "border-border hover:border-primary/50"
                 )}
               >
-                🔄 Повторяющаяся
+                🔄 {t.recurring}
               </button>
               <button
                 type="button"
@@ -328,14 +419,14 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                     : "border-border hover:border-primary/50"
                 )}
               >
-                📌 Разовая
+                📌 {t.oneTime}
               </button>
             </div>
           </div>
 
           {/* Icon Selection */}
           <div className="space-y-2">
-            <Label>Иконка</Label>
+            <Label>{t.icon}</Label>
             <div className="grid grid-cols-8 gap-2">
               {taskIcons.map((icon) => (
                 <button
@@ -357,10 +448,10 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
 
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="task-title">Название задачи *</Label>
+            <Label htmlFor="task-title">{t.taskName}</Label>
             <Input
               id="task-title"
-              placeholder="Например: Заправить кровать"
+              placeholder={t.taskNamePlaceholder}
               className="rounded-xl"
               {...form.register('titleRu')}
             />
@@ -371,10 +462,10 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="task-description">Описание</Label>
+            <Label htmlFor="task-description">{t.description}</Label>
             <Textarea
               id="task-description"
-              placeholder="Подробности задания..."
+              placeholder={t.descriptionPlaceholder}
               className="rounded-xl resize-none"
               rows={2}
               {...form.register('descriptionRu')}
@@ -383,16 +474,16 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
 
           {/* Child Selection */}
           <div className="space-y-2">
-            <Label>Для кого</Label>
+            <Label>{t.forWhom}</Label>
             <Select
               value={form.watch('childId') || 'all'}
               onValueChange={(value) => form.setValue('childId', value === 'all' ? '' : value)}
             >
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Выберите ребёнка" />
+                <SelectValue placeholder={t.selectChild} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">👨‍👩‍👧 Для всех детей</SelectItem>
+                <SelectItem value="all">👨‍👩‍👧 {t.allChildren}</SelectItem>
                 {children.map((child) => (
                   <SelectItem key={child.id} value={child.id}>
                     {child.avatar_url || '🦁'} {child.name}
@@ -407,12 +498,12 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
             <div className="space-y-3">
               <Label className="flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
-                Период действия
+                {t.dateRange}
               </Label>
               <div className="grid grid-cols-2 gap-3">
                 {/* Start Date */}
                 <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Дата начала</span>
+                  <span className="text-xs text-muted-foreground">{t.startDate}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -423,7 +514,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, 'dd.MM.yyyy', { locale }) : 'Выберите дату'}
+                        {startDate ? format(startDate, 'dd.MM.yyyy', { locale }) : t.selectDate}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -440,7 +531,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
 
                 {/* End Date */}
                 <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Дата окончания</span>
+                  <span className="text-xs text-muted-foreground">{t.endDateLabel}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -451,7 +542,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {endDate ? format(endDate, 'dd.MM.yyyy', { locale }) : 'Бессрочно'}
+                        {endDate ? format(endDate, 'dd.MM.yyyy', { locale }) : t.indefinitely}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -472,7 +563,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
-                Дата выполнения
+                {t.executionDate}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -484,7 +575,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {oneTimeDate ? format(oneTimeDate, 'dd MMMM yyyy', { locale }) : 'Выберите дату'}
+                    {oneTimeDate ? format(oneTimeDate, 'dd MMMM yyyy', { locale }) : t.selectDate}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -500,75 +591,77 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
             </div>
           )}
 
-          {/* Time Interval */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Время
-              </Label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Указать время</span>
-                <Switch
-                  checked={hasTime}
-                  onCheckedChange={setHasTime}
-                />
+          {/* Time Interval - only for activities */}
+          {taskCategory === 'activity' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  {t.time}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{t.specifyTime}</span>
+                  <Switch
+                    checked={hasTime}
+                    onCheckedChange={setHasTime}
+                  />
+                </div>
               </div>
-            </div>
-            
-            {hasTime && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Start Time */}
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Начало</span>
-                    <Input
-                      type="time"
-                      className="rounded-xl"
-                      {...form.register('startTime')}
-                    />
-                  </div>
-                  
-                  {/* End Time */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Окончание</span>
-                      <Switch
-                        checked={hasEndTime}
-                        onCheckedChange={setHasEndTime}
-                        className="scale-75"
-                      />
-                    </div>
-                    {hasEndTime ? (
+              
+              {hasTime && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Start Time */}
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground">{t.startTime}</span>
                       <Input
                         type="time"
                         className="rounded-xl"
-                        {...form.register('endTime')}
+                        {...form.register('startTime')}
                       />
-                    ) : (
-                      <div className="h-10 flex items-center text-sm text-muted-foreground">
-                        —
+                    </div>
+                    
+                    {/* End Time */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">{t.endTimeLabel}</span>
+                        <Switch
+                          checked={hasEndTime}
+                          onCheckedChange={setHasEndTime}
+                          className="scale-75"
+                        />
                       </div>
-                    )}
+                      {hasEndTime ? (
+                        <Input
+                          type="time"
+                          className="rounded-xl"
+                          {...form.register('endTime')}
+                        />
+                      ) : (
+                        <div className="h-10 flex items-center text-sm text-muted-foreground">
+                          —
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  
+                  {hasEndTime && form.watch('startTime') && form.watch('endTime') && (
+                    <p className="text-xs text-muted-foreground">
+                      ⏱️ {t.interval}: {form.watch('startTime')} — {form.watch('endTime')}
+                    </p>
+                  )}
                 </div>
-                
-                {hasEndTime && form.watch('startTime') && form.watch('endTime') && (
-                  <p className="text-xs text-muted-foreground">
-                    ⏱️ Интервал: {form.watch('startTime')} — {form.watch('endTime')}
-                  </p>
-                )}
-              </div>
-            )}
-            
-            {!hasTime && (
-              <p className="text-sm text-muted-foreground py-1">Без привязки ко времени</p>
-            )}
-          </div>
+              )}
+              
+              {!hasTime && (
+                <p className="text-sm text-muted-foreground py-1">{t.noTimeBinding}</p>
+              )}
+            </div>
+          )}
 
           {/* Reward */}
           <div className="space-y-2">
-            <Label htmlFor="task-reward">Награда 💰</Label>
+            <Label htmlFor="task-reward">{t.reward}</Label>
             <Input
               id="task-reward"
               type="number"
@@ -586,7 +679,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
               <ListChecks className="w-4 h-4" />
-              {language === 'ru' ? 'Шаги (чек-лист)' : 'Steps (checklist)'}
+              {t.steps}
             </Label>
             
             <SortableStepList
@@ -614,7 +707,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
             <div className="space-y-2 border rounded-xl p-3 bg-muted/30">
               <div className="flex gap-2">
                 <Input
-                  placeholder={language === 'ru' ? 'Название шага...' : 'Step title...'}
+                  placeholder={t.stepPlaceholder}
                   value={newStepTitle}
                   onChange={(e) => setNewStepTitle(e.target.value)}
                   className="rounded-xl flex-1"
@@ -642,7 +735,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                       )}
                     >
                       <CalendarIcon className="mr-1 h-3 w-3" />
-                      {newStepDueDate ? format(newStepDueDate, 'dd.MM', { locale }) : (language === 'ru' ? 'Срок' : 'Due')}
+                      {newStepDueDate ? format(newStepDueDate, 'dd.MM', { locale }) : t.dueDate}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -665,7 +758,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                     max={180}
                     value={newStepDuration || ''}
                     onChange={(e) => setNewStepDuration(parseInt(e.target.value) || undefined)}
-                    placeholder={language === 'ru' ? 'мин' : 'min'}
+                    placeholder={t.min}
                     className="rounded-lg h-8 text-xs pl-6 pr-2"
                   />
                 </div>
@@ -696,12 +789,12 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                   {newStepBonusHidden ? (
                     <>
                       <EyeOff className="w-3 h-3 mr-1" />
-                      {language === 'ru' ? 'Скрыт' : 'Hidden'}
+                      {t.hidden}
                     </>
                   ) : (
                     <>
                       <Eye className="w-3 h-3 mr-1" />
-                      {language === 'ru' ? 'Виден' : 'Visible'}
+                      {t.visible}
                     </>
                   )}
                 </Button>
@@ -716,21 +809,19 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                 disabled={!newStepTitle.trim()}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                {language === 'ru' ? 'Добавить шаг' : 'Add step'}
+                {t.addStep}
               </Button>
             </div>
             
             <p className="text-xs text-muted-foreground">
-              {language === 'ru' 
-                ? 'Шаги помогают разбить задачу на части. Бонусы могут быть скрыты до завершения!'
-                : 'Steps help break down tasks. Bonuses can be hidden until completion!'}
+              {t.stepsHint}
             </p>
           </div>
 
           {/* Days of Week (for recurring) */}
           {taskType === 'recurring' && (
             <div className="space-y-2">
-              <Label>{language === 'ru' ? 'Дни недели' : 'Days of week'}</Label>
+              <Label>{t.daysOfWeek}</Label>
               <div className="flex gap-2">
                 {weekDays.map((day) => (
                   <button
@@ -749,7 +840,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                 ))}
               </div>
               {selectedDays.length === 0 && (
-                <p className="text-sm text-destructive">{language === 'ru' ? 'Выберите хотя бы один день' : 'Select at least one day'}</p>
+                <p className="text-sm text-destructive">{t.selectAtLeastOneDay}</p>
               )}
             </div>
           )}
@@ -762,7 +853,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
               className="flex-1 rounded-xl"
               onClick={() => setOpen(false)}
             >
-              Отмена
+              {t.cancel}
             </Button>
             <Button
               type="submit"
@@ -774,7 +865,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
               ) : (
                 <Plus className="w-4 h-4 mr-2" />
               )}
-              Создать
+              {t.create}
             </Button>
           </div>
         </form>

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, Edit, Plus, X, ListChecks, Gift, EyeOff, Eye } from 'lucide-react';
+import { Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, Edit, Plus, X, ListChecks, Gift, EyeOff, Eye, Sun, Moon } from 'lucide-react';
 import { SortableStepList, type SortableStep } from './SortableStepList';
 import { useTasks } from '@/hooks/useTasks';
 import { useChildren } from '@/hooks/useChildren';
@@ -110,6 +110,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
   const [selectedDays, setSelectedDays] = useState<number[]>(template.recurring_days || [1, 2, 3, 4, 5]);
   const [taskType, setTaskType] = useState<'recurring' | 'one_time'>(template.task_type as 'recurring' | 'one_time');
   const [taskCategory, setTaskCategory] = useState<'routine' | 'activity'>(template.task_category as 'routine' | 'activity');
+  const [routineType, setRoutineType] = useState<'morning' | 'evening'>(((template as any).routine_type as 'morning' | 'evening') || 'morning');
   const [hasTime, setHasTime] = useState(!!template.recurring_time);
   const [hasEndTime, setHasEndTime] = useState(!!template.end_time);
   const [startDate, setStartDate] = useState<Date>(template.start_date ? new Date(template.start_date) : new Date());
@@ -170,6 +171,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
     setSelectedDays(template.recurring_days || [1, 2, 3, 4, 5]);
     setTaskType(template.task_type as 'recurring' | 'one_time');
     setTaskCategory(template.task_category as 'routine' | 'activity');
+    setRoutineType(((template as any).routine_type as 'morning' | 'evening') || 'morning');
     setHasTime(!!template.recurring_time);
     setHasEndTime(!!template.end_time);
     setStartDate(template.start_date ? new Date(template.start_date) : new Date());
@@ -226,11 +228,12 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
 
   const handleSubmit = async (data: TaskFormData) => {
     if (taskType === 'recurring' && selectedDays.length === 0) {
-      toast.error('Выберите хотя бы один день недели');
+      toast.error(language === 'ru' ? 'Выберите хотя бы один день недели' : 'Select at least one day of week');
       return;
     }
 
-    if (hasTime && hasEndTime && data.startTime && data.endTime) {
+    // Time validation only for activities with time
+    if (taskCategory === 'activity' && hasTime && hasEndTime && data.startTime && data.endTime) {
       if (data.endTime <= data.startTime) {
         toast.error(language === 'ru' ? 'Время окончания должно быть после времени начала' : 'End time must be after start time');
         return;
@@ -249,9 +252,11 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
         reward_amount: data.rewardAmount,
         task_type: taskType,
         task_category: taskCategory,
+        routine_type: taskCategory === 'routine' ? routineType : null,
         recurring_days: taskType === 'recurring' ? selectedDays : null,
-        recurring_time: hasTime && data.startTime ? data.startTime : null,
-        end_time: hasTime && hasEndTime && data.endTime ? data.endTime : null,
+        // Activities have time, routines don't
+        recurring_time: taskCategory === 'activity' && hasTime && data.startTime ? data.startTime : null,
+        end_time: taskCategory === 'activity' && hasTime && hasEndTime && data.endTime ? data.endTime : null,
         child_id: data.childId || null,
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
@@ -341,6 +346,41 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
               </button>
             </div>
           </div>
+
+          {/* Routine Type (Morning/Evening) - only for routines */}
+          {taskCategory === 'routine' && (
+            <div className="space-y-2">
+              <Label>{language === 'ru' ? 'Тип рутины' : 'Routine Type'}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRoutineType('morning')}
+                  className={cn(
+                    "p-3 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2",
+                    routineType === 'morning'
+                      ? "border-amber-400 bg-amber-50 text-amber-700"
+                      : "border-border hover:border-amber-300"
+                  )}
+                >
+                  <Sun className="w-4 h-4" />
+                  {language === 'ru' ? 'Утренняя' : 'Morning'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoutineType('evening')}
+                  className={cn(
+                    "p-3 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2",
+                    routineType === 'evening'
+                      ? "border-indigo-400 bg-indigo-50 text-indigo-700"
+                      : "border-border hover:border-indigo-300"
+                  )}
+                >
+                  <Moon className="w-4 h-4" />
+                  {language === 'ru' ? 'Вечерняя' : 'Evening'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Task Type */}
           <div className="space-y-2">

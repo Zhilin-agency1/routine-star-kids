@@ -1018,7 +1018,50 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      family_members_public: {
+        Row: {
+          created_at: string | null
+          family_id: string | null
+          id: string | null
+          invite_status: string | null
+          invited_by: string | null
+          permission_level: string | null
+          role_label: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          family_id?: string | null
+          id?: string | null
+          invite_status?: string | null
+          invited_by?: string | null
+          permission_level?: string | null
+          role_label?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          family_id?: string | null
+          id?: string | null
+          invite_status?: string | null
+          invited_by?: string | null
+          permission_level?: string | null
+          role_label?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       adjust_child_balance: {

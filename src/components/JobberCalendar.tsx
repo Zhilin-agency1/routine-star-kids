@@ -182,13 +182,27 @@ export const JobberCalendar = ({
   }, [activities, selectedChildId]);
 
   // Filter task templates (ONLY activities, not routines)
+  // Parent activities (assignee_parent_id != null) should only appear in "All" view (parent calendar)
+  // Child activities appear based on selectedChildId filter
   const activityTasks = useMemo(() => {
     const tasks = templates.filter(t => 
       t.status === 'active' && 
       t.task_category === 'activity' // Only show activities in calendar
     );
-    if (!selectedChildId) return tasks;
-    return tasks.filter(t => t.child_id === selectedChildId || t.child_id === null);
+    
+    if (!selectedChildId) {
+      // "All" view - show all child activities AND parent activities
+      return tasks;
+    }
+    
+    // Specific child selected - show that child's tasks and "all children" tasks
+    // Exclude parent activities (those with assignee_parent_id set)
+    return tasks.filter(t => {
+      // Exclude parent activities
+      if ((t as any).assignee_parent_id) return false;
+      // Include tasks for this child or for all children
+      return t.child_id === selectedChildId || t.child_id === null;
+    });
   }, [templates, selectedChildId]);
 
   const getItemsForDay = useCallback((date: Date): ScheduleItem[] => {

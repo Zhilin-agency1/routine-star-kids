@@ -766,6 +766,7 @@ export type Database = {
       }
       task_templates: {
         Row: {
+          assignee_parent_id: string | null
           child_id: string | null
           created_at: string
           description_en: string | null
@@ -790,6 +791,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assignee_parent_id?: string | null
           child_id?: string | null
           created_at?: string
           description_en?: string | null
@@ -814,6 +816,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assignee_parent_id?: string | null
           child_id?: string | null
           created_at?: string
           description_en?: string | null

@@ -148,6 +148,12 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
   const selectedAssignee = form.watch('childId') || 'all';
   const isParentSelected = selectedAssignee.startsWith('parent:');
   
+  // Get the actual parent user ID if parent is selected
+  const getParentUserId = (): string | null => {
+    if (!isParentSelected) return null;
+    return selectedAssignee.replace('parent:', '');
+  };
+  
   // When parent is selected, force category to activity (routines are child-only)
   useEffect(() => {
     if (isParentSelected && taskCategory === 'routine') {
@@ -260,6 +266,12 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
 
     setIsSubmitting(true);
     try {
+      // Determine child_id and assignee_parent_id based on selection
+      const parentUserId = getParentUserId();
+      const childId = isParentSelected 
+        ? null // Parent activities have no child_id
+        : (data.childId || null); // Regular child or 'all'
+      
       const template = await createTemplate.mutateAsync({
         title_ru: data.titleRu,
         title_en: data.titleEn || data.titleRu,
@@ -274,7 +286,8 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
         // Activities have time, routines don't
         recurring_time: taskCategory === 'activity' && hasTime && data.startTime ? data.startTime : null,
         end_time: taskCategory === 'activity' && hasTime && hasEndTime && data.endTime ? data.endTime : null,
-        child_id: data.childId || null,
+        child_id: childId,
+        assignee_parent_id: parentUserId, // Set parent ID for adult activities
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
         one_time_date: taskType === 'one_time' ? format(oneTimeDate, 'yyyy-MM-dd') : null,

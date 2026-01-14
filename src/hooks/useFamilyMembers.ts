@@ -46,15 +46,18 @@ export const useFamilyMembers = () => {
   // Get adults available for task assignment
   // - Owner is always available if parent activities enabled
   // - Admin/non-admin members: admin can see all, non-admin only sees self
+  // Get adults available for task assignment
+  // Returns user IDs (not prefixed) - the UI will handle display
   const getAvailableAdults = () => {
     if (!allowParentActivities || !user) return [];
     
-    const adults: { id: string; name: string; isOwner: boolean; isSelf: boolean }[] = [];
+    const adults: { id: string; userId: string; name: string; isOwner: boolean; isSelf: boolean }[] = [];
     
     // Add owner (always available)
     if (family?.owner_user_id) {
       adults.push({
-        id: `parent:${family.owner_user_id}`,
+        id: `parent:${family.owner_user_id}`, // For dropdown value
+        userId: family.owner_user_id, // Actual user ID for DB
         name: 'Owner', // Will be translated in UI
         isOwner: true,
         isSelf: family.owner_user_id === user.id,
@@ -70,7 +73,8 @@ export const useFamilyMembers = () => {
       if (!isOwnerOrAdmin && member.user_id !== user.id) return;
       
       adults.push({
-        id: `parent:${member.user_id}`,
+        id: `parent:${member.user_id}`, // For dropdown value
+        userId: member.user_id, // Actual user ID for DB
         name: member.role_label,
         isOwner: false,
         isSelf: member.user_id === user.id,

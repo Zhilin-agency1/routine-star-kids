@@ -81,9 +81,11 @@ export const RoutineBlocks = ({
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     
     // Filter only routine tasks (not activities)
+    // Also exclude any parent activities (routines should only be for children)
     const routineTemplates = templates.filter(t => 
       t.status === 'active' && 
-      t.task_category === 'routine'
+      t.task_category === 'routine' &&
+      !(t as any).assignee_parent_id // Exclude parent activities (should never happen for routines)
     );
     
     // Filter by child if selected

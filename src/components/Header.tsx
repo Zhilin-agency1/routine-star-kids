@@ -1,11 +1,10 @@
-import { Globe, User, Users, LogIn, LogOut, ChevronDown, Check, Trophy } from 'lucide-react';
+import { Globe, User, LogIn, LogOut, ChevronDown, Check, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { CoinBadge } from './ui/CoinBadge';
 import { ChildAvatar } from './ui/ChildAvatar';
-import { NotificationBell } from './NotificationBell';
 import { GroweeCharacter } from './ui/GroweeCharacter';
 import { Button } from './ui/button';
 import {
@@ -158,8 +157,6 @@ export const Header = () => {
               <CoinBadge amount={currentChild.balance} size="md" />
             )}
 
-            {/* Notifications for parents */}
-            {role === 'parent' && <NotificationBell />}
 
             {/* Language Toggle */}
             <DropdownMenu>
@@ -219,8 +216,6 @@ export const Header = () => {
         <CoinBadge amount={currentChild.balance} size="md" />
       )}
 
-      {/* Notifications for parents */}
-      {role === 'parent' && <NotificationBell />}
 
       {/* Language Toggle */}
       <DropdownMenu>

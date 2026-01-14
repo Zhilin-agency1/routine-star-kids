@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFamily } from './useFamily';
 import type { Database } from '@/integrations/supabase/types';
 
-type Child = Database['public']['Tables']['children']['Row'];
+export type Child = Database['public']['Tables']['children']['Row'];
 type ChildInsert = Database['public']['Tables']['children']['Insert'];
 type ChildUpdate = Database['public']['Tables']['children']['Update'];
 
@@ -128,5 +128,3 @@ export const useChildren = () => {
     deleteChild,
   };
 };
-
-export type { Child };

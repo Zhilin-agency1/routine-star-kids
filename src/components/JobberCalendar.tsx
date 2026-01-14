@@ -32,6 +32,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useSchedule, type ActivitySchedule } from '@/hooks/useSchedule';
 import { useChildren } from '@/hooks/useChildren';
 import { useTasks } from '@/hooks/useTasks';
+import { useFamilyMembers, type EligibleAdult } from '@/hooks/useFamilyMembers';
 import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { cn } from '@/lib/utils';
@@ -122,6 +123,10 @@ export const JobberCalendar = ({
   const { children } = useChildren();
   const { activities, createActivity, deleteActivity } = useSchedule();
   const { templates, createTemplate, deleteTemplate } = useTasks();
+  const { getEligibleAdultsForCalendar, allowParentActivities } = useFamilyMembers();
+  
+  // Get eligible adults for calendar filter
+  const eligibleAdults = getEligibleAdultsForCalendar();
   
   const [internalViewMode, setInternalViewMode] = useState<ViewMode>('week');
   const viewMode = externalViewMode ?? internalViewMode;
@@ -175,15 +180,22 @@ export const JobberCalendar = ({
     return map;
   }, [children]);
 
-  // Filter activities by child
+  // Check if an adult is selected (format: parent:userId)
+  const isAdultSelected = selectedChildId?.startsWith('parent:') ?? false;
+  const selectedAdultUserId = isAdultSelected ? selectedChildId?.replace('parent:', '') : null;
+
+  // Filter activities by child (activity_schedules - these are child-only)
   const filteredActivities = useMemo(() => {
+    // If adult is selected, show no activity_schedules (they're child-only)
+    if (isAdultSelected) return [];
     if (!selectedChildId) return activities;
     return activities.filter(a => a.child_id === selectedChildId);
-  }, [activities, selectedChildId]);
+  }, [activities, selectedChildId, isAdultSelected]);
 
   // Filter task templates (ONLY activities, not routines)
-  // Parent activities (assignee_parent_id != null) should only appear in "All" view (parent calendar)
-  // Child activities appear based on selectedChildId filter
+  // Parent activities (assignee_parent_id != null) should only appear when:
+  // - "All" view is selected
+  // - That specific adult is selected
   const activityTasks = useMemo(() => {
     const tasks = templates.filter(t => 
       t.status === 'active' && 
@@ -195,6 +207,13 @@ export const JobberCalendar = ({
       return tasks;
     }
     
+    // Adult selected - show only that adult's activities
+    if (isAdultSelected && selectedAdultUserId) {
+      return tasks.filter(t => 
+        (t as any).assignee_parent_id === selectedAdultUserId
+      );
+    }
+    
     // Specific child selected - show that child's tasks and "all children" tasks
     // Exclude parent activities (those with assignee_parent_id set)
     return tasks.filter(t => {
@@ -203,7 +222,7 @@ export const JobberCalendar = ({
       // Include tasks for this child or for all children
       return t.child_id === selectedChildId || t.child_id === null;
     });
-  }, [templates, selectedChildId]);
+  }, [templates, selectedChildId, isAdultSelected, selectedAdultUserId]);
 
   const getItemsForDay = useCallback((date: Date): ScheduleItem[] => {
     const dayOfWeek = date.getDay();
@@ -559,16 +578,23 @@ export const JobberCalendar = ({
             </SelectContent>
           </Select>
 
-          {/* Child Selector */}
+          {/* Child/Adult Selector */}
           <Select 
             value={selectedChildId || 'all'} 
             onValueChange={(v) => onChildChange(v === 'all' ? null : v)}
           >
-            <SelectTrigger className="w-[130px] h-8 text-sm">
+            <SelectTrigger className="w-[140px] h-8 text-sm">
               <SelectValue placeholder={t('filter_all')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('filter_all')}</SelectItem>
+              
+              {/* Children section */}
+              {children.length > 0 && (
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  {language === 'ru' ? 'Дети' : 'Children'}
+                </div>
+              )}
               {children.map(child => (
                 <SelectItem key={child.id} value={child.id}>
                   <div className="flex items-center gap-2">
@@ -577,6 +603,31 @@ export const JobberCalendar = ({
                   </div>
                 </SelectItem>
               ))}
+              
+              {/* Adults section - only eligible adults with parent_activities_enabled */}
+              {allowParentActivities && eligibleAdults.length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                    {language === 'ru' ? 'Взрослые' : 'Adults'}
+                  </div>
+                  {eligibleAdults.map(adult => (
+                    <SelectItem key={adult.id} value={adult.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px]"
+                          style={{ backgroundColor: adult.activityColor }}
+                        >
+                          👤
+                        </div>
+                        <span>
+                          {adult.name}
+                          {adult.isSelf && ` (${language === 'ru' ? 'Вы' : 'You'})`}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </>
+              )}
             </SelectContent>
           </Select>
         </div>

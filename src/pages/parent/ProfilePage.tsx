@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { User, Users, CreditCard, Settings, UserPlus, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Users, CreditCard, Settings, UserPlus, Calendar, Palette } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { useFamily } from '@/hooks/useFamily';
 import { useAuth } from '@/hooks/useAuth';
-import { useChildren } from '@/hooks/useChildren';
+import { useChildren, type Child } from '@/hooks/useChildren';
+import { useFamilyMembers } from '@/hooks/useFamilyMembers';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,17 +19,40 @@ import { EditChildProfileDialog } from '@/components/EditChildProfileDialog';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { InviteMemberDialog } from '@/components/InviteMemberDialog';
 import { FamilyMembersList } from '@/components/FamilyMembersList';
+import { ColorPicker } from '@/components/ColorPicker';
 
 export const ProfilePage = () => {
   const { language } = useLanguage();
   const { children } = useApp();
+  const { updateChild } = useChildren();
   const { family, updateFamily } = useFamily();
   const { user } = useAuth();
+  const { currentUserProfile, isOwnerOrAdmin, allowParentActivities, refetch: refetchMembers } = useFamilyMembers();
   
   const [familyName, setFamilyName] = useState(family?.name || '');
   const [isSaving, setIsSaving] = useState(false);
   const [editingChild, setEditingChild] = useState<typeof children[0] | null>(null);
-  const [allowParentActivities, setAllowParentActivities] = useState(family?.allow_parent_activities || false);
+  const [allowParentActivitiesLocal, setAllowParentActivitiesLocal] = useState(family?.allow_parent_activities || false);
+  const [parentActivitiesEnabled, setParentActivitiesEnabled] = useState(currentUserProfile?.parent_activities_enabled ?? false);
+  const [myActivityColor, setMyActivityColor] = useState(currentUserProfile?.activity_color || '#8B5CF6');
+  const [childColors, setChildColors] = useState<Record<string, string>>({});
+  
+  // Initialize child colors from data
+  useEffect(() => {
+    const colors: Record<string, string> = {};
+    children.forEach((child: any) => {
+      colors[child.id] = child.color || '#3B82F6';
+    });
+    setChildColors(colors);
+  }, [children]);
+  
+  // Sync parent activities enabled from profile
+  useEffect(() => {
+    if (currentUserProfile) {
+      setParentActivitiesEnabled(currentUserProfile.parent_activities_enabled ?? false);
+      setMyActivityColor(currentUserProfile.activity_color || '#8B5CF6');
+    }
+  }, [currentUserProfile]);
   
   const t = {
     en: {
@@ -61,6 +86,12 @@ export const ProfilePage = () => {
       google_calendar_desc: 'Sync your schedule with Google Calendar',
       connect_google: 'Connect Google Calendar',
       coming_soon: 'Coming Soon',
+      colors: 'Colors',
+      colors_desc: 'Customize calendar colors for children and your activities',
+      children_colors: 'Children Colors',
+      my_activity_color: 'My Activity Color',
+      enable_parent_activities_for_me: 'Enable parent activities for me',
+      enable_parent_activities_for_me_desc: 'Show my activities in my calendar filter',
     },
     ru: {
       profile: 'Профиль',
@@ -93,6 +124,12 @@ export const ProfilePage = () => {
       google_calendar_desc: 'Синхронизация расписания с Google Calendar',
       connect_google: 'Подключить Google Calendar',
       coming_soon: 'Скоро',
+      colors: 'Цвета',
+      colors_desc: 'Настройте цвета календаря для детей и ваших занятий',
+      children_colors: 'Цвета детей',
+      my_activity_color: 'Цвет моих занятий',
+      enable_parent_activities_for_me: 'Включить мои занятия',
+      enable_parent_activities_for_me_desc: 'Показывать мои занятия в фильтре календаря',
     }
   }[language];
 
@@ -113,12 +150,59 @@ export const ProfilePage = () => {
   const handleToggleParentActivities = async (checked: boolean) => {
     if (!family?.id) return;
     
-    setAllowParentActivities(checked);
+    setAllowParentActivitiesLocal(checked);
     try {
       await updateFamily.mutateAsync({ id: family.id, allow_parent_activities: checked });
       toast.success(t.saved);
     } catch (error) {
-      setAllowParentActivities(!checked);
+      setAllowParentActivitiesLocal(!checked);
+      toast.error(t.save_error);
+    }
+  };
+
+  const handleToggleMyParentActivities = async (checked: boolean) => {
+    if (!user?.id) return;
+    
+    setParentActivitiesEnabled(checked);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ parent_activities_enabled: checked })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      refetchMembers();
+      toast.success(t.saved);
+    } catch (error) {
+      setParentActivitiesEnabled(!checked);
+      toast.error(t.save_error);
+    }
+  };
+
+  const handleChildColorChange = async (childId: string, color: string) => {
+    setChildColors(prev => ({ ...prev, [childId]: color }));
+    try {
+      await updateChild.mutateAsync({ id: childId, color });
+      toast.success(t.saved);
+    } catch (error) {
+      toast.error(t.save_error);
+    }
+  };
+
+  const handleMyColorChange = async (color: string) => {
+    if (!user?.id) return;
+    
+    setMyActivityColor(color);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ activity_color: color })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      refetchMembers();
+      toast.success(t.saved);
+    } catch (error) {
       toast.error(t.save_error);
     }
   };
@@ -250,17 +334,101 @@ export const ProfilePage = () => {
           </CardTitle>
           <CardDescription>{t.parent_activities_desc}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="parent-activities">
-              {language === 'ru' ? 'Включить занятия родителей' : 'Enable parent activities'}
-            </Label>
-            <Switch
-              id="parent-activities"
-              checked={allowParentActivities}
-              onCheckedChange={handleToggleParentActivities}
-            />
-          </div>
+        <CardContent className="space-y-4">
+          {/* Family-level toggle (owner/admin only) */}
+          {isOwnerOrAdmin && (
+            <div className="flex items-center justify-between">
+              <Label htmlFor="parent-activities">
+                {language === 'ru' ? 'Включить занятия родителей' : 'Enable parent activities'}
+              </Label>
+              <Switch
+                id="parent-activities"
+                checked={allowParentActivitiesLocal}
+                onCheckedChange={handleToggleParentActivities}
+              />
+            </div>
+          )}
+          
+          {/* Personal toggle - only visible when family-level is enabled */}
+          {allowParentActivities && (
+            <>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="my-parent-activities" className="block">
+                    {t.enable_parent_activities_for_me}
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t.enable_parent_activities_for_me_desc}
+                  </p>
+                </div>
+                <Switch
+                  id="my-parent-activities"
+                  checked={parentActivitiesEnabled}
+                  onCheckedChange={handleToggleMyParentActivities}
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Colors Section */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            {t.colors}
+          </CardTitle>
+          <CardDescription>{t.colors_desc}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Children colors (admin only) */}
+          {isOwnerOrAdmin && children.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">{t.children_colors}</Label>
+              <div className="space-y-2">
+                {children.map((child) => (
+                  <div 
+                    key={child.id}
+                    className="flex items-center justify-between p-2 rounded-lg border"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
+                      <span className="text-sm">{child.name}</span>
+                    </div>
+                    <ColorPicker
+                      color={childColors[child.id] || '#3B82F6'}
+                      onChange={(color) => handleChildColorChange(child.id, color)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* My activity color - only when parent activities enabled */}
+          {allowParentActivities && parentActivitiesEnabled && (
+            <>
+              {isOwnerOrAdmin && children.length > 0 && <Separator />}
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">{t.my_activity_color}</Label>
+                <ColorPicker
+                  color={myActivityColor}
+                  onChange={handleMyColorChange}
+                />
+              </div>
+            </>
+          )}
+          
+          {/* Empty state */}
+          {(!isOwnerOrAdmin || children.length === 0) && (!allowParentActivities || !parentActivitiesEnabled) && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              {language === 'ru' 
+                ? 'Нет доступных настроек цвета' 
+                : 'No color settings available'}
+            </p>
+          )}
         </CardContent>
       </Card>
 

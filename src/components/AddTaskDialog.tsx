@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye, GripVertical, Sun, Moon, Users } from 'lucide-react';
+import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye, GripVertical, Sun, Moon, Users, Search } from 'lucide-react';
 import { SortableStepList, type SortableStep } from './SortableStepList';
+import { IconPicker } from './IconPicker';
 import { useTasks } from '@/hooks/useTasks';
 import { useTaskSteps } from '@/hooks/useTaskSteps';
 import { useChildren } from '@/hooks/useChildren';
@@ -40,7 +41,8 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-const taskIcons = [
+// Fallback icons if library fails to load
+const fallbackIcons = [
   '✨', '🛏️', '🪥', '🍳', '📚', '🧹', '🧸', '🎒',
   '🏃', '🎹', '🎨', '✏️', '🧘', '🚿', '👕', '🍽️',
 ];
@@ -95,7 +97,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
   
-  const [selectedIcon, setSelectedIcon] = useState(taskIcons[0]);
+  const [selectedIcon, setSelectedIcon] = useState('✨');
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [taskType, setTaskType] = useState<'recurring' | 'one_time'>('recurring');
   const [taskCategory, setTaskCategory] = useState<'routine' | 'activity'>(initialCategory || 'routine');
@@ -312,7 +314,7 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
       toast.success(t.taskCreated);
       setOpen(false);
       form.reset();
-      setSelectedIcon(taskIcons[0]);
+      setSelectedIcon('✨');
       setSelectedDays([1, 2, 3, 4, 5]);
       setTaskCategory('routine');
       setRoutineType('morning');
@@ -462,26 +464,13 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
             </div>
           </div>
 
-          {/* Icon Selection */}
+          {/* Icon Selection with search and categories */}
           <div className="space-y-2">
             <Label>{t.icon}</Label>
-            <div className="grid grid-cols-8 gap-2">
-              {taskIcons.map((icon) => (
-                <button
-                  key={icon}
-                  type="button"
-                  onClick={() => setSelectedIcon(icon)}
-                  className={cn(
-                    "w-10 h-10 rounded-xl text-2xl flex items-center justify-center transition-all",
-                    selectedIcon === icon
-                      ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 scale-110"
-                      : "bg-muted hover:bg-muted/80"
-                  )}
-                >
-                  {icon}
-                </button>
-              ))}
-            </div>
+            <IconPicker
+              selectedIcon={selectedIcon}
+              onSelectIcon={setSelectedIcon}
+            />
           </div>
 
           {/* Title */}

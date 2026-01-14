@@ -84,6 +84,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           balance: number
+          color: string | null
           created_at: string
           family_id: string
           id: string
@@ -95,6 +96,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           balance?: number
+          color?: string | null
           created_at?: string
           family_id: string
           id?: string
@@ -106,6 +108,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           balance?: number
+          color?: string | null
           created_at?: string
           family_id?: string
           id?: string
@@ -301,6 +304,42 @@ export type Database = {
           },
         ]
       }
+      icon_library: {
+        Row: {
+          category: string
+          created_at: string
+          emoji: string
+          id: string
+          key: string
+          name_en: string
+          name_ru: string
+          tags_en: string[] | null
+          tags_ru: string[] | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          emoji: string
+          id?: string
+          key: string
+          name_en: string
+          name_ru: string
+          tags_en?: string[] | null
+          tags_ru?: string[] | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          emoji?: string
+          id?: string
+          key?: string
+          name_en?: string
+          name_ru?: string
+          tags_en?: string[] | null
+          tags_ru?: string[] | null
+        }
+        Relationships: []
+      }
       job_board_items: {
         Row: {
           active: boolean
@@ -484,29 +523,35 @@ export type Database = {
       }
       profiles: {
         Row: {
+          activity_color: string | null
           avatar_url: string | null
           created_at: string
           full_name: string | null
           id: string
           language_preference: string | null
+          parent_activities_enabled: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          activity_color?: string | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
           language_preference?: string | null
+          parent_activities_enabled?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          activity_color?: string | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
           language_preference?: string | null
+          parent_activities_enabled?: boolean
           updated_at?: string
           user_id?: string
         }

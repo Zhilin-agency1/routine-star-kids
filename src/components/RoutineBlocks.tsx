@@ -281,8 +281,8 @@ export const RoutineBlocks = ({
     
     return (
       <div className={cn(
-        "flex-1 min-w-[280px] rounded-xl border-2 p-3",
-        colorClass
+        "flex-1 min-w-[280px] rounded-xl border p-3 bg-card",
+        "border-border"
       )}>
         <div className={cn(
           "flex items-center justify-between",
@@ -343,20 +343,20 @@ export const RoutineBlocks = ({
       <div className={cn("flex flex-col md:flex-row gap-3", className)}>
         {renderBlock(
           language === 'ru' ? 'Утренняя рутина' : 'Morning Routine',
-          <Sun className="w-4 h-4 text-amber-500" />,
+          <Sun className="w-4 h-4 text-primary" />,
           morningRoutines,
           morningExpanded,
           setMorningExpanded,
-          'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800'
+          ''
         )}
         
         {renderBlock(
           language === 'ru' ? 'Вечерняя рутина' : 'Evening Routine',
-          <Moon className="w-4 h-4 text-indigo-500" />,
+          <Moon className="w-4 h-4 text-muted-foreground" />,
           eveningRoutines,
           eveningExpanded,
           setEveningExpanded,
-          'border-indigo-200 bg-indigo-50/50 dark:bg-indigo-950/20 dark:border-indigo-800'
+          ''
         )}
       </div>
       

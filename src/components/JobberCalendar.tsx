@@ -656,7 +656,9 @@ export const JobberCalendar = ({
                             )}
                           >
                             <span className="shrink-0">{item.icon || child?.avatar_url || '📅'}</span>
-                            <span className="truncate">{item.time.slice(0, 5)}</span>
+                            <span className="truncate font-semibold">
+                              {language === 'ru' ? item.title_ru : item.title_en}
+                            </span>
                           </div>
                         );
                       })}

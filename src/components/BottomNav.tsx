@@ -1,4 +1,4 @@
-import { Home, Briefcase, Trophy, ShoppingBag, ListTodo, Calendar, User } from 'lucide-react';
+import { Home, Briefcase, ShoppingBag, ListTodo, Calendar, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -10,24 +10,15 @@ interface NavItem {
   path: string;
 }
 
-// Family dashboard navigation (when viewMode is 'family' AND role is 'child')
-// Child mode = execution only - NO Templates
-const familyNavItems: NavItem[] = [
+// Child navigation - unified KIDS mode (no personal/family split)
+const childNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Calendar, labelKey: 'nav_schedule', path: '/schedule' },
   { icon: Briefcase, labelKey: 'nav_jobs', path: '/exchange' },
-];
-
-// Personal child navigation (when viewMode is 'personal')
-// Child mode = execution only - NO Schedule or Templates
-const personalNavItems: NavItem[] = [
-  { icon: Home, labelKey: 'nav_today', path: '/' },
-  { icon: Trophy, labelKey: 'nav_rewards', path: '/rewards' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/store' },
-  { icon: Briefcase, labelKey: 'nav_jobs', path: '/jobs' },
 ];
 
-// Parent navigation - Updated: removed Plans, added Profile
+// Parent navigation
 const parentNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_dashboard', path: '/parent' },
   { icon: ListTodo, labelKey: 'nav_tasks', path: '/parent/tasks' },
@@ -38,18 +29,12 @@ const parentNavItems: NavItem[] = [
 
 export const BottomNav = () => {
   const { t } = useLanguage();
-  const { role, viewMode } = useApp();
+  const { role } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Determine which nav items to show based on role and viewMode
-  const getNavItems = () => {
-    if (role === 'parent') return parentNavItems;
-    if (viewMode === 'family') return familyNavItems;
-    return personalNavItems;
-  };
-
-  const navItems = getNavItems();
+  // Determine which nav items to show based on role
+  const navItems = role === 'parent' ? parentNavItems : childNavItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-bottom z-40">

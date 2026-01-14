@@ -30,13 +30,9 @@ export interface TaskInstance {
   icon?: string;
 }
 
-export type ViewMode = 'personal' | 'family';
-
 interface AppContextType {
   role: Role;
   setRole: (role: Role) => void;
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
   currentChild: Child | null;
   setCurrentChild: (child: Child | null) => void;
   children: Child[];
@@ -55,7 +51,6 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children: childrenProp }) => {
   const [role, setRole] = useState<Role>('child');
-  const [viewMode, setViewMode] = useState<ViewMode>('personal');
   const [currentChild, setCurrentChild] = useState<Child | null>(null);
   
   // Use real hooks
@@ -138,8 +133,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children:
     <AppContext.Provider value={{
       role,
       setRole,
-      viewMode,
-      setViewMode,
       currentChild,
       setCurrentChild,
       children: childrenData,

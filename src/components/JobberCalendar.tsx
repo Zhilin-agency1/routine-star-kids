@@ -4,7 +4,11 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Plus,
-  ChevronDown 
+  ChevronDown,
+  MoreHorizontal,
+  Pencil,
+  Copy,
+  Trash2
 } from 'lucide-react';
 import { 
   format, 
@@ -32,8 +36,10 @@ import { Button } from '@/components/ui/button';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { cn } from '@/lib/utils';
 import { EditActivityDialog } from '@/components/EditActivityDialog';
+import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
 import { getWeekDays } from '@/i18n/translations';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +53,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import type { Database } from '@/integrations/supabase/types';
 
+type TaskTemplate = Database['public']['Tables']['task_templates']['Row'];
 type ViewMode = 'day' | 'week' | 'month';
 
 interface ScheduleItem {
@@ -61,6 +79,7 @@ interface ScheduleItem {
   type: 'activity' | 'task';
   icon?: string | null;
   originalActivity?: ActivitySchedule;
+  originalTemplate?: TaskTemplate;
   category?: string;
 }
 
@@ -106,8 +125,8 @@ export const JobberCalendar = ({
 }: JobberCalendarProps) => {
   const { language, t } = useLanguage();
   const { children } = useChildren();
-  const { activities } = useSchedule();
-  const { templates } = useTasks();
+  const { activities, createActivity, deleteActivity } = useSchedule();
+  const { templates, createTemplate, deleteTemplate } = useTasks();
   
   const [internalViewMode, setInternalViewMode] = useState<ViewMode>('week');
   const viewMode = externalViewMode ?? internalViewMode;
@@ -120,9 +139,12 @@ export const JobberCalendar = ({
   };
   
   const [editingActivity, setEditingActivity] = useState<ActivitySchedule | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
   const [addActivityOpen, setAddActivityOpen] = useState(false);
   const [addActivityDate, setAddActivityDate] = useState<Date | null>(null);
   const [addActivityTime, setAddActivityTime] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'activity' | 'task' } | null>(null);
   
   const weekDays = getWeekDays(language);
   
@@ -206,6 +228,7 @@ export const JobberCalendar = ({
           type: 'task',
           icon: task.icon,
           category: task.task_category,
+          originalTemplate: task,
         });
       }
     });
@@ -267,6 +290,95 @@ export const JobberCalendar = ({
     setAddActivityDate(date);
     setAddActivityTime(hour ? `${hour.toString().padStart(2, '0')}:00` : null);
     setAddActivityOpen(true);
+  };
+
+  // Handle item click - open edit dialog
+  const handleItemClick = (item: ScheduleItem) => {
+    if (isReadOnly) return;
+    if (item.type === 'activity' && item.originalActivity) {
+      setEditingActivity(item.originalActivity);
+    } else if (item.type === 'task' && item.originalTemplate) {
+      setEditingTemplate(item.originalTemplate);
+    }
+  };
+
+  // Handle copy item
+  const handleCopyItem = async (item: ScheduleItem) => {
+    if (item.type === 'task' && item.originalTemplate) {
+      const template = item.originalTemplate;
+      try {
+        const copiedTitle_ru = `${template.title_ru} (${language === 'ru' ? 'Копия' : 'Copy'})`;
+        const copiedTitle_en = `${template.title_en} (Copy)`;
+        
+        const newTemplate = await createTemplate.mutateAsync({
+          title_ru: copiedTitle_ru,
+          title_en: copiedTitle_en,
+          description_ru: template.description_ru,
+          description_en: template.description_en,
+          icon: template.icon,
+          reward_amount: template.reward_amount,
+          task_type: template.task_type,
+          task_category: template.task_category,
+          recurring_days: template.recurring_days,
+          recurring_time: template.recurring_time,
+          end_time: template.end_time,
+          child_id: template.child_id,
+          start_date: template.start_date,
+          end_date: template.end_date,
+          one_time_date: template.one_time_date,
+        });
+        
+        toast.success(language === 'ru' ? 'Занятие скопировано!' : 'Activity copied!');
+        
+        // Open the copied item in edit mode
+        const copiedTemplate = templates.find(t => t.id === newTemplate.id);
+        if (copiedTemplate) {
+          setEditingTemplate(copiedTemplate);
+        }
+      } catch (error) {
+        toast.error(language === 'ru' ? 'Ошибка при копировании' : 'Failed to copy');
+      }
+    } else if (item.type === 'activity' && item.originalActivity) {
+      const activity = item.originalActivity;
+      try {
+        const copiedTitle_ru = `${activity.title_ru} (${language === 'ru' ? 'Копия' : 'Copy'})`;
+        const copiedTitle_en = `${activity.title_en} (Copy)`;
+        
+        await createActivity.mutateAsync({
+          title_ru: copiedTitle_ru,
+          title_en: copiedTitle_en,
+          child_id: activity.child_id,
+          time: activity.time,
+          duration: activity.duration,
+          location: activity.location,
+          recurring_days: activity.recurring_days,
+          start_date: activity.start_date,
+          end_date: activity.end_date,
+        });
+        
+        toast.success(language === 'ru' ? 'Занятие скопировано!' : 'Activity copied!');
+      } catch (error) {
+        toast.error(language === 'ru' ? 'Ошибка при копировании' : 'Failed to copy');
+      }
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      if (itemToDelete.type === 'task') {
+        await deleteTemplate.mutateAsync(itemToDelete.id);
+      } else {
+        await deleteActivity.mutateAsync(itemToDelete.id);
+      }
+      toast.success(language === 'ru' ? 'Удалено!' : 'Deleted!');
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    } catch (error) {
+      toast.error(language === 'ru' ? 'Ошибка при удалении' : 'Failed to delete');
+    }
   };
 
   // Generate month options for quick jump
@@ -458,9 +570,7 @@ export const JobberCalendar = ({
                             key={item.id}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (item.type === 'activity' && item.originalActivity && !isReadOnly) {
-                                setEditingActivity(item.originalActivity);
-                              }
+                              handleItemClick(item);
                             }}
                             className={cn(
                               "text-[10px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border font-medium cursor-pointer hover:opacity-80",
@@ -553,9 +663,7 @@ export const JobberCalendar = ({
                               key={item.id}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (item.type === 'activity' && item.originalActivity && !isReadOnly) {
-                                  setEditingActivity(item.originalActivity);
-                                }
+                                handleItemClick(item);
                               }}
                               className={cn(
                                 "text-[10px] p-1 rounded mb-0.5 border cursor-pointer hover:opacity-80 transition-opacity font-medium",
@@ -634,13 +742,8 @@ export const JobberCalendar = ({
                         return (
                           <div 
                             key={item.id}
-                            onClick={() => {
-                              if (item.type === 'activity' && item.originalActivity && !isReadOnly) {
-                                setEditingActivity(item.originalActivity);
-                              }
-                            }}
                             className={cn(
-                              "flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer hover:opacity-90 transition-opacity",
+                              "flex items-center gap-3 p-3 rounded-lg border-2 group",
                               CHILD_COLORS_LIGHT[colorIndex]
                             )}
                           >
@@ -666,6 +769,42 @@ export const JobberCalendar = ({
                                 {item.duration} {t('minutes_short')}
                               </span>
                             )}
+                            
+                            {/* Actions dropdown */}
+                            {!isReadOnly && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleItemClick(item)}>
+                                    <Pencil className="w-4 h-4 mr-2" />
+                                    {language === 'ru' ? 'Редактировать' : 'Edit'}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleCopyItem(item)}>
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    {language === 'ru' ? 'Копировать' : 'Copy'}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => {
+                                      setItemToDelete({ id: item.id, type: item.type });
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    {language === 'ru' ? 'Удалить' : 'Delete'}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
                           </div>
                         );
                       })}
@@ -684,6 +823,39 @@ export const JobberCalendar = ({
         open={!!editingActivity}
         onOpenChange={(open) => !open && setEditingActivity(null)}
       />
+
+      {/* Edit Task Template Dialog */}
+      {editingTemplate && (
+        <EditTaskDialog
+          template={editingTemplate}
+          open={!!editingTemplate}
+          onOpenChange={(open) => !open && setEditingTemplate(null)}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'ru' ? 'Удалить?' : 'Delete?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'ru' 
+                ? 'Это действие нельзя отменить.'
+                : 'This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === 'ru' ? 'Отмена' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {language === 'ru' ? 'Удалить' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add Activity Dialog */}
       {!isReadOnly && (

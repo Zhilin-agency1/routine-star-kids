@@ -1,12 +1,30 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sun, Moon, Pencil, Copy, Trash2, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTasks } from '@/hooks/useTasks';
 import { useChildren } from '@/hooks/useChildren';
+import { useTaskSteps } from '@/hooks/useTaskSteps';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 type ViewMode = 'day' | 'week' | 'month';
@@ -17,6 +35,7 @@ interface RoutineBlocksProps {
   viewMode?: ViewMode;
   className?: string;
   onEditRoutine?: (templateId: string) => void;
+  onCopyRoutine?: (templateId: string) => void;
 }
 
 interface RoutineItem {
@@ -36,24 +55,25 @@ export const RoutineBlocks = ({
   viewMode = 'day',
   className,
   onEditRoutine,
+  onCopyRoutine,
 }: RoutineBlocksProps) => {
   const { language, t } = useLanguage();
-  const { templates } = useTasks();
+  const { templates, createTemplate, deleteTemplate } = useTasks();
   const { children } = useChildren();
   
-  // In day view: start expanded, in week/month: start collapsed
-  const [morningExpanded, setMorningExpanded] = useState(viewMode === 'day');
-  const [eveningExpanded, setEveningExpanded] = useState(viewMode === 'day');
+  // Always start collapsed in all views
+  const [morningExpanded, setMorningExpanded] = useState(false);
+  const [eveningExpanded, setEveningExpanded] = useState(false);
+  
+  // State for delete confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [routineToDelete, setRoutineToDelete] = useState<string | null>(null);
   
   // Reset expansion state when viewMode changes
   useEffect(() => {
-    if (viewMode === 'day') {
-      setMorningExpanded(true);
-      setEveningExpanded(true);
-    } else {
-      setMorningExpanded(false);
-      setEveningExpanded(false);
-    }
+    // Always collapse for all views
+    setMorningExpanded(false);
+    setEveningExpanded(false);
   }, [viewMode]);
 
   // Get routines for the selected date and child
@@ -126,17 +146,66 @@ export const RoutineBlocks = ({
     [routines]
   );
 
-  const PREVIEW_COUNT = viewMode === 'day' ? 10 : 3;
-  const isCompactView = viewMode !== 'day';
+  const PREVIEW_COUNT = 3;
+
+  const handleCopyRoutine = async (templateId: string) => {
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+    
+    try {
+      const copiedTitle_ru = `${template.title_ru} (${language === 'ru' ? 'Копия' : 'Copy'})`;
+      const copiedTitle_en = `${template.title_en} (Copy)`;
+      
+      const newTemplate = await createTemplate.mutateAsync({
+        title_ru: copiedTitle_ru,
+        title_en: copiedTitle_en,
+        description_ru: template.description_ru,
+        description_en: template.description_en,
+        icon: template.icon,
+        reward_amount: template.reward_amount,
+        task_type: template.task_type,
+        task_category: template.task_category,
+        recurring_days: template.recurring_days,
+        recurring_time: template.recurring_time,
+        end_time: template.end_time,
+        child_id: template.child_id,
+        start_date: template.start_date,
+        end_date: template.end_date,
+        one_time_date: template.one_time_date,
+      });
+      
+      toast.success(language === 'ru' ? 'Рутина скопирована!' : 'Routine copied!');
+      
+      // Open the copied routine in edit mode
+      if (onCopyRoutine) {
+        onCopyRoutine(newTemplate.id);
+      } else if (onEditRoutine) {
+        onEditRoutine(newTemplate.id);
+      }
+    } catch (error) {
+      toast.error(language === 'ru' ? 'Ошибка при копировании' : 'Failed to copy');
+    }
+  };
+
+  const handleDeleteRoutine = async () => {
+    if (!routineToDelete) return;
+    
+    try {
+      await deleteTemplate.mutateAsync(routineToDelete);
+      toast.success(language === 'ru' ? 'Рутина удалена!' : 'Routine deleted!');
+      setDeleteDialogOpen(false);
+      setRoutineToDelete(null);
+    } catch (error) {
+      toast.error(language === 'ru' ? 'Ошибка при удалении' : 'Failed to delete');
+    }
+  };
 
   const renderRoutineItem = (item: RoutineItem, compact = false) => (
-    <button 
+    <div 
       key={item.id}
-      onClick={() => onEditRoutine?.(item.id)}
       className={cn(
-        "w-full flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border text-left transition-colors",
-        compact && "py-1.5",
-        onEditRoutine && "hover:bg-muted cursor-pointer"
+        "w-full flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border text-left transition-colors group",
+        compact && "py-1.5"
       )}
     >
       <span className="text-lg shrink-0">{item.icon}</span>
@@ -158,7 +227,41 @@ export const RoutineBlocks = ({
         </div>
       </div>
       <CoinBadge amount={item.reward} size="xs" />
-    </button>
+      
+      {/* Actions dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onEditRoutine?.(item.id)}>
+            <Pencil className="w-4 h-4 mr-2" />
+            {language === 'ru' ? 'Редактировать' : 'Edit'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleCopyRoutine(item.id)}>
+            <Copy className="w-4 h-4 mr-2" />
+            {language === 'ru' ? 'Копировать' : 'Copy'}
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => {
+              setRoutineToDelete(item.id);
+              setDeleteDialogOpen(true);
+            }}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {language === 'ru' ? 'Удалить' : 'Delete'}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 
   const renderBlock = (
@@ -171,16 +274,10 @@ export const RoutineBlocks = ({
   ) => {
     if (items.length === 0) return null;
     
-    // Day view: show all items, allow "show more" if many
-    // Week/Month view: collapsed by default, expand to show all
-    const isDayView = viewMode === 'day';
-    const shouldShowItems = isDayView || expanded;
-    const displayItems = shouldShowItems 
-      ? (isDayView && !expanded ? items.slice(0, PREVIEW_COUNT) : items) 
-      : [];
-    const hasExpandToggle = isDayView 
-      ? items.length > PREVIEW_COUNT 
-      : items.length > 0;
+    // Always collapsed by default, expand to show all
+    const shouldShowItems = expanded;
+    const displayItems = shouldShowItems ? items : [];
+    const hasExpandToggle = items.length > 0;
     
     return (
       <div className={cn(
@@ -195,7 +292,7 @@ export const RoutineBlocks = ({
             {icon}
             <h3 className="font-bold text-sm">{title}</h3>
             <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-              {items.length} {isCompactView && (language === 'ru' ? 'рутин' : 'routines')}
+              {items.length}
             </span>
           </div>
           {hasExpandToggle && (
@@ -210,14 +307,9 @@ export const RoutineBlocks = ({
                   {language === 'ru' ? 'Скрыть' : 'Collapse'}
                   <ChevronUp className="w-3 h-3" />
                 </>
-              ) : isCompactView ? (
-                <>
-                  {language === 'ru' ? 'Развернуть' : 'Expand'}
-                  <ChevronDown className="w-3 h-3" />
-                </>
               ) : (
                 <>
-                  +{items.length - PREVIEW_COUNT} {language === 'ru' ? 'ещё' : 'more'}
+                  {language === 'ru' ? 'Развернуть' : 'Expand'}
                   <ChevronDown className="w-3 h-3" />
                 </>
               )}
@@ -227,7 +319,7 @@ export const RoutineBlocks = ({
         
         {shouldShowItems && displayItems.length > 0 && (
           <div className="space-y-1.5">
-            {displayItems.map(item => renderRoutineItem(item, isCompactView && !expanded))}
+            {displayItems.map(item => renderRoutineItem(item, !expanded))}
           </div>
         )}
       </div>
@@ -247,24 +339,50 @@ export const RoutineBlocks = ({
   }
 
   return (
-    <div className={cn("flex flex-col md:flex-row gap-3", className)}>
-      {renderBlock(
-        language === 'ru' ? 'Утренняя рутина' : 'Morning Routine',
-        <Sun className="w-4 h-4 text-amber-500" />,
-        morningRoutines,
-        morningExpanded,
-        setMorningExpanded,
-        'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800'
-      )}
+    <>
+      <div className={cn("flex flex-col md:flex-row gap-3", className)}>
+        {renderBlock(
+          language === 'ru' ? 'Утренняя рутина' : 'Morning Routine',
+          <Sun className="w-4 h-4 text-amber-500" />,
+          morningRoutines,
+          morningExpanded,
+          setMorningExpanded,
+          'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800'
+        )}
+        
+        {renderBlock(
+          language === 'ru' ? 'Вечерняя рутина' : 'Evening Routine',
+          <Moon className="w-4 h-4 text-indigo-500" />,
+          eveningRoutines,
+          eveningExpanded,
+          setEveningExpanded,
+          'border-indigo-200 bg-indigo-50/50 dark:bg-indigo-950/20 dark:border-indigo-800'
+        )}
+      </div>
       
-      {renderBlock(
-        language === 'ru' ? 'Вечерняя рутина' : 'Evening Routine',
-        <Moon className="w-4 h-4 text-indigo-500" />,
-        eveningRoutines,
-        eveningExpanded,
-        setEveningExpanded,
-        'border-indigo-200 bg-indigo-50/50 dark:bg-indigo-950/20 dark:border-indigo-800'
-      )}
-    </div>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'ru' ? 'Удалить рутину?' : 'Delete routine?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'ru' 
+                ? 'Это действие нельзя отменить. Рутина будет удалена навсегда.'
+                : 'This action cannot be undone. The routine will be permanently deleted.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === 'ru' ? 'Отмена' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRoutine} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {language === 'ru' ? 'Удалить' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

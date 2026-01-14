@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Calendar, FileText, ClipboardList, Plus } from 'lucide-react';
+import { Calendar, FileText, Plus } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { TaskChooserDialog } from '@/components/TaskChooserDialog';
 import { AddFromTemplateDialog } from '@/components/AddFromTemplateDialog';
 import { JobberCalendar } from '@/components/JobberCalendar';
 import { RoutineBlocks } from '@/components/RoutineBlocks';
-import { MyPlansSheet } from '@/components/MyPlansSheet';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { useTasks } from '@/hooks/useTasks';
 
@@ -18,7 +17,6 @@ export const TasksPage = () => {
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
-  const [myPlansOpen, setMyPlansOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
@@ -28,6 +26,11 @@ export const TasksPage = () => {
     : null;
 
   const handleEditRoutine = (templateId: string) => {
+    setEditingTemplateId(templateId);
+  };
+
+  const handleCopyRoutine = (templateId: string) => {
+    // Open the copied routine in edit mode
     setEditingTemplateId(templateId);
   };
 
@@ -43,17 +46,6 @@ export const TasksPage = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* My Plans button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="rounded-xl gap-1"
-            onClick={() => setMyPlansOpen(true)}
-          >
-            <ClipboardList className="w-4 h-4" />
-            {language === 'ru' ? 'Мои планы' : 'My Plans'}
-          </Button>
-          
           {/* From Template */}
           <AddFromTemplateDialog 
             trigger={
@@ -82,6 +74,7 @@ export const TasksPage = () => {
         selectedChildId={selectedChildId}
         viewMode={viewMode}
         onEditRoutine={handleEditRoutine}
+        onCopyRoutine={handleCopyRoutine}
         className="mb-4"
       />
 
@@ -97,12 +90,6 @@ export const TasksPage = () => {
           className="h-full"
         />
       </div>
-
-      {/* My Plans Sheet */}
-      <MyPlansSheet 
-        open={myPlansOpen} 
-        onOpenChange={setMyPlansOpen} 
-      />
 
       {/* Edit Routine/Task Dialog */}
       {editingTemplate && (

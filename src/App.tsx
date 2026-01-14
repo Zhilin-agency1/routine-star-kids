@@ -13,10 +13,8 @@ import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import { AuthPage } from "./pages/AuthPage";
 import { StorePage } from "./pages/child/StorePage";
-import { JobBoardPage } from "./pages/child/JobBoardPage";
 import { FamilySchedulePage } from "./pages/child/FamilySchedulePage";
 import { FamilyJobBoardPage } from "./pages/child/FamilyJobBoardPage";
-import { MyRewardsPage } from "./pages/child/MyRewardsPage";
 import { ParentDashboard } from "./pages/parent/Dashboard";
 import { ChildrenPage } from "./pages/parent/ChildrenPage";
 import { TasksPage } from "./pages/parent/TasksPage";
@@ -55,7 +53,7 @@ const App = () => (
                   }
                 />
                 
-                {/* Child Routes - Family Mode */}
+                {/* Child Routes - Unified KIDS mode */}
                 <Route
                   path="/schedule"
                   element={
@@ -80,20 +78,6 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                
-                {/* Child Routes - Personal Mode */}
-                <Route
-                  path="/rewards"
-                  element={
-                    <ProtectedRoute>
-                      <FamilySetup>
-                        <Layout>
-                          <MyRewardsPage />
-                        </Layout>
-                      </FamilySetup>
-                    </ProtectedRoute>
-                  }
-                />
                 <Route
                   path="/store"
                   element={
@@ -101,18 +85,6 @@ const App = () => (
                       <FamilySetup>
                         <Layout>
                           <StorePage />
-                        </Layout>
-                      </FamilySetup>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/jobs"
-                  element={
-                    <ProtectedRoute>
-                      <FamilySetup>
-                        <Layout>
-                          <JobBoardPage />
                         </Layout>
                       </FamilySetup>
                     </ProtectedRoute>

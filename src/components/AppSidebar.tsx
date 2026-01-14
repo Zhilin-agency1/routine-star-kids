@@ -1,14 +1,10 @@
-import { useState } from 'react';
-import { Home, Calendar, Briefcase, Trophy, ShoppingBag, ListTodo, Users, LogOut, LogIn, ChevronDown, Check, Pencil, User } from 'lucide-react';
+import { Home, Calendar, Briefcase, ShoppingBag, ListTodo, LogOut, LogIn, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
-import { ChildAvatar } from '@/components/ui/ChildAvatar';
-import { CoinBadge } from '@/components/ui/CoinBadge';
 import { GroweeCharacter } from '@/components/ui/GroweeCharacter';
-import { EditChildProfileDialog } from '@/components/EditChildProfileDialog';
 import {
   Sidebar,
   SidebarContent,
@@ -22,14 +18,6 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
 
 interface NavItem {
   icon: React.ElementType;
@@ -37,23 +25,15 @@ interface NavItem {
   path: string;
 }
 
-// Family dashboard navigation (when viewMode is 'family' AND role is 'child')
-// Child mode = execution only - NO Templates
-const familyNavItems: NavItem[] = [
+// Child navigation - unified KIDS mode (no personal/family split)
+const childNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_today', path: '/' },
   { icon: Calendar, labelKey: 'nav_schedule', path: '/schedule' },
   { icon: Briefcase, labelKey: 'nav_jobs', path: '/exchange' },
-];
-
-// Personal child navigation (when viewMode is 'personal')
-const personalNavItems: NavItem[] = [
-  { icon: Home, labelKey: 'nav_today', path: '/' },
-  { icon: Trophy, labelKey: 'nav_rewards', path: '/rewards' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/store' },
-  { icon: Briefcase, labelKey: 'nav_jobs', path: '/jobs' },
 ];
 
-// Parent navigation - Updated: removed Plans, added Profile
+// Parent navigation
 const parentNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_dashboard', path: '/parent' },
   { icon: ListTodo, labelKey: 'nav_tasks', path: '/parent/tasks' },
@@ -65,7 +45,6 @@ const parentNavItems: NavItem[] = [
 const translations: Record<string, { en: string; ru: string }> = {
   nav_today: { en: 'Today', ru: 'Сегодня' },
   nav_schedule: { en: 'Schedule', ru: 'Расписание' },
-  nav_rewards: { en: 'Rewards', ru: 'Награды' },
   nav_store: { en: 'Store', ru: 'Магазин' },
   nav_jobs: { en: 'Jobs', ru: 'Работы' },
   nav_tasks: { en: 'Tasks', ru: 'Задания' },
@@ -75,38 +54,16 @@ const translations: Record<string, { en: string; ru: string }> = {
 
 export const AppSidebar = () => {
   const { language, t } = useLanguage();
-  const { role, viewMode, setViewMode, currentChild, setCurrentChild, children } = useApp();
+  const { role } = useApp();
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [childToEdit, setChildToEdit] = useState<typeof currentChild>(null);
 
   const isCollapsed = state === 'collapsed';
 
-  const handleEditChild = (child: typeof currentChild, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (child) {
-      setChildToEdit(child);
-      setEditDialogOpen(true);
-    }
-  };
-
-  const handleEditSuccess = (updatedChild: typeof currentChild) => {
-    if (updatedChild && currentChild?.id === updatedChild.id) {
-      setCurrentChild(updatedChild);
-    }
-  };
-
-  // Determine which nav items to show based on role and viewMode
-  const getNavItems = () => {
-    if (role === 'parent') return parentNavItems;
-    if (viewMode === 'family') return familyNavItems;
-    return personalNavItems;
-  };
-
-  const navItems = getNavItems();
+  // Determine which nav items to show based on role
+  const navItems = role === 'parent' ? parentNavItems : childNavItems;
 
   const getLabel = (key: string) => {
     const trans = translations[key];
@@ -115,20 +72,7 @@ export const AppSidebar = () => {
 
   const groupLabel = role === 'parent' 
     ? (language === 'ru' ? 'Управление' : 'Management')
-    : viewMode === 'family' 
-      ? (language === 'ru' ? 'Семья' : 'Family')
-      : (language === 'ru' ? 'Личное' : 'Personal');
-
-  const handleSelectChild = (child: typeof currentChild) => {
-    setCurrentChild(child);
-    setViewMode('personal');
-    navigate('/');
-  };
-
-  const handleSelectFamily = () => {
-    setViewMode('family');
-    navigate('/');
-  };
+    : (language === 'ru' ? 'Меню' : 'Menu');
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -142,129 +86,6 @@ export const AppSidebar = () => {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* User Profile Section */}
-        {role === 'child' && (
-          <SidebarGroup>
-            {!isCollapsed && (
-              <SidebarGroupLabel>
-                {language === 'ru' ? 'Профиль' : 'Profile'}
-              </SidebarGroupLabel>
-            )}
-            <SidebarGroupContent>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors",
-                    isCollapsed && "justify-center p-2"
-                  )}>
-                    {viewMode === 'family' ? (
-                      <>
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Trophy className="w-5 h-5 text-primary" />
-                        </div>
-                        {!isCollapsed && (
-                          <div className="flex-1 text-left min-w-0">
-                            <div className="flex items-center gap-1">
-                              <p className="font-semibold truncate">
-                                {language === 'ru' ? 'Семья' : 'Family'}
-                              </p>
-                              <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                            </div>
-                          <p className="text-xs text-muted-foreground">
-                            {language === 'ru' ? 'Обзор' : 'Overview'}
-                          </p>
-                        </div>
-                        )}
-                      </>
-                    ) : currentChild ? (
-                      <>
-                        <ChildAvatar avatar={currentChild.avatar_url || '🦁'} size="md" />
-                        {!isCollapsed && (
-                          <div className="flex-1 text-left min-w-0">
-                            <div className="flex items-center gap-1">
-                              <p className="font-semibold truncate">{currentChild.name}</p>
-                              <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                            </div>
-                            <CoinBadge amount={currentChild.balance} size="sm" />
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <Users className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        {!isCollapsed && (
-                          <div className="flex items-center gap-1">
-                            <p className="font-semibold">
-                              {language === 'ru' ? 'Выберите' : 'Select'}
-                            </p>
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>
-                    {language === 'ru' ? 'Переключить вид' : 'Switch view'}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  
-                  {/* Family Dashboard Option */}
-                  <DropdownMenuItem
-                    onClick={handleSelectFamily}
-                    className="flex items-center gap-3"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Trophy className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">
-                        {language === 'ru' ? 'Обзор' : 'Overview'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {language === 'ru' ? 'Все дети' : 'All children'}
-                      </p>
-                    </div>
-                    {viewMode === 'family' && (
-                      <Check className="w-4 h-4 text-primary" />
-                    )}
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  {/* Children List */}
-                  {children.map((child) => (
-                    <DropdownMenuItem
-                      key={child.id}
-                      onClick={() => handleSelectChild(child)}
-                      className="flex items-center gap-3"
-                    >
-                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
-                      <div className="flex-1">
-                        <p className="font-medium">{child.name}</p>
-                        <p className="text-xs text-muted-foreground">{child.balance} coins</p>
-                      </div>
-                      <button
-                        onClick={(e) => handleEditChild(child, e)}
-                        className="p-1.5 rounded-md hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
-                        title={language === 'ru' ? 'Редактировать' : 'Edit'}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      {viewMode === 'personal' && currentChild?.id === child.id && (
-                        <Check className="w-4 h-4 text-primary" />
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
         {/* Navigation */}
         <SidebarGroup>
           {!isCollapsed && (
@@ -327,16 +148,6 @@ export const AppSidebar = () => {
           </button>
         )}
       </SidebarFooter>
-
-      {/* Edit Child Profile Dialog */}
-      {childToEdit && (
-        <EditChildProfileDialog
-          child={childToEdit}
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          onSuccess={handleEditSuccess}
-        />
-      )}
     </Sidebar>
   );
 };

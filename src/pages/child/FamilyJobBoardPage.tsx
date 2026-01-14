@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 export const FamilyJobBoardPage = () => {
   const { language } = useLanguage();
-  const { jobBoardItems, children, currentChild, setCurrentChild, setViewMode } = useApp();
+  const { jobBoardItems, children, currentChild, setCurrentChild } = useApp();
 
   const activeJobs = jobBoardItems.filter(job => job.active);
 

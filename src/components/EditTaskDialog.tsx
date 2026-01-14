@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { IconPicker } from '@/components/IconPicker';
 import {
   Dialog,
   DialogContent,
@@ -41,11 +42,6 @@ import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
 type TaskTemplate = Database['public']['Tables']['task_templates']['Row'];
-
-const taskIcons = [
-  '✨', '🛏️', '🪥', '🍳', '📚', '🧹', '🧸', '🎒',
-  '🏃', '🎹', '🎨', '✏️', '🧘', '🚿', '👕', '🍽️',
-];
 
 const weekDays = [
   { value: 1, labelRu: 'Пн', labelEn: 'Mon' },
@@ -106,7 +102,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
       setInternalOpen(value);
     }
   };
-  const [selectedIcon, setSelectedIcon] = useState(template.icon || taskIcons[0]);
+  const [selectedIcon, setSelectedIcon] = useState(template.icon || '✨');
   const [selectedDays, setSelectedDays] = useState<number[]>(template.recurring_days || [1, 2, 3, 4, 5]);
   const [taskType, setTaskType] = useState<'recurring' | 'one_time'>(template.task_type as 'recurring' | 'one_time');
   const [taskCategory, setTaskCategory] = useState<'routine' | 'activity'>(template.task_category as 'routine' | 'activity');
@@ -167,7 +163,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
       endTime: template.end_time?.slice(0, 5) || '',
       childId: template.child_id || '',
     });
-    setSelectedIcon(template.icon || taskIcons[0]);
+    setSelectedIcon(template.icon || '✨');
     setSelectedDays(template.recurring_days || [1, 2, 3, 4, 5]);
     setTaskType(template.task_type as 'recurring' | 'one_time');
     setTaskCategory(template.task_category as 'routine' | 'activity');
@@ -414,26 +410,7 @@ export const EditTaskDialog = ({ template, trigger, open: controlledOpen, onOpen
           </div>
 
           {/* Icon Selection */}
-          <div className="space-y-2">
-            <Label>{language === 'ru' ? 'Иконка' : 'Icon'}</Label>
-            <div className="grid grid-cols-8 gap-2">
-              {taskIcons.map((icon) => (
-                <button
-                  key={icon}
-                  type="button"
-                  onClick={() => setSelectedIcon(icon)}
-                  className={cn(
-                    "w-10 h-10 rounded-xl text-2xl flex items-center justify-center transition-all",
-                    selectedIcon === icon
-                      ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 scale-110"
-                      : "bg-muted hover:bg-muted/80"
-                  )}
-                >
-                  {icon}
-                </button>
-              ))}
-            </div>
-          </div>
+          <IconPicker selectedIcon={selectedIcon} onSelectIcon={setSelectedIcon} />
 
           {/* Title */}
           <div className="space-y-2">

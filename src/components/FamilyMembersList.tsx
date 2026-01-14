@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Crown, User } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
+// Using family_members_public VIEW - excludes sensitive fields (invite_email, invite_token)
 interface FamilyMember {
   id: string;
   user_id: string;
   role_label: string;
   permission_level: string;
-  invite_email: string | null;
   invite_status: string;
 }
 
@@ -58,13 +58,14 @@ export const FamilyMembersList = () => {
       }
       
       try {
+        // Use the secure VIEW that excludes sensitive fields (invite_email, invite_token)
         const { data, error } = await supabase
-          .from('family_members')
-          .select('*')
+          .from('family_members_public' as 'family_members')
+          .select('id, user_id, role_label, permission_level, invite_status')
           .eq('family_id', family.id);
         
         if (error) throw error;
-        setMembers(data || []);
+        setMembers((data as FamilyMember[]) || []);
       } catch (error) {
         console.error('Error fetching members:', error);
       } finally {
@@ -129,8 +130,8 @@ export const FamilyMembersList = () => {
             <div>
               <p className="font-medium">
                 {member.role_label}
-                {member.invite_status === 'pending' && member.invite_email && (
-                  <span className="text-muted-foreground text-sm ml-1">({member.invite_email})</span>
+                {member.invite_status === 'pending' && (
+                  <span className="text-muted-foreground text-sm ml-1">({language === 'ru' ? 'приглашён' : 'invited'})</span>
                 )}
               </p>
               <div className="flex items-center gap-1">

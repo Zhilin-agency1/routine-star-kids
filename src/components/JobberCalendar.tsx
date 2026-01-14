@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { 
   Calendar, 
   ChevronLeft, 
@@ -38,6 +38,8 @@ import { cn } from '@/lib/utils';
 import { EditActivityDialog } from '@/components/EditActivityDialog';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
+import { ActivityActionSheet } from '@/components/ActivityActionSheet';
+import { CopyActivityDialog } from '@/components/CopyActivityDialog';
 import { getWeekDays } from '@/i18n/translations';
 import { toast } from 'sonner';
 import {
@@ -81,25 +83,17 @@ interface ScheduleItem {
   originalActivity?: ActivitySchedule;
   originalTemplate?: TaskTemplate;
   category?: string;
+  endTime?: string | null;
 }
 
-// Color palette for children
-const CHILD_COLORS = [
-  'bg-blue-500',
-  'bg-green-500',
-  'bg-purple-500',
-  'bg-orange-500',
-  'bg-pink-500',
-  'bg-teal-500',
-];
-
+// Color palette for children - neutral/soft tones
 const CHILD_COLORS_LIGHT = [
-  'bg-blue-100 border-blue-400 text-blue-900',
-  'bg-green-100 border-green-400 text-green-900',
-  'bg-purple-100 border-purple-400 text-purple-900',
-  'bg-orange-100 border-orange-400 text-orange-900',
-  'bg-pink-100 border-pink-400 text-pink-900',
-  'bg-teal-100 border-teal-400 text-teal-900',
+  'bg-blue-50 border-blue-300 text-blue-800',
+  'bg-green-50 border-green-300 text-green-800',
+  'bg-purple-50 border-purple-300 text-purple-800',
+  'bg-orange-50 border-orange-300 text-orange-800',
+  'bg-pink-50 border-pink-300 text-pink-800',
+  'bg-teal-50 border-teal-300 text-teal-800',
 ];
 
 interface JobberCalendarProps {
@@ -146,10 +140,19 @@ export const JobberCalendar = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'activity' | 'task' } | null>(null);
   
+  // Action sheet and copy dialog states
+  const [actionSheetActivity, setActionSheetActivity] = useState<ActivitySchedule | null>(null);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const [copyDialogActivity, setCopyDialogActivity] = useState<ActivitySchedule | null>(null);
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  
   const weekDays = getWeekDays(language);
   
   // Mobile detection
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  
+  // Ref for week grid scroll container
+  const weekGridRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -164,7 +167,7 @@ export const JobberCalendar = ({
   const childColorMap = useMemo(() => {
     const map = new Map<string, number>();
     children.forEach((child, index) => {
-      map.set(child.id, index % CHILD_COLORS.length);
+      map.set(child.id, index % CHILD_COLORS_LIGHT.length);
     });
     return map;
   }, [children]);
@@ -229,6 +232,7 @@ export const JobberCalendar = ({
           icon: task.icon,
           category: task.task_category,
           originalTemplate: task,
+          endTime: task.end_time,
         });
       }
     });
@@ -236,12 +240,40 @@ export const JobberCalendar = ({
     return items.sort((a, b) => a.time.localeCompare(b.time));
   }, [filteredActivities, activityTasks]);
 
-  const getItemsForHour = (date: Date, hour: number): ScheduleItem[] => {
+  // Get items that start at a specific hour
+  const getItemsStartingAtHour = (date: Date, hour: number): ScheduleItem[] => {
     const dayItems = getItemsForDay(date);
     return dayItems.filter(item => {
       const itemHour = parseInt(item.time.split(':')[0], 10);
       return itemHour === hour;
     });
+  };
+
+  // Calculate the duration in hours for an item
+  const getItemDurationHours = (item: ScheduleItem): number => {
+    // If duration is provided (in minutes), use it
+    if (item.duration) {
+      return Math.max(1, Math.ceil(item.duration / 60));
+    }
+    
+    // If end_time is provided, calculate duration
+    if (item.endTime) {
+      const startHour = parseInt(item.time.split(':')[0], 10);
+      const startMin = parseInt(item.time.split(':')[1], 10);
+      const endHour = parseInt(item.endTime.split(':')[0], 10);
+      const endMin = parseInt(item.endTime.split(':')[1], 10);
+      
+      const startTotalMins = startHour * 60 + startMin;
+      const endTotalMins = endHour * 60 + endMin;
+      const durationMins = endTotalMins - startTotalMins;
+      
+      if (durationMins > 0) {
+        return Math.max(1, Math.ceil(durationMins / 60));
+      }
+    }
+    
+    // Default to 1 hour
+    return 1;
   };
 
   // Navigation
@@ -274,7 +306,8 @@ export const JobberCalendar = ({
   };
 
   const days = getDaysToShow();
-  const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7am to 9pm
+  // Full day hours: 00:00 to 23:00
+  const hours = Array.from({ length: 24 }, (_, i) => i);
 
   // Month grid info
   const getMonthGridInfo = () => {
@@ -288,22 +321,57 @@ export const JobberCalendar = ({
   const handleCellClick = (date: Date, hour?: number) => {
     if (isReadOnly) return;
     setAddActivityDate(date);
-    setAddActivityTime(hour ? `${hour.toString().padStart(2, '0')}:00` : null);
+    setAddActivityTime(hour !== undefined ? `${hour.toString().padStart(2, '0')}:00` : null);
     setAddActivityOpen(true);
   };
 
-  // Handle item click - open edit dialog
-  const handleItemClick = (item: ScheduleItem) => {
+  // Handle item click - open action sheet for activities, edit dialog for tasks
+  const handleItemClick = (item: ScheduleItem, e?: React.MouseEvent) => {
     if (isReadOnly) return;
+    if (e) e.stopPropagation();
+    
     if (item.type === 'activity' && item.originalActivity) {
-      setEditingActivity(item.originalActivity);
+      // Open action sheet for activities
+      setActionSheetActivity(item.originalActivity);
+      setActionSheetOpen(true);
     } else if (item.type === 'task' && item.originalTemplate) {
       setEditingTemplate(item.originalTemplate);
     }
   };
 
-  // Handle copy item
-  const handleCopyItem = async (item: ScheduleItem) => {
+  // Handle edit from action sheet
+  const handleEditActivity = () => {
+    if (actionSheetActivity) {
+      setEditingActivity(actionSheetActivity);
+    }
+  };
+
+  // Handle copy from action sheet
+  const handleCopyActivity = () => {
+    if (actionSheetActivity) {
+      setCopyDialogActivity(actionSheetActivity);
+      setCopyDialogOpen(true);
+    }
+  };
+
+  // Handle delete from action sheet
+  const handleDeleteActivity = () => {
+    if (actionSheetActivity) {
+      setItemToDelete({ id: actionSheetActivity.id, type: 'activity' });
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  // Handle copy complete - open edit dialog for new activity
+  const handleCopyComplete = (newActivity: ActivitySchedule) => {
+    // Small delay to allow the copy dialog to close first
+    setTimeout(() => {
+      setEditingActivity(newActivity);
+    }, 100);
+  };
+
+  // Handle copy item (for tasks)
+  const handleCopyTaskItem = async (item: ScheduleItem) => {
     if (item.type === 'task' && item.originalTemplate) {
       const template = item.originalTemplate;
       try {
@@ -335,28 +403,6 @@ export const JobberCalendar = ({
         if (copiedTemplate) {
           setEditingTemplate(copiedTemplate);
         }
-      } catch (error) {
-        toast.error(language === 'ru' ? 'Ошибка при копировании' : 'Failed to copy');
-      }
-    } else if (item.type === 'activity' && item.originalActivity) {
-      const activity = item.originalActivity;
-      try {
-        const copiedTitle_ru = `${activity.title_ru} (${language === 'ru' ? 'Копия' : 'Copy'})`;
-        const copiedTitle_en = `${activity.title_en} (Copy)`;
-        
-        await createActivity.mutateAsync({
-          title_ru: copiedTitle_ru,
-          title_en: copiedTitle_en,
-          child_id: activity.child_id,
-          time: activity.time,
-          duration: activity.duration,
-          location: activity.location,
-          recurring_days: activity.recurring_days,
-          start_date: activity.start_date,
-          end_date: activity.end_date,
-        });
-        
-        toast.success(language === 'ru' ? 'Занятие скопировано!' : 'Activity copied!');
       } catch (error) {
         toast.error(language === 'ru' ? 'Ошибка при копировании' : 'Failed to copy');
       }
@@ -406,6 +452,41 @@ export const JobberCalendar = ({
       return `${format(days[0], 'd MMM', { locale })} – ${format(days[days.length - 1], 'd MMM', { locale })}`;
     }
     return format(selectedDate, 'LLLL yyyy', { locale });
+  };
+
+  // Render week view item with proper duration height
+  const renderWeekItem = (item: ScheduleItem, dayIndex: number, hour: number) => {
+    const child = children.find(c => c.id === item.child_id);
+    const colorIndex = childColorMap.get(item.child_id) ?? 0;
+    const durationHours = getItemDurationHours(item);
+    const heightPx = durationHours * 50 - 2; // 50px per hour minus gap
+    
+    return (
+      <div 
+        key={item.id}
+        onClick={(e) => handleItemClick(item, e)}
+        style={{ height: `${heightPx}px`, minHeight: '48px' }}
+        className={cn(
+          "text-[10px] p-1.5 rounded border cursor-pointer hover:opacity-80 transition-opacity font-medium overflow-hidden absolute left-0.5 right-0.5 z-10",
+          CHILD_COLORS_LIGHT[colorIndex]
+        )}
+      >
+        <div className="flex items-center gap-1">
+          <span className="shrink-0">{item.icon || child?.avatar_url || '📅'}</span>
+          <span className="font-semibold truncate">
+            {language === 'ru' ? item.title_ru : item.title_en}
+          </span>
+        </div>
+        {durationHours > 1 && (
+          <div className="text-[9px] opacity-70 mt-0.5">
+            {item.time.slice(0, 5)} - {item.endTime?.slice(0, 5) || `${(parseInt(item.time.split(':')[0]) + durationHours).toString().padStart(2, '0')}:${item.time.split(':')[1]}`}
+          </div>
+        )}
+        {item.location && durationHours > 1 && (
+          <div className="text-[9px] opacity-70 truncate">📍 {item.location}</div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -505,15 +586,15 @@ export const JobberCalendar = ({
       {/* Calendar Grid */}
       <div className="flex-1 overflow-auto mt-3" style={{ WebkitOverflowScrolling: 'touch' }}>
         {viewMode === 'month' ? (
-          <div className="border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
+          <div className="border border-border rounded-xl overflow-hidden bg-background shadow-sm">
             {/* Day headers */}
-            <div className="grid grid-cols-7 border-b-2 border-border bg-muted">
+            <div className="grid grid-cols-7 border-b border-border bg-muted/30">
               {weekDays.map((day, i) => (
                 <div 
                   key={i} 
                   className={cn(
-                    "text-center text-xs font-bold py-2 uppercase tracking-wide",
-                    i < 6 && "border-r border-border",
+                    "text-center text-xs font-semibold py-2 uppercase tracking-wide",
+                    i < 6 && "border-r border-border/50",
                     i >= 5 ? "text-muted-foreground" : "text-foreground"
                   )}
                 >
@@ -528,8 +609,8 @@ export const JobberCalendar = ({
                 <div 
                   key={`empty-${i}`} 
                   className={cn(
-                    "min-h-[80px] md:min-h-[100px] bg-muted/30 border-b border-border",
-                    i < 6 && "border-r border-border"
+                    "min-h-[80px] md:min-h-[100px] bg-muted/10 border-b border-border/50",
+                    i < 6 && "border-r border-border/50"
                   )} 
                 />
               ))}
@@ -548,11 +629,11 @@ export const JobberCalendar = ({
                     key={day.toISOString()}
                     onClick={() => !isReadOnly && handleCellClick(day)}
                     className={cn(
-                      'min-h-[80px] md:min-h-[100px] p-1.5 transition-colors text-left hover:bg-muted/50 relative group',
-                      !isLastColumn && "border-r border-border",
-                      !isLastRow && "border-b border-border",
-                      isToday(day) && 'bg-primary/10',
-                      dayOfWeek >= 5 && !isToday(day) && 'bg-muted/20'
+                      'min-h-[80px] md:min-h-[100px] p-1.5 transition-colors text-left hover:bg-muted/30 relative group bg-background',
+                      !isLastColumn && "border-r border-border/50",
+                      !isLastRow && "border-b border-border/50",
+                      isToday(day) && 'bg-primary/5',
+                      dayOfWeek >= 5 && !isToday(day) && 'bg-muted/5'
                     )}
                   >
                     <div className={cn(
@@ -568,10 +649,7 @@ export const JobberCalendar = ({
                         return (
                           <div 
                             key={item.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleItemClick(item);
-                            }}
+                            onClick={(e) => handleItemClick(item, e)}
                             className={cn(
                               "text-[10px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border font-medium cursor-pointer hover:opacity-80",
                               CHILD_COLORS_LIGHT[colorIndex]
@@ -600,21 +678,24 @@ export const JobberCalendar = ({
             </div>
           </div>
         ) : viewMode === 'week' ? (
-          <div className="min-w-[700px] border-2 border-border rounded-xl overflow-hidden bg-card shadow-sm">
+          <div 
+            ref={weekGridRef}
+            className="min-w-[700px] border border-border rounded-xl overflow-hidden bg-background shadow-sm"
+          >
             {/* Header row with days */}
-            <div className="grid grid-cols-8 border-b-2 border-border sticky top-0 bg-muted z-10">
-              <div className="p-2 text-center text-xs text-muted-foreground font-semibold border-r border-border" />
+            <div className="grid grid-cols-8 border-b border-border sticky top-0 bg-muted/30 z-10">
+              <div className="p-2 text-center text-xs text-muted-foreground font-semibold border-r border-border/50" />
               {days.map((day, index) => (
                 <div 
                   key={day.toISOString()} 
                   className={cn(
-                    "p-2 text-center",
-                    index < days.length - 1 && "border-r border-border",
-                    isToday(day) ? "bg-primary/20" : index >= 5 ? "bg-muted/80" : ""
+                    "p-2 text-center bg-background",
+                    index < days.length - 1 && "border-r border-border/50",
+                    isToday(day) ? "bg-primary/5" : index >= 5 ? "bg-muted/5" : ""
                   )}
                 >
                   <div className={cn(
-                    "text-xs font-bold uppercase tracking-wide",
+                    "text-xs font-semibold uppercase tracking-wide",
                     isToday(day) ? "text-primary" : "text-foreground"
                   )}>
                     {format(day, 'EEE', { locale })}
@@ -634,55 +715,32 @@ export const JobberCalendar = ({
               {hours.map((hour, hourIndex) => (
                 <div key={hour} className={cn(
                   "grid grid-cols-8 min-h-[50px]",
-                  hourIndex < hours.length - 1 && "border-b border-border/70"
+                  hourIndex < hours.length - 1 && "border-b border-border/30"
                 )}>
                   {/* Hour label */}
-                  <div className="p-1 text-xs text-muted-foreground font-mono font-bold text-right pr-2 border-r border-border bg-muted/50 flex items-start justify-end">
+                  <div className="p-1 text-xs text-muted-foreground font-mono font-medium text-right pr-2 border-r border-border/50 bg-muted/10 flex items-start justify-end">
                     {hour.toString().padStart(2, '0')}:00
                   </div>
                   {/* Day columns */}
                   {days.map((day, dayIndex) => {
-                    const hourItems = getItemsForHour(day, hour);
+                    const hourItems = getItemsStartingAtHour(day, hour);
                     return (
                       <button 
                         key={day.toISOString()} 
                         onClick={() => handleCellClick(day, hour)}
                         disabled={isReadOnly}
                         className={cn(
-                          "p-0.5 min-h-[50px] relative group hover:bg-muted/30 transition-colors",
-                          dayIndex < days.length - 1 && "border-r border-border/50",
-                          isToday(day) && "bg-primary/5",
-                          dayIndex >= 5 && !isToday(day) && "bg-muted/10"
+                          "p-0.5 min-h-[50px] relative group hover:bg-muted/20 transition-colors",
+                          dayIndex < days.length - 1 && "border-r border-border/30",
+                          isToday(day) && "bg-primary/[0.02]",
+                          dayIndex >= 5 && !isToday(day) && "bg-muted/[0.02]"
                         )}
                       >
-                        {hourItems.map(item => {
-                          const child = children.find(c => c.id === item.child_id);
-                          const colorIndex = childColorMap.get(item.child_id) ?? 0;
-                          return (
-                            <div 
-                              key={item.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleItemClick(item);
-                              }}
-                              className={cn(
-                                "text-[10px] p-1 rounded mb-0.5 border cursor-pointer hover:opacity-80 transition-opacity font-medium",
-                                CHILD_COLORS_LIGHT[colorIndex]
-                              )}
-                            >
-                              <div className="flex items-center gap-1">
-                                <span className="shrink-0">{item.icon || child?.avatar_url || '📅'}</span>
-                                <span className="font-semibold truncate">
-                                  {language === 'ru' ? item.title_ru : item.title_en}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {hourItems.map(item => renderWeekItem(item, dayIndex, hour))}
                         {/* Add indicator */}
                         {!isReadOnly && hourItems.length === 0 && (
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Plus className="w-4 h-4 text-muted-foreground/50" />
+                            <Plus className="w-4 h-4 text-muted-foreground/30" />
                           </div>
                         )}
                       </button>
@@ -701,8 +759,8 @@ export const JobberCalendar = ({
                 <div 
                   key={day.toISOString()} 
                   className={cn(
-                    'rounded-xl p-4 border-2',
-                    isToday(day) ? 'bg-primary/10 border-primary/40' : 'bg-card border-border'
+                    'rounded-xl p-4 border',
+                    isToday(day) ? 'bg-primary/5 border-primary/20' : 'bg-background border-border'
                   )}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -743,7 +801,7 @@ export const JobberCalendar = ({
                           <div 
                             key={item.id}
                             className={cn(
-                              "flex items-center gap-3 p-3 rounded-lg border-2 group",
+                              "flex items-center gap-3 p-3 rounded-lg border group",
                               CHILD_COLORS_LIGHT[colorIndex]
                             )}
                           >
@@ -788,7 +846,14 @@ export const JobberCalendar = ({
                                     <Pencil className="w-4 h-4 mr-2" />
                                     {language === 'ru' ? 'Редактировать' : 'Edit'}
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleCopyItem(item)}>
+                                  <DropdownMenuItem onClick={() => {
+                                    if (item.type === 'activity' && item.originalActivity) {
+                                      setCopyDialogActivity(item.originalActivity);
+                                      setCopyDialogOpen(true);
+                                    } else {
+                                      handleCopyTaskItem(item);
+                                    }
+                                  }}>
                                     <Copy className="w-4 h-4 mr-2" />
                                     {language === 'ru' ? 'Копировать' : 'Copy'}
                                   </DropdownMenuItem>
@@ -816,6 +881,24 @@ export const JobberCalendar = ({
           </div>
         )}
       </div>
+
+      {/* Activity Action Sheet */}
+      <ActivityActionSheet
+        activity={actionSheetActivity}
+        open={actionSheetOpen}
+        onOpenChange={setActionSheetOpen}
+        onEdit={handleEditActivity}
+        onCopy={handleCopyActivity}
+        onDelete={handleDeleteActivity}
+      />
+
+      {/* Copy Activity Dialog */}
+      <CopyActivityDialog
+        activity={copyDialogActivity}
+        open={copyDialogOpen}
+        onOpenChange={setCopyDialogOpen}
+        onCopyComplete={handleCopyComplete}
+      />
 
       {/* Edit Activity Dialog */}
       <EditActivityDialog

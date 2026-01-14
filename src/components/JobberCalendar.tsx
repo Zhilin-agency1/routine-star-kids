@@ -38,8 +38,9 @@ import { cn } from '@/lib/utils';
 import { EditActivityDialog } from '@/components/EditActivityDialog';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { AddTaskDialog } from '@/components/AddTaskDialog';
-import { ActivityActionSheet } from '@/components/ActivityActionSheet';
+import { ItemActionSheet, type ActionableItem } from '@/components/ItemActionSheet';
 import { CopyActivityDialog } from '@/components/CopyActivityDialog';
+import { CopyTaskDialog } from '@/components/CopyTaskDialog';
 import { getWeekDays } from '@/i18n/translations';
 import { toast } from 'sonner';
 import {
@@ -140,11 +141,13 @@ export const JobberCalendar = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'activity' | 'task' } | null>(null);
   
-  // Action sheet and copy dialog states
-  const [actionSheetActivity, setActionSheetActivity] = useState<ActivitySchedule | null>(null);
+  // Action sheet and copy dialog states - unified for both activities and tasks
+  const [actionSheetItem, setActionSheetItem] = useState<ActionableItem | null>(null);
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const [copyDialogActivity, setCopyDialogActivity] = useState<ActivitySchedule | null>(null);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const [copyDialogTemplate, setCopyDialogTemplate] = useState<TaskTemplate | null>(null);
+  const [copyTaskDialogOpen, setCopyTaskDialogOpen] = useState(false);
   
   const weekDays = getWeekDays(language);
   
@@ -325,88 +328,70 @@ export const JobberCalendar = ({
     setAddActivityOpen(true);
   };
 
-  // Handle item click - open action sheet for activities, edit dialog for tasks
+  // Handle item click - open action sheet for all items
   const handleItemClick = (item: ScheduleItem, e?: React.MouseEvent) => {
     if (isReadOnly) return;
     if (e) e.stopPropagation();
     
-    if (item.type === 'activity' && item.originalActivity) {
-      // Open action sheet for activities
-      setActionSheetActivity(item.originalActivity);
-      setActionSheetOpen(true);
-    } else if (item.type === 'task' && item.originalTemplate) {
-      setEditingTemplate(item.originalTemplate);
-    }
+    // Create ActionableItem for the action sheet
+    const actionItem: ActionableItem = {
+      id: item.id,
+      title_ru: item.title_ru,
+      title_en: item.title_en,
+      type: item.type,
+      originalActivity: item.originalActivity,
+      originalTemplate: item.originalTemplate,
+    };
+    
+    setActionSheetItem(actionItem);
+    setActionSheetOpen(true);
   };
 
   // Handle edit from action sheet
-  const handleEditActivity = () => {
-    if (actionSheetActivity) {
-      setEditingActivity(actionSheetActivity);
+  const handleEditItem = () => {
+    if (!actionSheetItem) return;
+    
+    if (actionSheetItem.type === 'activity' && actionSheetItem.originalActivity) {
+      setEditingActivity(actionSheetItem.originalActivity);
+    } else if (actionSheetItem.type === 'task' && actionSheetItem.originalTemplate) {
+      setEditingTemplate(actionSheetItem.originalTemplate);
     }
   };
 
   // Handle copy from action sheet
-  const handleCopyActivity = () => {
-    if (actionSheetActivity) {
-      setCopyDialogActivity(actionSheetActivity);
+  const handleCopyItem = () => {
+    if (!actionSheetItem) return;
+    
+    if (actionSheetItem.type === 'activity' && actionSheetItem.originalActivity) {
+      setCopyDialogActivity(actionSheetItem.originalActivity);
       setCopyDialogOpen(true);
+    } else if (actionSheetItem.type === 'task' && actionSheetItem.originalTemplate) {
+      setCopyDialogTemplate(actionSheetItem.originalTemplate);
+      setCopyTaskDialogOpen(true);
     }
   };
 
   // Handle delete from action sheet
-  const handleDeleteActivity = () => {
-    if (actionSheetActivity) {
-      setItemToDelete({ id: actionSheetActivity.id, type: 'activity' });
-      setDeleteDialogOpen(true);
-    }
+  const handleDeleteItem = () => {
+    if (!actionSheetItem) return;
+    setItemToDelete({ id: actionSheetItem.id, type: actionSheetItem.type });
+    setDeleteDialogOpen(true);
   };
 
-  // Handle copy complete - open edit dialog for new activity
-  const handleCopyComplete = (newActivity: ActivitySchedule) => {
+  // Handle activity copy complete - open edit dialog for new activity
+  const handleActivityCopyComplete = (newActivity: ActivitySchedule) => {
     // Small delay to allow the copy dialog to close first
     setTimeout(() => {
       setEditingActivity(newActivity);
     }, 100);
   };
 
-  // Handle copy item (for tasks)
-  const handleCopyTaskItem = async (item: ScheduleItem) => {
-    if (item.type === 'task' && item.originalTemplate) {
-      const template = item.originalTemplate;
-      try {
-        const copiedTitle_ru = `${template.title_ru} (${language === 'ru' ? 'Копия' : 'Copy'})`;
-        const copiedTitle_en = `${template.title_en} (Copy)`;
-        
-        const newTemplate = await createTemplate.mutateAsync({
-          title_ru: copiedTitle_ru,
-          title_en: copiedTitle_en,
-          description_ru: template.description_ru,
-          description_en: template.description_en,
-          icon: template.icon,
-          reward_amount: template.reward_amount,
-          task_type: template.task_type,
-          task_category: template.task_category,
-          recurring_days: template.recurring_days,
-          recurring_time: template.recurring_time,
-          end_time: template.end_time,
-          child_id: template.child_id,
-          start_date: template.start_date,
-          end_date: template.end_date,
-          one_time_date: template.one_time_date,
-        });
-        
-        toast.success(language === 'ru' ? 'Занятие скопировано!' : 'Activity copied!');
-        
-        // Open the copied item in edit mode
-        const copiedTemplate = templates.find(t => t.id === newTemplate.id);
-        if (copiedTemplate) {
-          setEditingTemplate(copiedTemplate);
-        }
-      } catch (error) {
-        toast.error(language === 'ru' ? 'Ошибка при копировании' : 'Failed to copy');
-      }
-    }
+  // Handle task copy complete - open edit dialog for new template
+  const handleTaskCopyComplete = (newTemplate: TaskTemplate) => {
+    // Small delay to allow the copy dialog to close first
+    setTimeout(() => {
+      setEditingTemplate(newTemplate);
+    }, 100);
   };
 
   // Handle delete confirmation
@@ -852,8 +837,9 @@ export const JobberCalendar = ({
                                     if (item.type === 'activity' && item.originalActivity) {
                                       setCopyDialogActivity(item.originalActivity);
                                       setCopyDialogOpen(true);
-                                    } else {
-                                      handleCopyTaskItem(item);
+                                    } else if (item.type === 'task' && item.originalTemplate) {
+                                      setCopyDialogTemplate(item.originalTemplate);
+                                      setCopyTaskDialogOpen(true);
                                     }
                                   }}>
                                     <Copy className="w-4 h-4 mr-2" />
@@ -884,14 +870,14 @@ export const JobberCalendar = ({
         )}
       </div>
 
-      {/* Activity Action Sheet */}
-      <ActivityActionSheet
-        activity={actionSheetActivity}
+      {/* Unified Action Sheet for all items */}
+      <ItemActionSheet
+        item={actionSheetItem}
         open={actionSheetOpen}
         onOpenChange={setActionSheetOpen}
-        onEdit={handleEditActivity}
-        onCopy={handleCopyActivity}
-        onDelete={handleDeleteActivity}
+        onEdit={handleEditItem}
+        onCopy={handleCopyItem}
+        onDelete={handleDeleteItem}
       />
 
       {/* Copy Activity Dialog */}
@@ -899,7 +885,15 @@ export const JobberCalendar = ({
         activity={copyDialogActivity}
         open={copyDialogOpen}
         onOpenChange={setCopyDialogOpen}
-        onCopyComplete={handleCopyComplete}
+        onCopyComplete={handleActivityCopyComplete}
+      />
+
+      {/* Copy Task Dialog */}
+      <CopyTaskDialog
+        template={copyDialogTemplate}
+        open={copyTaskDialogOpen}
+        onOpenChange={setCopyTaskDialogOpen}
+        onCopyComplete={handleTaskCopyComplete}
       />
 
       {/* Edit Activity Dialog */}

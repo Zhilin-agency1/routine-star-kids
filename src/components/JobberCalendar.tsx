@@ -86,17 +86,21 @@ interface ScheduleItem {
   originalTemplate?: TaskTemplate;
   category?: string;
   endTime?: string | null;
+  assigneeParentId?: string | null;
 }
 
-// Color palette for children - neutral/soft tones
-const CHILD_COLORS_LIGHT = [
-  'bg-blue-50 border-blue-300 text-blue-800',
-  'bg-green-50 border-green-300 text-green-800',
-  'bg-purple-50 border-purple-300 text-purple-800',
-  'bg-orange-50 border-orange-300 text-orange-800',
-  'bg-pink-50 border-pink-300 text-pink-800',
-  'bg-teal-50 border-teal-300 text-teal-800',
-];
+// Default color fallback
+const DEFAULT_COLOR = '#3B82F6';
+
+// Helper to get light background from hex color (10% opacity)
+const getColorStyles = (hexColor: string | null | undefined): React.CSSProperties => {
+  const color = hexColor || DEFAULT_COLOR;
+  return {
+    backgroundColor: `${color}15`, // 15 = ~8% opacity in hex
+    borderColor: color,
+    color: color,
+  };
+};
 
 interface JobberCalendarProps {
   selectedDate: Date;
@@ -171,14 +175,20 @@ export const JobberCalendar = ({
 
   const locale = language === 'ru' ? ru : undefined;
 
-  // Child color map
-  const childColorMap = useMemo(() => {
-    const map = new Map<string, number>();
-    children.forEach((child, index) => {
-      map.set(child.id, index % CHILD_COLORS_LIGHT.length);
-    });
-    return map;
-  }, [children]);
+  // Build color map for children and adults
+  const getItemColor = useCallback((childId: string | null | undefined, parentId: string | null | undefined): string => {
+    // If parent activity, find the adult's color
+    if (parentId) {
+      const adult = eligibleAdults.find(a => a.userId === parentId);
+      return adult?.activityColor || DEFAULT_COLOR;
+    }
+    // For child, find their color
+    if (childId) {
+      const child = children.find(c => c.id === childId);
+      return child?.color || DEFAULT_COLOR;
+    }
+    return DEFAULT_COLOR;
+  }, [children, eligibleAdults]);
 
   // Check if an adult is selected (format: parent:userId)
   const isAdultSelected = selectedChildId?.startsWith('parent:') ?? false;
@@ -269,6 +279,7 @@ export const JobberCalendar = ({
           category: task.task_category,
           originalTemplate: task,
           endTime: task.end_time,
+          assigneeParentId: (task as any).assignee_parent_id || null,
         });
       }
     });
@@ -475,7 +486,8 @@ export const JobberCalendar = ({
   // Render week view item with proper duration height
   const renderWeekItem = (item: ScheduleItem, dayIndex: number, hour: number) => {
     const child = children.find(c => c.id === item.child_id);
-    const colorIndex = childColorMap.get(item.child_id) ?? 0;
+    const itemColor = getItemColor(item.child_id, item.assigneeParentId);
+    const colorStyles = getColorStyles(itemColor);
     const durationHours = getItemDurationHours(item);
     const heightPx = durationHours * 50 - 2; // 50px per hour minus gap
     
@@ -483,15 +495,16 @@ export const JobberCalendar = ({
       <div 
         key={item.id}
         onClick={(e) => handleItemClick(item, e)}
-        style={{ height: `${heightPx}px`, minHeight: '48px' }}
-        className={cn(
-          "text-[10px] p-1.5 rounded border cursor-pointer hover:opacity-80 transition-opacity font-medium overflow-hidden absolute left-0.5 right-0.5 z-10",
-          CHILD_COLORS_LIGHT[colorIndex]
-        )}
+        style={{ 
+          height: `${heightPx}px`, 
+          minHeight: '48px',
+          ...colorStyles,
+        }}
+        className="text-[10px] p-1.5 rounded border-2 cursor-pointer hover:opacity-80 transition-opacity font-medium overflow-hidden absolute left-0.5 right-0.5 z-10"
       >
         <div className="flex items-center gap-1">
           <span className="shrink-0">{item.icon || child?.avatar_url || '📅'}</span>
-          <span className="font-semibold truncate">
+          <span className="font-semibold truncate" style={{ color: itemColor }}>
             {language === 'ru' ? item.title_ru : item.title_en}
           </span>
         </div>
@@ -695,18 +708,17 @@ export const JobberCalendar = ({
                     <div className="space-y-0.5">
                       {dayItems.slice(0, isMobile ? 2 : 3).map(item => {
                         const child = children.find(c => c.id === item.child_id);
-                        const colorIndex = childColorMap.get(item.child_id) ?? 0;
+                        const itemColor = getItemColor(item.child_id, item.assigneeParentId);
+                        const colorStyles = getColorStyles(itemColor);
                         return (
                           <div 
                             key={item.id}
                             onClick={(e) => handleItemClick(item, e)}
-                            className={cn(
-                              "text-[10px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border font-medium cursor-pointer hover:opacity-80",
-                              CHILD_COLORS_LIGHT[colorIndex]
-                            )}
+                            style={colorStyles}
+                            className="text-[10px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border-2 font-medium cursor-pointer hover:opacity-80"
                           >
                             <span className="shrink-0">{item.icon || child?.avatar_url || '📅'}</span>
-                            <span className="truncate font-semibold">
+                            <span className="truncate font-semibold" style={{ color: itemColor }}>
                               {language === 'ru' ? item.title_ru : item.title_en}
                             </span>
                           </div>
@@ -848,23 +860,22 @@ export const JobberCalendar = ({
                     <div className="space-y-2">
                       {dayItems.map(item => {
                         const child = children.find(c => c.id === item.child_id);
-                        const colorIndex = childColorMap.get(item.child_id) ?? 0;
+                        const itemColor = getItemColor(item.child_id, item.assigneeParentId);
+                        const colorStyles = getColorStyles(itemColor);
                         return (
                           <div 
                             key={item.id}
-                            className={cn(
-                              "flex items-center gap-3 p-3 rounded-lg border group",
-                              CHILD_COLORS_LIGHT[colorIndex]
-                            )}
+                            style={colorStyles}
+                            className="flex items-center gap-3 p-3 rounded-lg border-2 group"
                           >
-                            <div className="text-sm font-mono font-bold w-14 shrink-0">
+                            <div className="text-sm font-mono font-bold w-14 shrink-0" style={{ color: itemColor }}>
                               {item.time.slice(0, 5)}
                             </div>
                             {child && (
                               <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm break-words line-clamp-2 leading-snug">
+                              <p className="font-semibold text-sm break-words line-clamp-2 leading-snug" style={{ color: itemColor }}>
                                 {item.icon && <span className="mr-1">{item.icon}</span>}
                                 {language === 'ru' ? item.title_ru : item.title_en}
                               </p>

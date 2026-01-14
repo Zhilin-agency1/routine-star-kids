@@ -62,9 +62,8 @@ export const RoutineBlocks = ({
   const { templates, createTemplate, deleteTemplate } = useTasks();
   const { children } = useChildren();
   
-  // Always start collapsed in all views
-  const [morningExpanded, setMorningExpanded] = useState(false);
-  const [eveningExpanded, setEveningExpanded] = useState(false);
+  // Synchronized expanded state for both blocks
+  const [blocksExpanded, setBlocksExpanded] = useState(false);
   
   // State for delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -73,8 +72,7 @@ export const RoutineBlocks = ({
   // Reset expansion state when viewMode changes
   useEffect(() => {
     // Always collapse for all views
-    setMorningExpanded(false);
-    setEveningExpanded(false);
+    setBlocksExpanded(false);
   }, [viewMode]);
 
   // Get routines for the selected date and child
@@ -275,8 +273,8 @@ export const RoutineBlocks = ({
     icon: React.ReactNode,
     items: RoutineItem[],
     expanded: boolean,
-    setExpanded: (v: boolean) => void,
-    colorClass: string
+    onToggle: () => void,
+    accentClass: string
   ) => {
     if (items.length === 0) return null;
     
@@ -287,8 +285,8 @@ export const RoutineBlocks = ({
     
     return (
       <div className={cn(
-        "flex-1 min-w-[280px] rounded-xl border p-3 bg-card",
-        "border-border"
+        "flex-1 min-w-[280px] rounded-xl border-2 p-3 bg-white",
+        accentClass
       )}>
         <div className={cn(
           "flex items-center justify-between",
@@ -305,7 +303,7 @@ export const RoutineBlocks = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setExpanded(!expanded)}
+              onClick={onToggle}
               className="h-7 px-2 text-xs gap-1"
             >
               {expanded ? (
@@ -344,25 +342,28 @@ export const RoutineBlocks = ({
     );
   }
 
+  // Synchronized toggle for both blocks
+  const handleToggleBlocks = () => setBlocksExpanded(!blocksExpanded);
+
   return (
     <>
       <div className={cn("flex flex-col md:flex-row gap-3", className)}>
         {renderBlock(
           language === 'ru' ? 'Утренняя рутина' : 'Morning Routine',
-          <Sun className="w-4 h-4 text-primary" />,
+          <Sun className="w-5 h-5 text-amber-500" />,
           morningRoutines,
-          morningExpanded,
-          setMorningExpanded,
-          ''
+          blocksExpanded,
+          handleToggleBlocks,
+          'border-amber-300 bg-amber-50/50'
         )}
         
         {renderBlock(
           language === 'ru' ? 'Вечерняя рутина' : 'Evening Routine',
-          <Moon className="w-4 h-4 text-muted-foreground" />,
+          <Moon className="w-5 h-5 text-indigo-500" />,
           eveningRoutines,
-          eveningExpanded,
-          setEveningExpanded,
-          ''
+          blocksExpanded,
+          handleToggleBlocks,
+          'border-indigo-300 bg-indigo-50/50'
         )}
       </div>
       

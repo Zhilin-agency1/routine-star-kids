@@ -346,8 +346,9 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
           {trigger}
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] md:max-h-[90vh] flex flex-col p-0 gap-0">
+        {/* Fixed Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <ClipboardList className="w-5 h-5" />
             {t.newTask}
@@ -357,7 +358,9 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+        {/* Scrollable Form Content */}
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
           {/* Task Category */}
           <div className="space-y-2">
             <Label>{t.category}</Label>
@@ -894,8 +897,10 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
             </div>
           )}
 
-          {/* Submit Button */}
-          <div className="flex gap-3 pt-2">
+          </div>
+
+          {/* Fixed Footer */}
+          <div className="flex gap-3 px-6 py-4 border-t bg-background shrink-0">
             <Button
               type="button"
               variant="outline"

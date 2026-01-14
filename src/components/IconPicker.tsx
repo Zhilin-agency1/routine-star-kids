@@ -94,7 +94,7 @@ export const IconPicker = ({ selectedIcon, onSelectIcon, className }: IconPicker
         </div>
       </ScrollArea>
 
-      {/* Icons grid */}
+      {/* Icons grid with limited height */}
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
@@ -104,7 +104,7 @@ export const IconPicker = ({ selectedIcon, onSelectIcon, className }: IconPicker
           {t.noResults}
         </div>
       ) : (
-        <>
+        <div className="max-h-[240px] overflow-y-auto rounded-lg border border-border/50 p-2 bg-muted/20">
           <div className="grid grid-cols-8 gap-2">
             {visibleIcons.map((icon) => (
               <button
@@ -124,9 +124,9 @@ export const IconPicker = ({ selectedIcon, onSelectIcon, className }: IconPicker
             ))}
           </div>
 
-          {/* Load more button */}
+          {/* Load more button inside scrollable area */}
           {visibleCount < icons.length && (
-            <div className="flex flex-col items-center gap-2 pt-2">
+            <div className="flex flex-col items-center gap-2 pt-3 mt-2 border-t border-border/50">
               <p className="text-xs text-muted-foreground">
                 {t.showing} {visibleCount} {t.of} {icons.length}
               </p>
@@ -141,7 +141,7 @@ export const IconPicker = ({ selectedIcon, onSelectIcon, className }: IconPicker
               </Button>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

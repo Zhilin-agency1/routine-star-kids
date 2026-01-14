@@ -31,26 +31,32 @@ type AuthView = 'login' | 'signup' | 'confirm-email';
 // Language toggle component
 const LanguageToggle = () => {
   const { language, setLanguage } = useLanguage();
-  
+
   return (
-    <div className="absolute top-4 right-4 flex gap-1 bg-muted/50 rounded-lg p-1">
+    <div className="absolute top-4 right-4 z-50 pointer-events-auto flex gap-1 bg-muted/50 rounded-lg p-1">
       <button
+        type="button"
         onClick={() => setLanguage('en')}
         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-          language === 'en' 
-            ? 'bg-primary text-primary-foreground' 
+          language === 'en'
+            ? 'bg-primary text-primary-foreground'
             : 'text-muted-foreground hover:text-foreground'
         }`}
+        aria-pressed={language === 'en'}
+        aria-label="Switch language to English"
       >
         EN
       </button>
       <button
+        type="button"
         onClick={() => setLanguage('ru')}
         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-          language === 'ru' 
-            ? 'bg-primary text-primary-foreground' 
+          language === 'ru'
+            ? 'bg-primary text-primary-foreground'
             : 'text-muted-foreground hover:text-foreground'
         }`}
+        aria-pressed={language === 'ru'}
+        aria-label="Switch language to Russian"
       >
         RU
       </button>

@@ -1,17 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { JobberCalendar } from '@/components/JobberCalendar';
 import { RoutineBlocks } from '@/components/RoutineBlocks';
+import { useChildren } from '@/hooks/useChildren';
 
 type ViewMode = 'day' | 'week' | 'month';
 
 export const FamilySchedulePage = () => {
   const { t } = useLanguage();
+  const { children } = useChildren();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('week');
+
+  // Read childId from query params on mount and when params change
+  useEffect(() => {
+    const childIdParam = searchParams.get('childId');
+    if (childIdParam) {
+      // Validate that this child exists
+      const childExists = children.some(c => c.id === childIdParam);
+      if (childExists) {
+        setSelectedChildId(childIdParam);
+      } else {
+        // Invalid childId, clear the param
+        setSelectedChildId(null);
+        searchParams.delete('childId');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, children, setSearchParams]);
+
+  // When filter dropdown changes, update URL (optional sync)
+  const handleChildChange = (childId: string | null) => {
+    setSelectedChildId(childId);
+    if (childId) {
+      searchParams.set('childId', childId);
+    } else {
+      searchParams.delete('childId');
+    }
+    setSearchParams(searchParams, { replace: true });
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-80px)] animate-fade-in px-4 md:px-6">
@@ -44,7 +76,7 @@ export const FamilySchedulePage = () => {
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           selectedChildId={selectedChildId}
-          onChildChange={setSelectedChildId}
+          onChildChange={handleChildChange}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           isReadOnly // Family view is read-only (parent uses Tasks page to edit)

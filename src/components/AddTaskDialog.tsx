@@ -4,11 +4,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye, GripVertical, Sun, Moon } from 'lucide-react';
+import { Plus, Loader2, ClipboardList, Clock, Calendar, RotateCcw, CalendarIcon, X, ListChecks, Gift, EyeOff, Eye, GripVertical, Sun, Moon, Users } from 'lucide-react';
 import { SortableStepList, type SortableStep } from './SortableStepList';
 import { useTasks } from '@/hooks/useTasks';
 import { useTaskSteps } from '@/hooks/useTaskSteps';
 import { useChildren } from '@/hooks/useChildren';
+import { useFamilyMembers } from '@/hooks/useFamilyMembers';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,13 +123,42 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
   const { createTemplate } = useTasks();
   const { createSteps } = useTaskSteps();
   const { children } = useChildren();
+  const { allowParentActivities, getAvailableAdults, isOwnerOrAdmin } = useFamilyMembers();
 
   const locale = language === 'ru' ? ru : undefined;
+
+  const form = useForm<TaskFormData>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      titleRu: '',
+      titleEn: '',
+      descriptionRu: '',
+      descriptionEn: '',
+      rewardAmount: 5,
+      startTime: '',
+      endTime: '',
+      childId: '',
+    },
+  });
+  
+  // Get available adults for assignment
+  const availableAdults = getAvailableAdults();
+  
+  // Track if selected assignee is a parent (starts with 'parent:')
+  const selectedAssignee = form.watch('childId') || 'all';
+  const isParentSelected = selectedAssignee.startsWith('parent:');
+  
+  // When parent is selected, force category to activity (routines are child-only)
+  useEffect(() => {
+    if (isParentSelected && taskCategory === 'routine') {
+      setTaskCategory('activity');
+    }
+  }, [isParentSelected, taskCategory]);
 
   // Translations
   const t = {
     newTask: language === 'ru' ? 'Новая задача' : 'New Task',
-    createTaskDesc: language === 'ru' ? 'Создайте задание для ребёнка' : 'Create a task for your child',
+    createTaskDesc: language === 'ru' ? 'Создайте задание' : 'Create a task',
     category: language === 'ru' ? 'Категория' : 'Category',
     routine: language === 'ru' ? 'Рутина' : 'Routine',
     activity: language === 'ru' ? 'Занятие' : 'Activity',
@@ -146,8 +176,12 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
     description: language === 'ru' ? 'Описание' : 'Description',
     descriptionPlaceholder: language === 'ru' ? 'Подробности задания...' : 'Task details...',
     forWhom: language === 'ru' ? 'Для кого' : 'For whom',
-    allChildren: language === 'ru' ? 'Для всех детей' : 'All children',
-    selectChild: language === 'ru' ? 'Выберите ребёнка' : 'Select child',
+    allChildren: language === 'ru' ? 'Все дети' : 'All children',
+    selectChild: language === 'ru' ? 'Выберите' : 'Select',
+    children: language === 'ru' ? 'Дети' : 'Children',
+    parents: language === 'ru' ? 'Родители' : 'Parents',
+    owner: language === 'ru' ? 'Владелец' : 'Owner',
+    you: language === 'ru' ? 'Вы' : 'You',
     dateRange: language === 'ru' ? 'Период действия' : 'Date range',
     startDate: language === 'ru' ? 'Дата начала' : 'Start date',
     endDateLabel: language === 'ru' ? 'Дата окончания' : 'End date',
@@ -177,21 +211,8 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
     errorCreating: language === 'ru' ? 'Ошибка при создании задачи' : 'Error creating task',
     endTimeError: language === 'ru' ? 'Время окончания должно быть после времени начала' : 'End time must be after start time',
     selectDayError: language === 'ru' ? 'Выберите хотя бы один день недели' : 'Select at least one day of the week',
+    routineOnlyForChildren: language === 'ru' ? 'Рутины только для детей' : 'Routines are for children only',
   };
-
-  const form = useForm<TaskFormData>({
-    resolver: zodResolver(taskSchema),
-    defaultValues: {
-      titleRu: '',
-      titleEn: '',
-      descriptionRu: '',
-      descriptionEn: '',
-      rewardAmount: 5,
-      startTime: '',
-      endTime: '',
-      childId: '',
-    },
-  });
 
   const toggleDay = (day: number) => {
     setSelectedDays(prev => 
@@ -328,12 +349,14 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setTaskCategory('routine')}
+                onClick={() => !isParentSelected && setTaskCategory('routine')}
+                disabled={isParentSelected}
                 className={cn(
                   "p-3 rounded-xl border-2 text-sm font-medium transition-all",
                   taskCategory === 'routine'
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:border-primary/50"
+                    : "border-border hover:border-primary/50",
+                  isParentSelected && "opacity-50 cursor-not-allowed"
                 )}
               >
                 <RotateCcw className="w-4 h-4 inline mr-1" />
@@ -354,7 +377,9 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              {taskCategory === 'routine' ? t.routineDesc : t.activityDesc}
+              {isParentSelected 
+                ? t.routineOnlyForChildren
+                : (taskCategory === 'routine' ? t.routineDesc : t.activityDesc)}
             </p>
           </div>
 
@@ -472,9 +497,12 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
             />
           </div>
 
-          {/* Child Selection */}
+          {/* For Whom Selection */}
           <div className="space-y-2">
-            <Label>{t.forWhom}</Label>
+            <Label className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              {t.forWhom}
+            </Label>
             <Select
               value={form.watch('childId') || 'all'}
               onValueChange={(value) => form.setValue('childId', value === 'all' ? '' : value)}
@@ -483,12 +511,31 @@ export const AddTaskDialog = ({ trigger, open: controlledOpen, onOpenChange, ini
                 <SelectValue placeholder={t.selectChild} />
               </SelectTrigger>
               <SelectContent>
+                {/* Children section */}
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  {t.children}
+                </div>
                 <SelectItem value="all">👨‍👩‍👧 {t.allChildren}</SelectItem>
                 {children.map((child) => (
                   <SelectItem key={child.id} value={child.id}>
                     {child.avatar_url || '🦁'} {child.name}
                   </SelectItem>
                 ))}
+                
+                {/* Parents section - only if parent activities enabled */}
+                {allowParentActivities && availableAdults.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                      {t.parents}
+                    </div>
+                    {availableAdults.map((adult) => (
+                      <SelectItem key={adult.id} value={adult.id}>
+                        👤 {adult.isOwner ? t.owner : adult.name}
+                        {adult.isSelf && ` (${t.you})`}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>

@@ -92,13 +92,43 @@ interface ScheduleItem {
 // Default color fallback
 const DEFAULT_COLOR = '#3B82F6';
 
-// Helper to get light background from hex color (10% opacity)
-const getColorStyles = (hexColor: string | null | undefined): React.CSSProperties => {
+// Helper to convert hex to HSL and create a light solid background
+const hexToLightSolid = (hex: string): string => {
+  // Remove # if present
+  hex = hex.replace('#', '');
+  
+  // Parse hex to RGB
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+  
+  // Convert to HSL
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+  
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  
+  // Return a light solid color (high lightness, reduced saturation)
+  return `hsl(${Math.round(h * 360)}, ${Math.round(s * 40)}%, 94%)`;
+};
+
+// Helper to get card styles - solid background, neutral border
+const getCardStyles = (hexColor: string | null | undefined): { bg: string; indicatorColor: string } => {
   const color = hexColor || DEFAULT_COLOR;
   return {
-    backgroundColor: `${color}15`, // 15 = ~8% opacity in hex
-    borderColor: color,
-    color: color,
+    bg: hexToLightSolid(color),
+    indicatorColor: color,
   };
 };
 
@@ -487,7 +517,7 @@ export const JobberCalendar = ({
   const renderWeekItem = (item: ScheduleItem, dayIndex: number, hour: number) => {
     const child = children.find(c => c.id === item.child_id);
     const itemColor = getItemColor(item.child_id, item.assigneeParentId);
-    const colorStyles = getColorStyles(itemColor);
+    const cardStyles = getCardStyles(itemColor);
     const durationHours = getItemDurationHours(item);
     const heightPx = durationHours * 50 - 2; // 50px per hour minus gap
     
@@ -498,24 +528,31 @@ export const JobberCalendar = ({
         style={{ 
           height: `${heightPx}px`, 
           minHeight: '48px',
-          ...colorStyles,
+          backgroundColor: cardStyles.bg,
         }}
-        className="text-[10px] p-1.5 rounded border-2 cursor-pointer hover:opacity-80 transition-opacity font-medium overflow-hidden absolute left-0.5 right-0.5 z-10"
+        className="text-[10px] p-1.5 rounded border border-border cursor-pointer hover:shadow-md transition-shadow font-medium overflow-hidden absolute left-0.5 right-0.5 z-10 flex"
       >
-        <div className="flex items-center gap-1">
-          <span className="shrink-0">{item.icon || child?.avatar_url || '📅'}</span>
-          <span className="font-semibold truncate" style={{ color: itemColor }}>
-            {language === 'ru' ? item.title_ru : item.title_en}
-          </span>
-        </div>
-        {durationHours > 1 && (
-          <div className="text-[9px] opacity-70 mt-0.5">
-            {item.time.slice(0, 5)} - {item.endTime?.slice(0, 5) || `${(parseInt(item.time.split(':')[0]) + durationHours).toString().padStart(2, '0')}:${item.time.split(':')[1]}`}
+        {/* Left color indicator */}
+        <div 
+          className="w-[3px] shrink-0 rounded-full mr-1.5"
+          style={{ backgroundColor: cardStyles.indicatorColor }}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <span className="shrink-0">{item.icon || child?.avatar_url || '📅'}</span>
+            <span className="font-semibold truncate text-foreground">
+              {language === 'ru' ? item.title_ru : item.title_en}
+            </span>
           </div>
-        )}
-        {item.location && durationHours > 1 && (
-          <div className="text-[9px] opacity-70 truncate">📍 {item.location}</div>
-        )}
+          {durationHours > 1 && (
+            <div className="text-[9px] text-muted-foreground mt-0.5">
+              {item.time.slice(0, 5)} - {item.endTime?.slice(0, 5) || `${(parseInt(item.time.split(':')[0]) + durationHours).toString().padStart(2, '0')}:${item.time.split(':')[1]}`}
+            </div>
+          )}
+          {item.location && durationHours > 1 && (
+            <div className="text-[9px] text-muted-foreground truncate">📍 {item.location}</div>
+          )}
+        </div>
       </div>
     );
   };
@@ -709,16 +746,21 @@ export const JobberCalendar = ({
                       {dayItems.slice(0, isMobile ? 2 : 3).map(item => {
                         const child = children.find(c => c.id === item.child_id);
                         const itemColor = getItemColor(item.child_id, item.assigneeParentId);
-                        const colorStyles = getColorStyles(itemColor);
+                        const cardStyles = getCardStyles(itemColor);
                         return (
                           <div 
                             key={item.id}
                             onClick={(e) => handleItemClick(item, e)}
-                            style={colorStyles}
-                            className="text-[10px] px-1 py-0.5 rounded truncate flex items-center gap-0.5 border-2 font-medium cursor-pointer hover:opacity-80"
+                            style={{ backgroundColor: cardStyles.bg }}
+                            className="text-[10px] px-1 py-0.5 rounded truncate flex items-center gap-1 border border-border font-medium cursor-pointer hover:shadow-sm transition-shadow"
                           >
+                            {/* Left color indicator */}
+                            <div 
+                              className="w-[2px] h-3 shrink-0 rounded-full"
+                              style={{ backgroundColor: cardStyles.indicatorColor }}
+                            />
                             <span className="shrink-0">{item.icon || child?.avatar_url || '📅'}</span>
-                            <span className="truncate font-semibold" style={{ color: itemColor }}>
+                            <span className="truncate font-semibold text-foreground">
                               {language === 'ru' ? item.title_ru : item.title_en}
                             </span>
                           </div>
@@ -861,21 +903,26 @@ export const JobberCalendar = ({
                       {dayItems.map(item => {
                         const child = children.find(c => c.id === item.child_id);
                         const itemColor = getItemColor(item.child_id, item.assigneeParentId);
-                        const colorStyles = getColorStyles(itemColor);
+                        const cardStyles = getCardStyles(itemColor);
                         return (
                           <div 
                             key={item.id}
-                            style={colorStyles}
-                            className="flex items-center gap-3 p-3 rounded-lg border-2 group"
+                            style={{ backgroundColor: cardStyles.bg }}
+                            className="flex items-center gap-3 p-3 rounded-lg border border-border group hover:shadow-sm transition-shadow"
                           >
-                            <div className="text-sm font-mono font-bold w-14 shrink-0" style={{ color: itemColor }}>
+                            {/* Left color indicator */}
+                            <div 
+                              className="w-[3px] h-full self-stretch shrink-0 rounded-full"
+                              style={{ backgroundColor: cardStyles.indicatorColor }}
+                            />
+                            <div className="text-sm font-mono font-bold w-14 shrink-0 text-foreground">
                               {item.time.slice(0, 5)}
                             </div>
                             {child && (
                               <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm break-words line-clamp-2 leading-snug" style={{ color: itemColor }}>
+                              <p className="font-semibold text-sm break-words line-clamp-2 leading-snug text-foreground">
                                 {item.icon && <span className="mr-1">{item.icon}</span>}
                                 {language === 'ru' ? item.title_ru : item.title_en}
                               </p>

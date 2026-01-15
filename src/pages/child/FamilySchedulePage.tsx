@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { JobberCalendar } from '@/components/JobberCalendar';
-import { RoutineBlocks } from '@/components/RoutineBlocks';
+import { ChildScheduleHeader } from '@/components/ChildScheduleHeader';
 import { useChildren } from '@/hooks/useChildren';
 
 type ViewMode = 'day' | 'week' | 'month';
@@ -62,15 +62,15 @@ export const FamilySchedulePage = () => {
         </div>
       </div>
 
-      {/* Routine Blocks */}
-      <RoutineBlocks
+      {/* Child Schedule Header: Selector + 3 Blocks (Routine, Wishlist, Jobs) */}
+      <ChildScheduleHeader
         selectedDate={selectedDate}
         selectedChildId={selectedChildId}
-        viewMode={viewMode}
+        onChildChange={handleChildChange}
         className="mb-4"
       />
 
-      {/* Calendar */}
+      {/* Calendar - no adults, read-only for kids */}
       <div className="flex-1 min-h-0">
         <JobberCalendar
           selectedDate={selectedDate}
@@ -80,6 +80,7 @@ export const FamilySchedulePage = () => {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           isReadOnly // Family view is read-only (parent uses Tasks page to edit)
+          hideAdults // Kids should never see adult activities
           className="h-full"
         />
       </div>

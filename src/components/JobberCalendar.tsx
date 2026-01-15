@@ -140,6 +140,7 @@ interface JobberCalendarProps {
   viewMode?: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
   isReadOnly?: boolean;
+  hideAdults?: boolean;
   className?: string;
 }
 
@@ -151,6 +152,7 @@ export const JobberCalendar = ({
   viewMode: externalViewMode,
   onViewModeChange,
   isReadOnly = false,
+  hideAdults = false,
   className,
 }: JobberCalendarProps) => {
   const { language, t } = useLanguage();
@@ -655,7 +657,8 @@ export const JobberCalendar = ({
               ))}
               
               {/* Adults section - only eligible adults with parent_activities_enabled */}
-              {allowParentActivities && eligibleAdults.length > 0 && (
+              {/* Hide adults if hideAdults prop is true */}
+              {!hideAdults && allowParentActivities && eligibleAdults.length > 0 && (
                 <>
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
                     {language === 'ru' ? 'Взрослые' : 'Adults'}

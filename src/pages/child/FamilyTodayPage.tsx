@@ -9,6 +9,7 @@ import { useSchedule } from '@/hooks/useSchedule';
 import { useApp } from '@/contexts/AppContext';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { SimpleTaskCard } from '@/components/SimpleTaskCard';
+import { CoinBadge } from '@/components/ui/CoinBadge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -18,12 +19,22 @@ import { cn } from '@/lib/utils';
 
 type FilterType = 'all' | 'morning' | 'evening' | 'activities';
 
-// Helper to generate a light background from child color
-const getChildBgTint = (color: string | null | undefined): string => {
-  if (!color) return 'bg-card/50';
-  // Return a very subtle tint using the color
-  return '';
-};
+interface NormalizedTask {
+  id: string;
+  templateId: string;
+  childId: string;
+  title: { ru: string; en: string };
+  description: { ru: string; en: string };
+  rewardAmount: number;
+  state: 'todo' | 'doing' | 'done' | 'skipped' | 'cancelled';
+  icon: string;
+  rewardGranted: boolean;
+  endDate: string | null;
+  taskCategory: 'routine' | 'activity';
+  routineType: 'morning' | 'evening' | null;
+  isActivity?: boolean; // from activity_schedules
+  time?: string; // for activities
+}
 
 export const FamilyTodayPage = () => {
   const { language } = useLanguage();
@@ -47,8 +58,8 @@ export const FamilyTodayPage = () => {
     return format(now, language === 'ru' ? "d MMMM yyyy, EEEE" : "MMMM d, yyyy, EEEE", { locale });
   }, [language]);
 
-  // Normalize instances to task format with category and routineType
-  const tasks = useMemo(() => {
+  // Normalize task instances to unified format
+  const taskItems = useMemo((): NormalizedTask[] => {
     return instances.map(instance => ({
       id: instance.id,
       templateId: instance.template_id,
@@ -66,29 +77,58 @@ export const FamilyTodayPage = () => {
       icon: instance.template?.icon || '✨',
       rewardGranted: instance.reward_granted,
       endDate: instance.template?.end_date || null,
-      // Add category and routine type for filtering
-      taskCategory: (instance.template as any)?.task_category || 'routine',
-      routineType: (instance.template as any)?.routine_type as 'morning' | 'evening' | null,
+      taskCategory: (instance.template?.task_category as 'routine' | 'activity') || 'routine',
+      routineType: (instance.template?.routine_type as 'morning' | 'evening' | null) || null,
+      isActivity: false,
     }));
   }, [instances]);
+
+  // Normalize activity schedules to unified format for filtering
+  const activityItems = useMemo((): NormalizedTask[] => {
+    return todayActivities.map(activity => ({
+      id: activity.id,
+      templateId: activity.id,
+      childId: activity.child_id,
+      title: {
+        ru: activity.title_ru,
+        en: activity.title_en,
+      },
+      description: { ru: '', en: '' },
+      rewardAmount: 0,
+      state: 'todo' as const,
+      icon: '📅',
+      rewardGranted: false,
+      endDate: null,
+      taskCategory: 'activity' as const,
+      routineType: null,
+      isActivity: true,
+      time: activity.time,
+    }));
+  }, [todayActivities]);
 
   // Group tasks and activities by child
   const childColumns = useMemo(() => {
     return children.map(child => {
-      const childTasks = tasks.filter(task => task.childId === child.id);
+      // Get task instances for this child
+      const childTasks = taskItems.filter(task => task.childId === child.id);
       const pending = childTasks.filter(t => t.state !== 'done');
       const done = childTasks.filter(t => t.state === 'done');
       const sortedTasks = [...pending, ...done];
       
-      const childActivities = todayActivities
-        .filter(a => a.child_id === child.id)
-        .sort((a, b) => a.time.localeCompare(b.time));
+      // Get activities for this child
+      const childActivities = activityItems
+        .filter(a => a.childId === child.id)
+        .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      
+      // Combine all items for filtering
+      const allItems = [...sortedTasks, ...childActivities];
       
       const completedCount = done.length;
       const totalCount = childTasks.length;
 
       return {
         child,
+        allItems,
         tasks: sortedTasks,
         activities: childActivities,
         completedCount,
@@ -97,7 +137,7 @@ export const FamilyTodayPage = () => {
         hasTasks: totalCount > 0 || childActivities.length > 0,
       };
     });
-  }, [children, tasks, todayActivities]);
+  }, [children, taskItems, activityItems]);
 
   const handleComplete = (taskId: string, childId: string) => {
     completeTask.mutate({ instanceId: taskId, childId });
@@ -113,19 +153,29 @@ export const FamilyTodayPage = () => {
     setChildFilters(prev => ({ ...prev, [childId]: filter }));
   };
 
-  // Get filtered tasks for a child
-  const getFilteredTasks = (childId: string, allTasks: typeof tasks) => {
+  // Get filtered items for a child - STRICT filtering logic
+  const getFilteredItems = (childId: string, allItems: NormalizedTask[]) => {
     const filter = childFilters[childId] || 'all';
     
     switch (filter) {
       case 'morning':
-        return allTasks.filter(t => t.taskCategory === 'routine' && t.routineType === 'morning');
+        // ONLY morning routines - exclude evening routines and all activities
+        return allItems.filter(t => 
+          t.taskCategory === 'routine' && t.routineType === 'morning' && !t.isActivity
+        );
       case 'evening':
-        return allTasks.filter(t => t.taskCategory === 'routine' && t.routineType === 'evening');
+        // ONLY evening routines - exclude morning routines and all activities
+        return allItems.filter(t => 
+          t.taskCategory === 'routine' && t.routineType === 'evening' && !t.isActivity
+        );
       case 'activities':
-        return allTasks.filter(t => t.taskCategory === 'activity');
+        // ONLY activities - exclude all routines
+        return allItems.filter(t => 
+          t.taskCategory === 'activity' || t.isActivity
+        );
       default:
-        return allTasks;
+        // All items
+        return allItems;
     }
   };
 
@@ -172,9 +222,9 @@ export const FamilyTodayPage = () => {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="space-y-4 animate-fade-in">
+      <div className="space-y-4 animate-fade-in h-full flex flex-col">
         {/* Header with date */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="text-2xl font-bold">
               {language === 'ru' ? 'Сегодня' : 'Today'}
@@ -197,141 +247,144 @@ export const FamilyTodayPage = () => {
           )}
         </div>
 
-        {/* Children columns */}
-        <div className="overflow-x-auto -mx-4 px-4 pb-2">
-          <div className="flex gap-3" style={{ minWidth: 'max-content' }}>
-            {childColumns.map(({ child, tasks: childTasks, activities, completedCount, totalCount, progress, hasTasks }) => {
-              const filteredTasks = getFilteredTasks(child.id, childTasks);
-              const currentFilter = childFilters[child.id] || 'all';
-              
-              // Create subtle background tint from child color
-              const bgStyle = child.color 
-                ? { backgroundColor: `${child.color}08` } // 8 = ~3% opacity in hex
-                : {};
-              
-              return (
-                <div 
-                  key={child.id} 
-                  className="w-[320px] flex-shrink-0 rounded-xl p-3"
-                  style={bgStyle}
-                >
-                  {/* Child Header */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold truncate">{child.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {completedCount}/{totalCount} • {progress}%
-                      </p>
+        {/* Children columns - horizontal scroll container */}
+        <div className="flex-1 overflow-hidden">
+          <div className="overflow-x-auto h-full pb-4 -mx-4 px-4">
+            <div className="flex gap-3 h-full" style={{ minWidth: 'max-content' }}>
+              {childColumns.map(({ child, allItems, completedCount, totalCount, progress, hasTasks }) => {
+                const filteredItems = getFilteredItems(child.id, allItems);
+                const currentFilter = childFilters[child.id] || 'all';
+                
+                // Create subtle background tint from child color
+                const bgStyle = child.color 
+                  ? { backgroundColor: `${child.color}08` } // 8 = ~3% opacity in hex
+                  : {};
+                
+                return (
+                  <div 
+                    key={child.id} 
+                    className="w-[320px] flex-shrink-0 rounded-xl p-3 flex flex-col h-full"
+                    style={bgStyle}
+                  >
+                    {/* Child Header with Balance */}
+                    <div className="flex items-center gap-2 mb-2 flex-shrink-0">
+                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold truncate">{child.name}</p>
+                          {/* Balance display */}
+                          <CoinBadge amount={child.balance} size="xs" className="flex-shrink-0" />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {completedCount}/{totalCount} • {progress}%
+                        </p>
+                      </div>
+                      {/* Quick action to open schedule for this child */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 flex-shrink-0"
+                            onClick={() => handleOpenSchedule(child.id)}
+                          >
+                            <Play className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">
+                          {language === 'ru' ? 'Открыть расписание' : 'Open schedule'}
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
-                    {/* Quick action to open schedule for this child */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleOpenSchedule(child.id)}
-                        >
-                          <Play className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">
-                        {language === 'ru' ? 'Открыть расписание' : 'Open schedule'}
-                      </TooltipContent>
-                    </Tooltip>
+
+                    {/* Per-child quick filters */}
+                    <div className="flex items-center gap-1 mb-3 p-1 bg-muted/50 rounded-lg w-fit flex-shrink-0">
+                      <FilterButton 
+                        childId={child.id} 
+                        filterType="all" 
+                        icon={List} 
+                        tooltip={language === 'ru' ? 'Все' : 'All'} 
+                      />
+                      <FilterButton 
+                        childId={child.id} 
+                        filterType="morning" 
+                        icon={Sun} 
+                        tooltip={language === 'ru' ? 'Утренние рутины' : 'Morning routines'} 
+                      />
+                      <FilterButton 
+                        childId={child.id} 
+                        filterType="evening" 
+                        icon={Moon} 
+                        tooltip={language === 'ru' ? 'Вечерние рутины' : 'Evening routines'} 
+                      />
+                      <FilterButton 
+                        childId={child.id} 
+                        filterType="activities" 
+                        icon={CalendarDays} 
+                        tooltip={language === 'ru' ? 'Занятия' : 'Activities'} 
+                      />
+                    </div>
+
+                    {/* Tasks/Activities List */}
+                    <ScrollArea className="flex-1 min-h-0">
+                      <div className="space-y-2 pr-2">
+                        {!hasTasks ? (
+                          <div className="text-center py-6 bg-card/50 rounded-xl">
+                            <span className="text-2xl block mb-2">📋</span>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {language === 'ru' 
+                                ? (canManageTemplates ? 'Нет плана' : 'План ещё не готов') 
+                                : (canManageTemplates ? 'No plan' : 'No plan yet')}
+                            </p>
+                            {canManageTemplates && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate('/parent/templates')}
+                                className="min-h-[40px]"
+                              >
+                                <LayoutTemplate className="w-4 h-4 mr-2" />
+                                {language === 'ru' ? 'Применить шаблон' : 'Apply template'}
+                              </Button>
+                            )}
+                          </div>
+                        ) : filteredItems.length === 0 ? (
+                          <div className="text-center py-6 bg-card/50 rounded-xl">
+                            <p className="text-sm text-muted-foreground">
+                              {language === 'ru' ? 'Нет задач в этой категории' : 'No tasks in this category'}
+                            </p>
+                          </div>
+                        ) : (
+                          filteredItems.map(item => (
+                            item.isActivity ? (
+                              // Activity card (from activity_schedules)
+                              <div 
+                                key={item.id}
+                                className="flex items-center gap-2 p-2 rounded-lg bg-secondary/10 text-sm"
+                              >
+                                <span className="font-mono text-xs font-semibold">
+                                  {item.time?.slice(0, 5)}
+                                </span>
+                                <span className="truncate">
+                                  {language === 'ru' ? item.title.ru : item.title.en}
+                                </span>
+                              </div>
+                            ) : (
+                              // Task card (from task_instances)
+                              <SimpleTaskCard
+                                key={item.id}
+                                task={item}
+                                onComplete={() => handleComplete(item.id, item.childId)}
+                              />
+                            )
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
                   </div>
-
-                  {/* Per-child quick filters */}
-                  <div className="flex items-center gap-1 mb-3 p-1 bg-muted/50 rounded-lg w-fit">
-                    <FilterButton 
-                      childId={child.id} 
-                      filterType="all" 
-                      icon={List} 
-                      tooltip={language === 'ru' ? 'Все' : 'All'} 
-                    />
-                    <FilterButton 
-                      childId={child.id} 
-                      filterType="morning" 
-                      icon={Sun} 
-                      tooltip={language === 'ru' ? 'Утренние рутины' : 'Morning routines'} 
-                    />
-                    <FilterButton 
-                      childId={child.id} 
-                      filterType="evening" 
-                      icon={Moon} 
-                      tooltip={language === 'ru' ? 'Вечерние рутины' : 'Evening routines'} 
-                    />
-                    <FilterButton 
-                      childId={child.id} 
-                      filterType="activities" 
-                      icon={CalendarDays} 
-                      tooltip={language === 'ru' ? 'Занятия' : 'Activities'} 
-                    />
-                  </div>
-
-                  {/* Activities for today (only show when filter is 'all' or 'activities') */}
-                  {(currentFilter === 'all' || currentFilter === 'activities') && activities.length > 0 && (
-                    <div className="mb-3 space-y-1">
-                      {activities.map(activity => (
-                        <div 
-                          key={activity.id}
-                          className="flex items-center gap-2 p-2 rounded-lg bg-secondary/10 text-sm"
-                        >
-                          <span className="font-mono text-xs font-semibold">
-                            {activity.time.slice(0, 5)}
-                          </span>
-                          <span className="truncate">
-                            {language === 'ru' ? activity.title_ru : activity.title_en}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Tasks List */}
-                  <ScrollArea className="h-[calc(100vh-380px)]">
-                    <div className="space-y-2 pr-2">
-                      {!hasTasks ? (
-                        <div className="text-center py-6 bg-card/50 rounded-xl">
-                          <span className="text-2xl block mb-2">📋</span>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            {language === 'ru' 
-                              ? (canManageTemplates ? 'Нет плана' : 'План ещё не готов') 
-                              : (canManageTemplates ? 'No plan' : 'No plan yet')}
-                          </p>
-                          {canManageTemplates && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate('/parent/templates')}
-                              className="min-h-[40px]"
-                            >
-                              <LayoutTemplate className="w-4 h-4 mr-2" />
-                              {language === 'ru' ? 'Применить шаблон' : 'Apply template'}
-                            </Button>
-                          )}
-                        </div>
-                      ) : filteredTasks.length === 0 ? (
-                        <div className="text-center py-6 bg-card/50 rounded-xl">
-                          <p className="text-sm text-muted-foreground">
-                            {language === 'ru' ? 'Нет задач в этой категории' : 'No tasks in this category'}
-                          </p>
-                        </div>
-                      ) : (
-                        filteredTasks.map(task => (
-                          <SimpleTaskCard
-                            key={task.id}
-                            task={task}
-                            onComplete={() => handleComplete(task.id, task.childId)}
-                          />
-                        ))
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 

@@ -106,8 +106,28 @@ export const FamilyTodayPage = () => {
     }));
   }, [todayActivities]);
 
-  // Group tasks and activities by child
+  // Group tasks and activities by child, and apply filters
   const childColumns = useMemo(() => {
+    // Helper to filter items based on filter type
+    const filterItems = (items: NormalizedTask[], filter: FilterType): NormalizedTask[] => {
+      switch (filter) {
+        case 'morning':
+          return items.filter(t => 
+            t.taskCategory === 'routine' && t.routineType === 'morning' && !t.isActivity
+          );
+        case 'evening':
+          return items.filter(t => 
+            t.taskCategory === 'routine' && t.routineType === 'evening' && !t.isActivity
+          );
+        case 'activities':
+          return items.filter(t => 
+            t.taskCategory === 'activity' || t.isActivity
+          );
+        default:
+          return items;
+      }
+    };
+
     return children.map(child => {
       // Get task instances for this child
       const childTasks = taskItems.filter(task => task.childId === child.id);
@@ -120,8 +140,12 @@ export const FamilyTodayPage = () => {
         .filter(a => a.childId === child.id)
         .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
       
-      // Combine all items for filtering
+      // Combine all items
       const allItems = [...sortedTasks, ...childActivities];
+      
+      // Apply filter for this child
+      const currentFilter = childFilters[child.id] || 'all';
+      const filteredItems = filterItems(allItems, currentFilter);
       
       const completedCount = done.length;
       const totalCount = childTasks.length;
@@ -129,6 +153,8 @@ export const FamilyTodayPage = () => {
       return {
         child,
         allItems,
+        filteredItems,
+        currentFilter,
         tasks: sortedTasks,
         activities: childActivities,
         completedCount,
@@ -137,7 +163,7 @@ export const FamilyTodayPage = () => {
         hasTasks: totalCount > 0 || childActivities.length > 0,
       };
     });
-  }, [children, taskItems, activityItems]);
+  }, [children, taskItems, activityItems, childFilters]);
 
   const handleComplete = (taskId: string, childId: string) => {
     completeTask.mutate({ instanceId: taskId, childId });
@@ -153,31 +179,6 @@ export const FamilyTodayPage = () => {
     setChildFilters(prev => ({ ...prev, [childId]: filter }));
   };
 
-  // Get filtered items for a child - STRICT filtering logic
-  const getFilteredItems = (childId: string, allItems: NormalizedTask[]) => {
-    const filter = childFilters[childId] || 'all';
-    
-    switch (filter) {
-      case 'morning':
-        // ONLY morning routines - exclude evening routines and all activities
-        return allItems.filter(t => 
-          t.taskCategory === 'routine' && t.routineType === 'morning' && !t.isActivity
-        );
-      case 'evening':
-        // ONLY evening routines - exclude morning routines and all activities
-        return allItems.filter(t => 
-          t.taskCategory === 'routine' && t.routineType === 'evening' && !t.isActivity
-        );
-      case 'activities':
-        // ONLY activities - exclude all routines
-        return allItems.filter(t => 
-          t.taskCategory === 'activity' || t.isActivity
-        );
-      default:
-        // All items
-        return allItems;
-    }
-  };
 
   // Check if any child has no tasks
   const hasChildWithNoTasks = childColumns.some(col => !col.hasTasks);
@@ -251,9 +252,7 @@ export const FamilyTodayPage = () => {
         <div className="flex-1 overflow-hidden">
           <div className="overflow-x-auto h-full pb-4 -mx-4 px-4">
             <div className="flex gap-3 h-full" style={{ minWidth: 'max-content' }}>
-              {childColumns.map(({ child, allItems, completedCount, totalCount, progress, hasTasks }) => {
-                const filteredItems = getFilteredItems(child.id, allItems);
-                const currentFilter = childFilters[child.id] || 'all';
+              {childColumns.map(({ child, filteredItems, currentFilter, completedCount, totalCount, progress, hasTasks }) => {
                 
                 // Create subtle background tint from child color
                 const bgStyle = child.color 

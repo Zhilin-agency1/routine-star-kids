@@ -1,17 +1,14 @@
-import { ShoppingBag, Sparkles, Target, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ShoppingBag, Sparkles, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { StoreCard } from '@/components/StoreCard';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export const StorePage = () => {
   const { t, language } = useLanguage();
-  const { storeItems, children, currentChild, setCurrentChild, tasks } = useApp();
-  const navigate = useNavigate();
+  const { storeItems, children, currentChild, setCurrentChild } = useApp();
 
   const handleSelectChild = (childId: string) => {
     const child = children.find(c => c.id === childId);
@@ -26,19 +23,6 @@ export const StorePage = () => {
     (item.child_id === null || item.child_id === currentChild?.id)
   );
   
-  const balance = currentChild?.balance || 0;
-  
-  // Find cheapest affordable item
-  const cheapestAffordable = activeItems
-    .filter(item => item.price <= balance)
-    .sort((a, b) => a.price - b.price)[0];
-  
-  // Find closest to afford
-  const closestToAfford = activeItems
-    .filter(item => item.price > balance)
-    .sort((a, b) => a.price - b.price)[0];
-  
-  const coinsNeededForClosest = closestToAfford ? closestToAfford.price - balance : 0;
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -103,24 +87,6 @@ export const StorePage = () => {
         </div>
       </div>
 
-      {/* Helpful message if balance is low */}
-      {!cheapestAffordable && closestToAfford && (
-        <div className="bg-muted/50 rounded-2xl p-4 text-center">
-          <p className="text-sm text-muted-foreground mb-2">
-            {language === 'ru' 
-              ? `Тебе нужно ещё ${coinsNeededForClosest} монет` 
-              : `You need ${coinsNeededForClosest} more coins`}
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/')}
-            className="min-h-[44px]"
-          >
-            <Target className="w-4 h-4 mr-2" />
-            {language === 'ru' ? 'К заданиям' : 'Back to Today'}
-          </Button>
-        </div>
-      )}
 
       {/* Store Grid */}
       <div className="grid grid-cols-2 gap-4">

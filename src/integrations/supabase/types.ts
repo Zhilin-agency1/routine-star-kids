@@ -680,6 +680,7 @@ export type Database = {
           created_at: string
           due_datetime: string
           id: string
+          job_claim_id: string | null
           reward_granted: boolean
           state: string
           template_id: string
@@ -692,6 +693,7 @@ export type Database = {
           created_at?: string
           due_datetime: string
           id?: string
+          job_claim_id?: string | null
           reward_granted?: boolean
           state?: string
           template_id: string
@@ -704,6 +706,7 @@ export type Database = {
           created_at?: string
           due_datetime?: string
           id?: string
+          job_claim_id?: string | null
           reward_granted?: boolean
           state?: string
           template_id?: string
@@ -715,6 +718,13 @@ export type Database = {
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_instances_job_claim_id_fkey"
+            columns: ["job_claim_id"]
+            isOneToOne: false
+            referencedRelation: "job_claims"
             referencedColumns: ["id"]
           },
           {

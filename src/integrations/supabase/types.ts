@@ -266,7 +266,7 @@ export type Database = {
           permission_level: string
           role_label: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -279,7 +279,7 @@ export type Database = {
           permission_level?: string
           role_label?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -292,7 +292,7 @@ export type Database = {
           permission_level?: string
           role_label?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1115,6 +1115,14 @@ export type Database = {
       }
     }
     Functions: {
+      accept_family_invite: {
+        Args: { p_token: string }
+        Returns: {
+          family_id: string
+          permission_level: string
+          role_label: string
+        }[]
+      }
       adjust_child_balance: {
         Args: { p_amount: number; p_child_id: string; p_note?: string }
         Returns: Json

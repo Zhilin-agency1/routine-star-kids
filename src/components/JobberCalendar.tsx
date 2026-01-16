@@ -141,6 +141,7 @@ interface JobberCalendarProps {
   onViewModeChange?: (mode: ViewMode) => void;
   isReadOnly?: boolean;
   hideAdults?: boolean;
+  hideChildSelector?: boolean;
   className?: string;
 }
 
@@ -153,6 +154,7 @@ export const JobberCalendar = ({
   onViewModeChange,
   isReadOnly = false,
   hideAdults = false,
+  hideChildSelector = false,
   className,
 }: JobberCalendarProps) => {
   const { language, t } = useLanguage();
@@ -630,59 +632,61 @@ export const JobberCalendar = ({
             </SelectContent>
           </Select>
 
-          {/* Child/Adult Selector */}
-          <Select 
-            value={selectedChildId || 'all'} 
-            onValueChange={(v) => onChildChange(v === 'all' ? null : v)}
-          >
-            <SelectTrigger className="w-[140px] h-8 text-sm">
-              <SelectValue placeholder={t('filter_all')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('filter_all')}</SelectItem>
-              
-              {/* Children section */}
-              {children.length > 0 && (
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  {language === 'ru' ? 'Дети' : 'Children'}
-                </div>
-              )}
-              {children.map(child => (
-                <SelectItem key={child.id} value={child.id}>
-                  <div className="flex items-center gap-2">
-                    <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
-                    <span>{child.name}</span>
+          {/* Child/Adult Selector - hidden when hideChildSelector is true */}
+          {!hideChildSelector && (
+            <Select 
+              value={selectedChildId || 'all'} 
+              onValueChange={(v) => onChildChange(v === 'all' ? null : v)}
+            >
+              <SelectTrigger className="w-[140px] h-8 text-sm">
+                <SelectValue placeholder={t('filter_all')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('filter_all')}</SelectItem>
+                
+                {/* Children section */}
+                {children.length > 0 && (
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    {language === 'ru' ? 'Дети' : 'Children'}
                   </div>
-                </SelectItem>
-              ))}
-              
-              {/* Adults section - only eligible adults with parent_activities_enabled */}
-              {/* Hide adults if hideAdults prop is true */}
-              {!hideAdults && allowParentActivities && eligibleAdults.length > 0 && (
-                <>
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
-                    {language === 'ru' ? 'Взрослые' : 'Adults'}
-                  </div>
-                  {eligibleAdults.map(adult => (
-                    <SelectItem key={adult.id} value={adult.id}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px]"
-                          style={{ backgroundColor: adult.activityColor }}
-                        >
-                          👤
+                )}
+                {children.map(child => (
+                  <SelectItem key={child.id} value={child.id}>
+                    <div className="flex items-center gap-2">
+                      <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
+                      <span>{child.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+                
+                {/* Adults section - only eligible adults with parent_activities_enabled */}
+                {/* Hide adults if hideAdults prop is true */}
+                {!hideAdults && allowParentActivities && eligibleAdults.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                      {language === 'ru' ? 'Взрослые' : 'Adults'}
+                    </div>
+                    {eligibleAdults.map(adult => (
+                      <SelectItem key={adult.id} value={adult.id}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px]"
+                            style={{ backgroundColor: adult.activityColor }}
+                          >
+                            👤
+                          </div>
+                          <span>
+                            {adult.name}
+                            {adult.isSelf && ` (${language === 'ru' ? 'Вы' : 'You'})`}
+                          </span>
                         </div>
-                        <span>
-                          {adult.name}
-                          {adult.isSelf && ` (${language === 'ru' ? 'Вы' : 'You'})`}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </>
-              )}
-            </SelectContent>
-          </Select>
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 

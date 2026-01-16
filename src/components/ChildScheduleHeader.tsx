@@ -55,10 +55,9 @@ export const ChildScheduleHeader = ({
   const { jobs } = useJobBoard();
   const { wishlistItems } = useAggregatedWishlists(selectedChildId);
   
-  // Expansion states for each block
-  const [routineExpanded, setRoutineExpanded] = useState(false);
-  const [wishlistExpanded, setWishlistExpanded] = useState(false);
-  const [jobsExpanded, setJobsExpanded] = useState(false);
+  // Single shared expansion state for all blocks
+  const [panelsExpanded, setPanelsExpanded] = useState(false);
+  const togglePanels = () => setPanelsExpanded(!panelsExpanded);
 
   // Get routines for the selected date
   const routines = useMemo(() => {
@@ -317,8 +316,8 @@ export const ChildScheduleHeader = ({
           language === 'ru' ? 'Рутина' : 'Routine',
           <ClipboardList className="w-5 h-5 text-emerald-500" />,
           routines.length,
-          routineExpanded,
-          () => setRoutineExpanded(!routineExpanded),
+          panelsExpanded,
+          togglePanels,
           'border-emerald-300 bg-emerald-50/30',
           routines.map(item => renderRoutineItem(item))
         )}
@@ -328,8 +327,8 @@ export const ChildScheduleHeader = ({
           language === 'ru' ? 'Желания' : 'Wishlist',
           <Heart className="w-5 h-5 text-rose-500" />,
           wishlistItems.length,
-          wishlistExpanded,
-          () => setWishlistExpanded(!wishlistExpanded),
+          panelsExpanded,
+          togglePanels,
           'border-rose-300 bg-rose-50/30',
           wishlistItems.length > 0 
             ? wishlistItems.map(item => renderWishlistItem(item))
@@ -343,8 +342,8 @@ export const ChildScheduleHeader = ({
           language === 'ru' ? 'Работы' : 'Jobs',
           <Briefcase className="w-5 h-5 text-blue-500" />,
           availableJobs.length,
-          jobsExpanded,
-          () => setJobsExpanded(!jobsExpanded),
+          panelsExpanded,
+          togglePanels,
           'border-blue-300 bg-blue-50/30',
           availableJobs.map(item => renderJobItem(item))
         )}

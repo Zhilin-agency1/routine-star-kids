@@ -3,13 +3,18 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { JobCard } from '@/components/JobCard';
 import { ChildAvatar } from '@/components/ui/ChildAvatar';
+import { CoinBadge } from '@/components/ui/CoinBadge';
 import { cn } from '@/lib/utils';
 
 export const FamilyJobBoardPage = () => {
   const { language } = useLanguage();
   const { jobBoardItems, children, currentChild, setCurrentChild } = useApp();
 
-  const activeJobs = jobBoardItems.filter(job => job.active);
+  // Filter jobs: active + (assigned to this child OR assigned to all children)
+  const activeJobs = jobBoardItems.filter(job => 
+    job.active && 
+    (job.child_id === null || job.child_id === currentChild?.id)
+  );
 
   const handleSelectChild = (childId: string) => {
     const child = children.find(c => c.id === childId);
@@ -74,6 +79,9 @@ export const FamilyJobBoardPage = () => {
                 )}>
                   {child.name}
                 </span>
+                
+                {/* Mini wallet balance */}
+                <CoinBadge amount={child.balance ?? 0} size="xs" className="mt-0.5" />
               </button>
             );
           })}

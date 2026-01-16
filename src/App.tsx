@@ -12,6 +12,7 @@ import { FamilySetup } from "@/components/FamilySetup";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import { AuthPage } from "./pages/AuthPage";
+import { InviteAcceptPage } from "./pages/InviteAcceptPage";
 import { StorePage } from "./pages/child/StorePage";
 import { FamilySchedulePage } from "./pages/child/FamilySchedulePage";
 import { FamilyJobBoardPage } from "./pages/child/FamilyJobBoardPage";
@@ -39,6 +40,7 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/invite/:token" element={<InviteAcceptPage />} />
                 
                 {/* Protected routes */}
                 <Route

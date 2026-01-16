@@ -119,15 +119,39 @@ export const InviteMemberDialog = ({ trigger }: InviteMemberDialogProps) => {
 
   const handleCopyLink = async () => {
     if (!family?.id) return;
-    
-    const inviteToken = crypto.randomUUID();
-    const inviteLink = `${window.location.origin}/invite/${inviteToken}`;
-    
+
+    setIsInviting(true);
     try {
+      const inviteToken = crypto.randomUUID();
+
+      // Store the invite in the database (user_id = null for pending link invites)
+      const { error } = await supabase
+        .from('family_members')
+        .insert({
+          family_id: family.id,
+          user_id: null, // Will be set when user accepts
+          role_label: roleLabel.trim() || (language === 'ru' ? 'Родитель' : 'Parent'),
+          permission_level: permissionLevel,
+          invite_token: inviteToken,
+          invite_status: 'pending',
+          invited_by: (await supabase.auth.getUser()).data.user?.id,
+        });
+
+      if (error) throw error;
+
+      const inviteLink = `${window.location.origin}/invite/${inviteToken}`;
       await navigator.clipboard.writeText(inviteLink);
       toast.success(t.link_copied);
+
+      setOpen(false);
+      setEmail('');
+      setRoleLabel('');
+      setPermissionLevel('viewer');
     } catch (error) {
-      console.error('Copy error:', error);
+      console.error('Copy link error:', error);
+      toast.error(t.invite_error);
+    } finally {
+      setIsInviting(false);
     }
   };
 

@@ -143,7 +143,7 @@ export const useJobBoard = () => {
         
         if (templateError) throw templateError;
         
-        // Create task instance
+        // Create task instance with job_claim_id for stable linking
         const { data: instance, error: instanceError } = await supabase
           .from('task_instances')
           .insert({
@@ -151,13 +151,14 @@ export const useJobBoard = () => {
             child_id: childId,
             due_datetime: new Date().toISOString(),
             state: 'todo',
+            job_claim_id: claim.id, // Link to job claim for carryover tracking
           })
           .select()
           .single();
         
         if (instanceError) throw instanceError;
         
-        // Link claim to task instance
+        // Also link claim back to task instance for backwards compatibility
         const { error: linkError } = await supabase
           .from('job_claims')
           .update({ linked_task_instance_id: instance.id })

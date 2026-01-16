@@ -12,7 +12,7 @@ export const useTaskGeneration = () => {
 
   const generateTodayTasks = useMutation({
     mutationFn: async () => {
-      if (!family || children.length === 0) return { created: 0 };
+      if (!family || children.length === 0) return { created: 0, carriedOver: 0 };
 
       const today = new Date();
       // Format date as YYYY-MM-DD in local timezone
@@ -22,7 +22,30 @@ export const useTaskGeneration = () => {
       const todayStr = `${year}-${month}-${day}`;
       const dayOfWeek = (today.getDay() + 6) % 7; // Monday = 0, Sunday = 6
 
-      // Get all active templates
+      // STEP 1: Carryover incomplete job tasks from previous days
+      // Find job-linked task instances that are not done and have due_datetime before today
+      const { data: overdueJobTasks, error: overdueError } = await supabase
+        .from('task_instances')
+        .select('id, job_claim_id')
+        .not('job_claim_id', 'is', null)
+        .neq('state', 'done')
+        .lt('due_datetime', `${todayStr}T00:00:00`);
+
+      if (overdueError) throw overdueError;
+
+      let carriedOver = 0;
+      if (overdueJobTasks && overdueJobTasks.length > 0) {
+        // Update their due_datetime to today at 09:00
+        const { error: updateError } = await supabase
+          .from('task_instances')
+          .update({ due_datetime: `${todayStr}T09:00:00` })
+          .in('id', overdueJobTasks.map(t => t.id));
+
+        if (updateError) throw updateError;
+        carriedOver = overdueJobTasks.length;
+      }
+
+      // STEP 2: Get all active templates (exclude job-linked ones from creation)
       const { data: templates, error: templatesError } = await supabase
         .from('task_templates')
         .select('*')
@@ -30,7 +53,20 @@ export const useTaskGeneration = () => {
         .eq('status', 'active');
 
       if (templatesError) throw templatesError;
-      if (!templates || templates.length === 0) return { created: 0 };
+      if (!templates || templates.length === 0) return { created: 0, carriedOver };
+
+      // Get template IDs that are linked to job claims (via task instances)
+      const { data: jobLinkedInstances, error: jobLinkedError } = await supabase
+        .from('task_instances')
+        .select('template_id')
+        .not('job_claim_id', 'is', null);
+
+      if (jobLinkedError) throw jobLinkedError;
+
+      // Set of template IDs that are job-linked - exclude from daily generation
+      const jobLinkedTemplateIds = new Set(
+        (jobLinkedInstances || []).map(i => i.template_id)
+      );
 
       // Get existing instances for today (using local date string)
       const { data: existingInstances, error: instancesError } = await supabase
@@ -54,6 +90,9 @@ export const useTaskGeneration = () => {
       }> = [];
 
       for (const template of templates) {
+        // Skip job-linked templates - they are handled by carryover logic
+        if (jobLinkedTemplateIds.has(template.id)) continue;
+
         // Check if template is valid for today
         const startDate = template.start_date ? new Date(template.start_date) : null;
         const endDate = template.end_date ? new Date(template.end_date) : null;
@@ -104,7 +143,7 @@ export const useTaskGeneration = () => {
         }
       }
 
-      if (instancesToCreate.length === 0) return { created: 0 };
+      if (instancesToCreate.length === 0) return { created: 0, carriedOver };
 
       // Insert all instances
       const { error: insertError } = await supabase
@@ -113,10 +152,10 @@ export const useTaskGeneration = () => {
 
       if (insertError) throw insertError;
 
-      return { created: instancesToCreate.length };
+      return { created: instancesToCreate.length, carriedOver };
     },
     onSuccess: (result) => {
-      if (result && result.created > 0) {
+      if (result && (result.created > 0 || result.carriedOver > 0)) {
         queryClient.invalidateQueries({ queryKey: ['task_instances'] });
         queryClient.invalidateQueries({ queryKey: ['all_task_instances'] });
       }

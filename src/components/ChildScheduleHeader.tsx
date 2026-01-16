@@ -11,13 +11,6 @@ import { ChildAvatar } from '@/components/ui/ChildAvatar';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface ChildScheduleHeaderProps {
@@ -315,35 +308,7 @@ export const ChildScheduleHeader = ({
   );
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Child Selector */}
-      <div className="flex items-center gap-3">
-        <Users className="w-5 h-5 text-muted-foreground" />
-        <Select 
-          value={selectedChildId || 'all'} 
-          onValueChange={(v) => onChildChange(v === 'all' ? null : v)}
-        >
-          <SelectTrigger className="w-[180px] h-9">
-            <SelectValue placeholder={language === 'ru' ? 'Все дети' : 'All children'} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                {language === 'ru' ? 'Все дети' : 'All children'}
-              </div>
-            </SelectItem>
-            {children.map(child => (
-              <SelectItem key={child.id} value={child.id}>
-                <div className="flex items-center gap-2">
-                  <ChildAvatar avatar={child.avatar_url || '🦁'} size="xs" />
-                  <span>{child.name}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className={className}>
 
       {/* Three expandable blocks */}
       <div className="flex flex-col md:flex-row gap-3">

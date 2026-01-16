@@ -81,7 +81,6 @@ export const FamilySchedulePage = () => {
           onViewModeChange={setViewMode}
           isReadOnly // Family view is read-only (parent uses Tasks page to edit)
           hideAdults // Kids should never see adult activities
-          hideChildSelector // Use only the top-level child selector
           className="h-full"
         />
       </div>

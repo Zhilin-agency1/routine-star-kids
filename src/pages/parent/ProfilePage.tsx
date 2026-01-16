@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User, Users, CreditCard, Settings, UserPlus, Calendar, Palette } from 'lucide-react';
+import { User, Users, CreditCard, Settings, UserPlus, Calendar, Palette, Shield, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
 import { useFamily } from '@/hooks/useFamily';
@@ -28,6 +29,7 @@ export const ProfilePage = () => {
   const { family, updateFamily } = useFamily();
   const { user } = useAuth();
   const { currentUserProfile, isOwnerOrAdmin, allowParentActivities, refetch: refetchMembers } = useFamilyMembers();
+  const navigate = useNavigate();
   
   const [familyName, setFamilyName] = useState(family?.name || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -92,6 +94,8 @@ export const ProfilePage = () => {
       my_activity_color: 'My Activity Color',
       enable_parent_activities_for_me: 'Enable parent activities for me',
       enable_parent_activities_for_me_desc: 'Show my activities in my calendar filter',
+      security_privacy: 'Security & Privacy',
+      security_privacy_desc: 'Manage your data, export, and account deletion',
     },
     ru: {
       profile: 'Профиль',
@@ -130,6 +134,8 @@ export const ProfilePage = () => {
       my_activity_color: 'Цвет моих занятий',
       enable_parent_activities_for_me: 'Включить мои занятия',
       enable_parent_activities_for_me_desc: 'Показывать мои занятия в фильтре календаря',
+      security_privacy: 'Безопасность и конфиденциальность',
+      security_privacy_desc: 'Управление данными, экспорт и удаление аккаунта',
     }
   }[language];
 
@@ -469,6 +475,25 @@ export const ProfilePage = () => {
             <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">{t.coming_soon}</span>
           </Button>
         </CardContent>
+      </Card>
+
+      {/* Security & Privacy */}
+      <Card 
+        className="cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={() => navigate('/parent/security')}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                {t.security_privacy}
+              </CardTitle>
+              <CardDescription>{t.security_privacy_desc}</CardDescription>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </div>
+        </CardHeader>
       </Card>
 
       {/* Subscription */}

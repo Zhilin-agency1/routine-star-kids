@@ -1,4 +1,4 @@
-import { Home, Calendar, Briefcase, ShoppingBag, ListTodo, LogOut, LogIn, User } from 'lucide-react';
+import { Home, Calendar, Briefcase, ShoppingBag, ListTodo, LogOut, LogIn, User, Shield } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -40,6 +40,7 @@ const parentNavItems: NavItem[] = [
   { icon: Briefcase, labelKey: 'nav_jobs', path: '/parent/jobs' },
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/parent/store' },
   { icon: User, labelKey: 'nav_profile', path: '/parent/profile' },
+  { icon: Shield, labelKey: 'nav_security', path: '/parent/security' },
 ];
 
 const translations: Record<string, { en: string; ru: string }> = {
@@ -50,6 +51,7 @@ const translations: Record<string, { en: string; ru: string }> = {
   nav_tasks: { en: 'Tasks', ru: 'Задания' },
   nav_dashboard: { en: 'Dashboard', ru: 'Главная' },
   nav_profile: { en: 'Profile', ru: 'Профиль' },
+  nav_security: { en: 'Security', ru: 'Безопасность' },
 };
 
 export const AppSidebar = () => {

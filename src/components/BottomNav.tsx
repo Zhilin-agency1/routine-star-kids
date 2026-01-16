@@ -1,4 +1,4 @@
-import { Home, Briefcase, ShoppingBag, ListTodo, Calendar, User } from 'lucide-react';
+import { Home, Briefcase, ShoppingBag, ListTodo, Calendar, User, Shield } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -18,7 +18,7 @@ const childNavItems: NavItem[] = [
   { icon: ShoppingBag, labelKey: 'nav_store', path: '/store' },
 ];
 
-// Parent navigation
+// Parent navigation - mobile shows only 5 items (security accessible from profile)
 const parentNavItems: NavItem[] = [
   { icon: Home, labelKey: 'nav_dashboard', path: '/parent' },
   { icon: ListTodo, labelKey: 'nav_tasks', path: '/parent/tasks' },

@@ -65,11 +65,17 @@ export const SimpleTaskCard = ({ task, onComplete, showCheckbox = true, canToggl
         {/* Checkbox */}
         {showCheckbox && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               if (!isDone) onComplete?.();
             }}
             disabled={isDone}
+            aria-label={
+              isDone
+                ? (language === 'ru' ? 'Задача выполнена' : 'Task completed')
+                : (language === 'ru' ? 'Отметить выполненной' : 'Mark as complete')
+            }
             className={cn(
               "w-7 h-7 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all",
               isDone 

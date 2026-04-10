@@ -111,6 +111,7 @@ export const FamilyAchievements = () => {
                         key={task.id}
                         task={task}
                         onComplete={() => handleComplete(task.id, task.childId)}
+                        canToggleSteps={task.state !== 'done' && task.state !== 'cancelled' && task.state !== 'skipped'}
                       />
                     ))
                   )}

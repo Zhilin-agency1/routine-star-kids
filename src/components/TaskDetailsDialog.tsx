@@ -1,14 +1,11 @@
-import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTaskSteps, useStepCompletions } from '@/hooks/useTaskSteps';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
 import { CoinBadge } from '@/components/ui/CoinBadge';
 
 import { Check, ListChecks, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, differenceInDays } from 'date-fns';
-import { ru, enUS } from 'date-fns/locale';
+import { differenceInDays } from 'date-fns';
 
 interface TaskDetailsDialogProps {
   open: boolean;
@@ -35,6 +32,7 @@ export const TaskDetailsDialog = ({
   const { language, t } = useLanguage();
   const { steps, isLoading: stepsLoading } = useTaskSteps(task.templateId);
   const { completions, toggleStepCompletion } = useStepCompletions(task.id);
+  const stepsDisabled = !canToggleSteps || toggleStepCompletion.isPending;
   
   const hasSteps = steps.length > 0;
   const completedSteps = completions.length;
@@ -132,21 +130,24 @@ export const TaskDetailsDialog = ({
               </h4>
               
               <div className="space-y-2">
-                {steps.map((step, index) => {
+                {steps.map((step) => {
                   const completed = isStepCompleted(step.id);
                   
                   return (
-                    <div 
+                    <button
                       key={step.id}
+                      type="button"
+                      disabled={stepsDisabled}
                       className={cn(
-                        "flex items-start gap-3 p-2 rounded-lg transition-colors",
-                        canToggleSteps && "cursor-pointer hover:bg-muted/50",
+                        "flex w-full items-start gap-3 rounded-xl border border-border/70 bg-card p-3 text-left transition-colors",
+                        canToggleSteps && "cursor-pointer hover:border-primary/30 hover:bg-muted/50",
+                        !canToggleSteps && "cursor-default",
                         completed && "opacity-60"
                       )}
                       onClick={() => handleToggleStep(step.id)}
                     >
                       <div className={cn(
-                        "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
+                        "mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2",
                         completed 
                           ? "bg-success border-success" 
                           : "border-muted-foreground/30"
@@ -166,7 +167,7 @@ export const TaskDetailsDialog = ({
                       {step.bonus_amount > 0 && !step.bonus_hidden && (
                         <CoinBadge amount={step.bonus_amount} size="sm" />
                       )}
-                    </div>
+                    </button>
                   );
                 })}
               </div>

@@ -374,6 +374,7 @@ export const FamilyTodayPage = () => {
                                 key={item.id}
                                 task={item}
                                 onComplete={() => handleComplete(item.id, item.childId)}
+                                canToggleSteps={item.state !== 'done' && item.state !== 'cancelled' && item.state !== 'skipped'}
                               />
                             )
                           ))

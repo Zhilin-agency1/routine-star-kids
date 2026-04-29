@@ -1,4 +1,4 @@
-import { Globe, User, LogIn, LogOut } from 'lucide-react';
+import { Globe, User, LogIn, LogOut, Check, Baby, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApp } from '@/contexts/AppContext';
@@ -51,11 +51,13 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setLanguage('ru')}>
-                  🇷🇺 Русский {language === 'ru' && '✓'}
+                <DropdownMenuItem onClick={() => setLanguage('ru')} className="flex items-center justify-between gap-4">
+                  <span>Русский</span>
+                  {language === 'ru' && <Check className="w-4 h-4 text-primary" />}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage('en')}>
-                  🇺🇸 English {language === 'en' && '✓'}
+                <DropdownMenuItem onClick={() => setLanguage('en')} className="flex items-center justify-between gap-4">
+                  <span>English</span>
+                  {language === 'en' && <Check className="w-4 h-4 text-primary" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -68,11 +70,19 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleRoleChange('child')}>
-                  👶 {t('role_child')} {role === 'child' && '✓'}
+                <DropdownMenuItem onClick={() => handleRoleChange('child')} className="flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-2">
+                    <Baby className="w-4 h-4" />
+                    {t('role_child')}
+                  </span>
+                  {role === 'child' && <Check className="w-4 h-4 text-primary" />}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
-                  👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
+                <DropdownMenuItem onClick={() => handleRoleChange('parent')} className="flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    {t('role_parent')}
+                  </span>
+                  {role === 'parent' && <Check className="w-4 h-4 text-primary" />}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {user ? (
@@ -122,11 +132,19 @@ export const Header = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => handleRoleChange('child')}>
-            👶 {t('role_child')} {role === 'child' && '✓'}
+          <DropdownMenuItem onClick={() => handleRoleChange('child')} className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-2">
+              <Baby className="w-4 h-4" />
+              {t('role_child')}
+            </span>
+            {role === 'child' && <Check className="w-4 h-4 text-primary" />}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleRoleChange('parent')}>
-            👨‍👩‍👧 {t('role_parent')} {role === 'parent' && '✓'}
+          <DropdownMenuItem onClick={() => handleRoleChange('parent')} className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              {t('role_parent')}
+            </span>
+            {role === 'parent' && <Check className="w-4 h-4 text-primary" />}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {user ? (

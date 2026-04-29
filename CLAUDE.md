@@ -13,7 +13,7 @@
 ## Стек
 
 - Язык: TypeScript 5.8 (`strict: false` в `tsconfig.app.json` — ошибки типов могут проскальзывать)
-- Фреймворк: React 18.3 SPA, сборщик Vite 5.4
+- Фреймворк: React 18.3 SPA, сборщик Vite 6.4 (поднят с 5.4 для закрытия esbuild dev-server CVE; vite 8 не подходит — требует Node 20.19+, на машине Node 20.11)
 - UI: shadcn/ui (`components.json`) поверх Radix UI + Tailwind 3.4 + lucide-react
 - Data layer: TanStack React Query 5.83 поверх Supabase JS client
 - Routing: React Router 6.30 (`BrowserRouter`)

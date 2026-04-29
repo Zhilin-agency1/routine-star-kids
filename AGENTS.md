@@ -22,7 +22,7 @@ Stage: **pre-launch**. Текущий приоритет — выкатить в
 ## Stack
 
 - Languages: TypeScript 5.8 (`strict: false`)
-- Framework: React 18.3 SPA, build с Vite 5.4
+- Framework: React 18.3 SPA, build с Vite 6.4 (vite 8 несовместим — требует Node 20.19+)
 - UI: shadcn/ui + Radix UI + Tailwind 3.4 + lucide-react
 - Data: TanStack React Query 5.83 over Supabase JS client
 - Routing: React Router 6.30

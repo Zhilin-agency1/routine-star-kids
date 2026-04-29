@@ -159,9 +159,9 @@ export const useStepCompletions = (instanceId?: string) => {
 
   // Toggle step completion
   const toggleStepCompletion = useMutation({
-    mutationFn: async ({ instanceId, stepId, isCompleted }: { 
-      instanceId: string; 
-      stepId: string; 
+    mutationFn: async ({ instanceId, stepId, isCompleted }: {
+      instanceId: string;
+      stepId: string;
       isCompleted: boolean;
     }) => {
       if (isCompleted) {
@@ -171,7 +171,7 @@ export const useStepCompletions = (instanceId?: string) => {
           .delete()
           .eq('task_instance_id', instanceId)
           .eq('step_id', stepId);
-        
+
         if (error) throw error;
       } else {
         // Add completion
@@ -181,12 +181,15 @@ export const useStepCompletions = (instanceId?: string) => {
             task_instance_id: instanceId,
             step_id: stepId,
           });
-        
+
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task_step_completions'] });
+    },
+    onError: (error) => {
+      console.error('Failed to toggle step completion:', error);
     },
   });
 
